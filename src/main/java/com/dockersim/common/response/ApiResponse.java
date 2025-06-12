@@ -13,7 +13,6 @@ public class ApiResponse<T> {
     public static <T> ApiResponse<T> success(ApiResponseCode code, T data) {
         return new ApiResponse<>(code.getCode(), code.getMessage(), data);
     }
-
     public static <T> ApiResponse<T> fail(ApiResponseCode code) {
         return new ApiResponse<>(code.getCode(), code.getMessage(), null);
     }
