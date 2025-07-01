@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Docker 시뮬레이터 - 도메인 중심 UI</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            background: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+        }
+
+        /* 리사이저블 메인 컨테이너 */
+        .main-container {
+            display: grid;
+            grid-template-columns: 350px 8px 1fr;
+            grid-template-rows: 1fr 8px 1fr;
+            height: 100vh;
+            gap: 0;
+        }
+
+        /* 리사이저 스타일 */
+        .resizer {
+            background: #dee2e6;
+            cursor: col-resize;
+            position: relative;
+            transition: background 0.2s;
+        }
+
+        .resizer:hover {
+            background: #0d6efd;
+        }
+
+        .resizer.vertical {
+            cursor: row-resize;
+        }
+
+        /* 왼쪽 상단 - 도메인 중심 명령어 영역 */
+        .domain-commands-area {
+            grid-column: 1;
+            grid-row: 1;
+            background: white;
+            border-radius: 15px 0 0 0;
+            box-shadow: 2px 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .domain-tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 10px;
+        }
+
+        .domain-tab {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px 8px 0 0;
+            padding: 10px 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .domain-tab.active {
+            background: #0d6efd;
+            color: white;
+            border-color: #0d6efd;
+        }
+
+        .domain-tab:hover:not(.active) {
+            background: #e9ecef;
+        }
+
+        .domain-commands {
+            display: none;
+        }
+
+        .domain-commands.active {
+            display: block;
+        }
+
+        .command-group {
+            margin-bottom: 20px;
+        }
+
+        .command-group-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #495057;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .command-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .command-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .command-button.create { background: linear-gradient(135deg, #28a745, #20c997); }
+        .command-button.list { background: linear-gradient(135deg, #17a2b8, #138496); }
+        .command-button.modify { background: linear-gradient(135deg, #ffc107, #fd7e14); }
+        .command-button.delete { background: linear-gradient(135deg, #dc3545, #c82333); }
+
+        /* 왼쪽 하단 - CLI 영역 */
+        .cli-area {
+            grid-column: 1;
+            grid-row: 3;
+            background: #1a1a1a;
+            border-radius: 0 0 0 15px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .cli-header {
+            background: #2d2d2d;
+            color: #fff;
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .cli-body {
+            flex: 1;
+            padding: 15px;
+            color: #00ff00;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 14px;
+            overflow-y: auto;
+            background: #1a1a1a;
+        }
+
+        .cli-input-area {
+            background: #2d2d2d;
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .cli-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #00ff00;
+            font-family: 'Monaco', 'Menlo', monospace;
+            outline: none;
+        }
+
+        .prompt { color: #00aaff; }
+        .error { color: #ff4444; }
+        .success { color: #00ff00; }
+
+        /* 오른쪽 - 그리드 기반 시각화 영역 */
+        .visualization-area {
+            grid-column: 3;
+            grid-row: 1 / 4;
+            background: white;
+            border-radius: 0 15px 15px 0;
+            box-shadow: -2px 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .viz-header {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-bottom: 2px solid #e9ecef;
+            display: flex;
+            align-items: center;
+            justify-content: between;
+        }
+
+        .network-tabs {
+            display: flex;
+            gap: 10px;
+            flex: 1;
+        }
+
+        .network-tab {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 8px 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .network-tab.active {
+            background: #0d6efd;
+            color: white;
+            border-color: #0d6efd;
+        }
+
+        .add-network-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* 그리드 기반 컨테이너 영역 */
+        .containers-grid {
+            flex: 1;
+            background: #f8f9fa;
+            position: relative;
+            padding: 20px;
+            overflow: auto;
+            
+            /* CSS Grid for container positioning */
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            grid-template-rows: repeat(4, 150px);
+            gap: 15px;
+            grid-auto-rows: 150px;
+        }
+
+        .grid-slot {
+            border: 2px dashed #dee2e6;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6c757d;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .grid-slot.available {
+            border-color: #28a745;
+            background: rgba(40, 167, 69, 0.1);
+        }
+
+        .grid-slot.occupied {
+            border: none;
+            background: transparent;
+        }
+
+        /* 드래그 가능한 컨테이너 */
+        .container-visual {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #2196F3, #21CBF3);
+            border-radius: 12px;
+            cursor: move;
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            position: relative;
+            user-select: none;
+        }
+
+        .container-visual:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+
+        .container-visual.dragging {
+            opacity: 0.7;
+            transform: rotate(5deg);
+            z-index: 100;
+        }
+
+        .container-visual.running {
+            background: linear-gradient(135deg, #28a745, #20c997);
+        }
+
+        .container-visual.stopped {
+            background: linear-gradient(135deg, #6c757d, #495057);
+        }
+
+        .container-visual.error {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+        }
+
+        .container-name {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .container-status {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .container-ports {
+            font-size: 10px;
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(0,0,0,0.3);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        /* 리소스 패널 */
+        .resource-panel {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .resource-box {
+            width: 80px;
+            height: 80px;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        .resource-box:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+
+        .resource-box.images { background: linear-gradient(135deg, #ffc107, #fd7e14); }
+        .resource-box.volumes { background: linear-gradient(135deg, #9c27b0, #e91e63); }
+        .resource-box.networks { background: linear-gradient(135deg, #607d8b, #455a64); }
+
+        .resource-count {
+            font-size: 12px;
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #dc3545;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        /* 모달 스타일 개선 */
+        .modal-custom {
+            background: rgba(0,0,0,0.7);
+        }
+
+        .modal-content-custom {
+            background: white;
+            border-radius: 15px;
+            border: none;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+
+        .container-info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .info-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+        }
+
+        .info-label {
+            font-size: 12px;
+            color: #6c757d;
+            text-transform: uppercase;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            font-size: 14px;
+            color: #495057;
+            font-weight: 500;
+        }
+
+        /* 반응형 */
+        @media (max-width: 1200px) {
+            .containers-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                grid-template-columns: 1fr;
+                grid-template-rows: 300px 8px 200px 8px 1fr;
+            }
+            
+            .visualization-area {
+                grid-column: 1;
+                grid-row: 5;
+            }
+            
+            .containers-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <!-- 왼쪽 상단: 도메인 중심 명령어 영역 -->
+        <div class="domain-commands-area">
+            <h5 class="mb-3">
+                <i class="fab fa-docker"></i> Docker 명령어
+            </h5>
+            
+            <!-- 도메인 탭 -->
+            <div class="domain-tabs">
+                <div class="domain-tab active" data-domain="container">
+                    <i class="fas fa-cube"></i> 컨테이너
+                </div>
+                <div class="domain-tab" data-domain="image">
+                    <i class="fas fa-layer-group"></i> 이미지
+                </div>
+                <div class="domain-tab" data-domain="volume">
+                    <i class="fas fa-hdd"></i> 볼륨
+                </div>
+                <div class="domain-tab" data-domain="network">
+                    <i class="fas fa-network-wired"></i> 네트워크
+                </div>
+            </div>
+            
+            <!-- 컨테이너 명령어 -->
+            <div class="domain-commands active" id="container-commands">
+                <div class="command-group">
+                    <div class="command-group-title">
+                        <i class="fas fa-plus"></i> 생성/실행
+                    </div>
+                    <button class="command-button create" onclick="executeCommand('docker run')">
+                        <i class="fas fa-play"></i> 컨테이너 실행
+                    </button>
+                    <button class="command-button create" onclick="executeCommand('docker create')">
+                        <i class="fas fa-plus"></i> 컨테이너 생성
+                    </button>
+                </div>
+                
+                <div class="command-group">
+                    <div class="command-group-title">
+                        <i class="fas fa-list"></i> 조회
+                    </div>
+                    <button class="command-button list" onclick="executeCommand('docker ps')">
+                        <i class="fas fa-list"></i> 실행 중인 컨테이너
+                    </button>
+                    <button class="command-button list" onclick="executeCommand('docker ps -a')">
+                        <i class="fas fa-list-ul"></i> 모든 컨테이너
+                    </button>
+                </div>
+                
+                <div class="command-group">
+                    <div class="command-group-title">
+                        <i class="fas fa-cog"></i> 관리
+                    </div>
+                    <button class="command-button modify" onclick="executeCommand('docker start')">
+                        <i class="fas fa-play"></i> 시작
+                    </button>
+                    <button class="command-button modify" onclick="executeCommand('docker stop')">
+                        <i class="fas fa-stop"></i> 중지
+                    </button>
+                    <button class="command-button modify" onclick="executeCommand('docker restart')">
+                        <i class="fas fa-redo"></i> 재시작
+                    </button>
+                    <button class="command-button delete" onclick="executeCommand('docker rm')">
+                        <i class="fas fa-trash"></i> 삭제
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 이미지 명령어 -->
+            <div class="domain-commands" id="image-commands">
+                <div class="command-group">
+                    <div class="command-group-title">
+                        <i class="fas fa-download"></i> 가져오기
+                    </div>
+                    <button class="command-button create" onclick="executeCommand('docker pull')">
+                        <i class="fas fa-download"></i> 이미지 다운로드
+                    </button>
+                    <button class="command-button create" onclick="executeCommand('docker build')">
+                        <i class="fas fa-hammer"></i> 이미지 빌드
+                    </button>
+                </div>
+                
+                <div class="command-group">
+                    <div class="command-group-title">
+                        <i class="fas fa-list"></i> 조회
+                    </div>
+                    <button class="command-button list" onclick="executeCommand('docker images')">
+                        <i class="fas fa-list"></i> 이미지 목록
+                    </button>
+                    <button class="command-button list" onclick="executeCommand('docker inspect')">
+                        <i class="fas fa-search"></i> 이미지 정보
+                    </button>
+                </div>
+                
+                <div class="command-group">
+                    <div class="command-group-title">
+                        <i class="fas fa-cog"></i> 관리
+                    </div>
+                    <button class="command-button modify" onclick="executeCommand('docker tag')">
+                        <i class="fas fa-tag"></i> 태그 설정
+                    </button>
+                    <button class="command-button delete" onclick="executeCommand('docker rmi')">
+                        <i class="fas fa-trash"></i> 이미지 삭제
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 볼륨 명령어 -->
+            <div class="domain-commands" id="volume-commands">
+                <div class="command-group">
+                    <div class="command-group-title">
+                        <i class="fas fa-plus"></i> 생성
+                    </div>
+                    <button class="command-button create" onclick="executeCommand('docker volume create')">
+                        <i class="fas fa-plus"></i> 볼륨 생성
+                    </button>
+                </div>
+                
+                <div class="command-group">
+                    <div class="command-group-title">
+                        <i class="fas fa-list"></i> 조회
+                    </div>
+                    <button class="command-button list" onclick="executeCommand('docker volume ls')">
+                        <i class="fas fa-list"></i> 볼륨 목록
+                    </button>
+                    <button class="command-button list" onclick="executeCommand('docker volume inspect')">
+                        <i class="fas fa-search"></i> 볼륨 정보
+                    </button>
+                </div>
+                
+                <div class="command-group">
+                    <div class="command-group-title">
+                        <i class="fas fa-cog"></i> 관리
+                    </div>
+                    <button class="command-button delete" onclick="executeCommand('docker volume rm')">
+                        <i class="fas fa-trash"></i> 볼륨 삭제
+                    </button>
+                    <button class="command-button delete" onclick="executeCommand('docker volume prune')">
+                        <i class="fas fa-broom"></i> 미사용 볼륨 정리
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 네트워크 명령어 -->
+            <div class="domain-commands" id="network-commands">
+                <div class="command-group">
+                    <div class="command-group-title">
+                        <i class="fas fa-plus"></i> 생성
+                    </div>
+                    <button class="command-button create" onclick="executeCommand('docker network create')">
+                        <i class="fas fa-plus"></i> 네트워크 생성
+                    </button>
+                </div>
+                
+                <div class="command-group">
+                    <div class="command-group-title">
+                        <i class="fas fa-list"></i> 조회
+                    </div>
+                    <button class="command-button list" onclick="executeCommand('docker network ls')">
+                        <i class="fas fa-list"></i> 네트워크 목록
+                    </button>
+                    <button class="command-button list" onclick="executeCommand('docker network inspect')">
+                        <i class="fas fa-search"></i> 네트워크 정보
+                    </button>
+                </div>
+                
+                <div class="command-group">
+                    <div class="command-group-title">
+                        <i class="fas fa-link"></i> 연결
+                    </div>
+                    <button class="command-button modify" onclick="executeCommand('docker network connect')">
+                        <i class="fas fa-link"></i> 컨테이너 연결
+                    </button>
+                    <button class="command-button modify" onclick="executeCommand('docker network disconnect')">
+                        <i class="fas fa-unlink"></i> 컨테이너 분리
+                    </button>
+                </div>
+                
+                <div class="command-group">
+                    <div class="command-group-title">
+                        <i class="fas fa-cog"></i> 관리
+                    </div>
+                    <button class="command-button delete" onclick="executeCommand('docker network rm')">
+                        <i class="fas fa-trash"></i> 네트워크 삭제
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 세로 리사이저 -->
+        <div class="resizer vertical" id="verticalResizer"></div>
+
+        <!-- 왼쪽 하단: CLI 영역 -->
+        <div class="cli-area">
+            <div class="cli-header">
+                <i class="fas fa-circle" style="color: #ff5f57;"></i>
+                <i class="fas fa-circle" style="color: #ffbd2e;"></i>
+                <i class="fas fa-circle" style="color: #28ca42;"></i>
+                <span class="ms-3">Docker CLI 시뮬레이터</span>
+                <div class="ms-auto">
+                    <button class="btn btn-sm btn-outline-light" onclick="clearTerminal()">
+                        <i class="fas fa-trash"></i> 클리어
+                    </button>
+                </div>
+            </div>
+            
+            <div class="cli-body" id="cliOutput">
+                <div class="prompt">docker-sim:~$ </div>
+                <div class="text-muted">도메인별 명령어를 클릭하거나 직접 입력해보세요!</div>
+                <div class="prompt">docker-sim:~$ </div>
+            </div>
+            
+            <div class="cli-input-area">
+                <span class="prompt">$</span>
+                <input type="text" class="cli-input" id="cliInput" placeholder="docker 명령어 입력..." autocomplete="off">
+                <button class="btn btn-primary btn-sm" onclick="executeCommand()">
+                    <i class="fas fa-play"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- 가로 리사이저 -->
+        <div class="resizer" id="horizontalResizer"></div>
+
+        <!-- 오른쪽: 그리드 기반 시각화 영역 -->
+        <div class="visualization-area">
+            <!-- 시각화 헤더 -->
+            <div class="viz-header">
+                <div class="network-tabs">
+                    <div class="network-tab active" data-network="default">
+                        <i class="fas fa-globe"></i> default
+                    </div>
+                    <button class="add-network-btn" onclick="createNetwork()">
+                        <i class="fas fa-plus"></i> 네트워크 추가
+                    </button>
+                </div>
+                
+                <div class="ms-auto">
+                    <span class="text-muted">컨테이너를 드래그하여 위치를 변경하세요</span>
+                </div>
+            </div>
+            
+            <!-- 그리드 기반 컨테이너 영역 -->
+            <div class="containers-grid" id="containersGrid">
+                <!-- 그리드 슬롯들이 동적으로 생성됩니다 -->
+            </div>
+            
+            <!-- 리소스 패널 -->
+            <div class="resource-panel">
+                <div class="resource-box images" onclick="showImagesList()" title="이미지 목록">
+                    <i class="fas fa-layer-group"></i>
+                    <span class="resource-count" id="imageCount">0</span>
+                </div>
+                <div class="resource-box volumes" onclick="showVolumesList()" title="볼륨 목록">
+                    <i class="fas fa-hdd"></i>
+                    <span class="resource-count" id="volumeCount">0</span>
+                </div>
+                <div class="resource-box networks" onclick="showNetworksList()" title="네트워크 목록">
+                    <i class="fas fa-network-wired"></i>
+                    <span class="resource-count" id="networkCount">1</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 컨테이너 정보 모달 (더블클릭 시 표시) -->
+    <div class="modal fade" id="containerModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content modal-content-custom">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-cube"></i> 컨테이너 상세 정보
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="containerModalBody">
+                    <!-- 컨테이너 정보가 여기에 표시됩니다 -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+                    <button type="button" class="btn btn-primary" onclick="manageContainer()">관리</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 이미지 목록 모달 -->
+    <div class="modal fade" id="imagesModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content modal-content-custom">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-layer-group"></i> 로컬 이미지 목록
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="imagesModalBody">
+                    <!-- 이미지 목록이 여기에 표시됩니다 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 볼륨 목록 모달 -->
+    <div class="modal fade" id="volumesModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content modal-content-custom">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-hdd"></i> 볼륨 목록
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="volumesModalBody">
+                    <!-- 볼륨 목록이 여기에 표시됩니다 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 네트워크 목록 모달 -->
+    <div class="modal fade" id="networksModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content modal-content-custom">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-network-wired"></i> 네트워크 목록
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="networksModalBody">
+                    <!-- 네트워크 목록이 여기에 표시됩니다 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 네트워크 생성 모달 -->
+    <div class="modal fade" id="networkModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content modal-content-custom">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-network-wired"></i> 네트워크 생성
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="networkName" class="form-label">네트워크 이름</label>
+                        <input type="text" class="form-control" id="networkName" placeholder="예: my-network">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-primary" onclick="executeNetworkCreate()">생성</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="docker-simulator-enhanced.js"></script>
+</body>
+</html> 
+</html> 
