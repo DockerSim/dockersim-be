@@ -1,14 +1,36 @@
-// 이 enum은 Docker 컨테이너의 상태를 정의합니다.
-// CREATED : 컨테이너가 생성됨
-// RUNNING : 컨테이너가 실행 중
-// STOPPED : 컨테이너가 중지됨
-// PAUSED : 컨테이너가 일시 정지됨
-
 package com.dockersim.domain;
 
+/**
+ * 컨테이너 상태
+ */
 public enum ContainerStatus {
+    /**
+     * 생성됨 (아직 시작되지 않음)
+     */
     CREATED,
+
+    /**
+     * 실행 중
+     */
     RUNNING,
-    STOPPED,
-    PAUSED
+
+    /**
+     * 중지됨
+     */
+    EXITED,
+
+    /**
+     * 재시작 중
+     */
+    RESTARTING,
+
+    /**
+     * 일시정지
+     */
+    PAUSED,
+
+    /**
+     * 제거됨
+     */
+    REMOVED
 }
