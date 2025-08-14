@@ -21,7 +21,7 @@ public class PostResponseDto {
     private String tags;
 
     // Entity를 DTO로 변환하는 생성자
-    public PostResponseDto(Post post, int likesCount) {
+    public PostResponse(Post post, int likesCount) {
         this.id = post.getId();
         this.title = post.getTitle();
         this.content = post.getContent();

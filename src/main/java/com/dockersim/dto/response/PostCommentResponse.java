@@ -17,7 +17,7 @@ public class PostCommentResponse {
     private Long postId;
 
     // Entity를 DTO로 변환하는 생성자
-    public CommentResponseDto(Comment comment) {
+    public CommentResponse(Comment comment) {
         this.id = comment.getId();
         this.content = comment.getContent();
         this.author = comment.getAuthor();
