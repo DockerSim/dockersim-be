@@ -6,7 +6,6 @@ import lombok.AllArgsConstructor;
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
-
 @Entity
 @Table(name = "comments")
 @Data
@@ -18,7 +17,6 @@ public class Comment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    
     @Column(nullable = false, length = 1000)
     private String content;
 
@@ -28,14 +26,16 @@ public class Comment {
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
-
-    @Column(nullable = false)
-    private int likes;
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "post_id", nullable = false)
     private Post post;
 
+    @PrePersist
+    public void prePersist() {
+        this.createdAt = LocalDateTime.now();
+    }
+    
     /**
      * 댓글 생성 시 사용할 생성자
      */
@@ -43,7 +43,5 @@ public class Comment {
         this.content = content;
         this.author = author;
         this.post = post;
-        this.createdAt = LocalDateTime.now();
-        this.likes = 0; 
     }
 }
