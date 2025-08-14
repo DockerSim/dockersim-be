@@ -38,14 +38,18 @@ public class Post {
     private LocalDateTime createdAt;
 
     @Column(nullable = false)
-    private int likes;
-
-    @Column(nullable = false)
     private int views;
 
     // 태그를 샆(#)으로 구분된 문자열로 저장
     @Column
     private String tags;
+
+    // 연관관계 매핑: 댓글과 좋아요
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Comment> comments = new ArrayList<>();
+
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<PostLike> likes = new ArrayList<>();
 
     /**
      * 게시글 생성 시 사용할 생성자
@@ -57,7 +61,6 @@ public class Post {
         this.type = type;
         this.tags = tags;
         this.createdAt = LocalDateTime.now();
-        this.likes = 0; 
         this.views = 0;
     }
 }
