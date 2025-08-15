@@ -6,7 +6,7 @@ import org.springframework.http.HttpStatus;
 
 @Getter
 @RequiredArgsConstructor
-public enum UserErrorCode implements ErrorCode {
+public enum UserErrorCode implements ResponseCode {
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "U001", "사용자를 찾을 수 없습니다"),
     EMAIL_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "U002", "이미 존재하는 이메일입니다"),
     INVALID_EMAIL_FORMAT(HttpStatus.BAD_REQUEST, "U003", "올바르지 않은 이메일 형식입니다"),

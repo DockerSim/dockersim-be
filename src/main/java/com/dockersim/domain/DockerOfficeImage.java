@@ -1,12 +1,18 @@
 package com.dockersim.domain;
 
+import com.dockersim.common.IdGenerator;
 import com.dockersim.service.DockerImageJson;
-import jakarta.persistence.*;
-import lombok.*;
-
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
@@ -14,41 +20,44 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class DockerOfficeImage {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(name = "image_id")
+    private String imageId;
+
     private String name;
     private String namespace;
     private String description;
+
+    @Column(name = "star_count")
     private int starCount;
+
+    @Column(name = "pull_count")
     private long pullCount;
+
+    @Column(name = "last_updated")
     private LocalDate lastUpdated;
+
+    @Column(name = "date_registered")
     private LocalDate dateRegistered;
     private String logoUrl;
-
-    @OneToMany(mappedBy = "image", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<DockerOfficeTag> tags = new ArrayList<>();
+    private String tags;
 
     public static DockerOfficeImage fromJson(DockerImageJson image) {
-        DockerOfficeImage newImage = DockerOfficeImage.builder()
-                .name(image.getName())
-                .namespace(image.getNamespace())
-                .description(image.getDescription())
-                .starCount(image.getStarCount())
-                .pullCount(image.getPullCount())
-                .lastUpdated(LocalDate.parse(image.getLastUpdated()))
-                .dateRegistered(LocalDate.parse(image.getDateRegistered()))
-                .logoUrl(image.getLogoUrl())
-                .build();
-
-        image.getTags().forEach(tagStr -> {
-            DockerOfficeTag tag = DockerOfficeTag.builder()
-                    .tag(tagStr)
-                    .image(newImage)
-                    .build();
-            newImage.getTags().add(tag);
-        });
-
-        return newImage;
+        return DockerOfficeImage.builder()
+            .name(image.getName())
+            .imageId(IdGenerator.generateFullId())
+            .namespace(image.getNamespace())
+            .description(image.getDescription())
+            .starCount(image.getStarCount())
+            .pullCount(image.getPullCount())
+            .lastUpdated(LocalDate.parse(image.getLastUpdated()))
+            .dateRegistered(LocalDate.parse(image.getDateRegistered()))
+            .logoUrl(image.getLogoUrl())
+//            .tags(List.of(image.getTags()).toString())
+            .build();
     }
 }

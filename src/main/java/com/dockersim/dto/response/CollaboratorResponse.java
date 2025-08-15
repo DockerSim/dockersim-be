@@ -1,11 +1,10 @@
 package com.dockersim.dto.response;
 
 import com.dockersim.domain.SimulationCollaborator;
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
 
 /**
  * 협업자 정보 응답 DTO
@@ -14,11 +13,11 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CollaboratorResponse {
+
     private Long id;
     private Long userId;
     private String userName;
     private String userEmail;
-    private String permission;
     private Long invitedById;
     private String invitedByName;
     private LocalDateTime invitedAt;
@@ -28,13 +27,12 @@ public class CollaboratorResponse {
      */
     public static CollaboratorResponse from(SimulationCollaborator collaborator) {
         return new CollaboratorResponse(
-                collaborator.getId(),
-                collaborator.getUser().getId(),
-                collaborator.getUser().getName(),
-                collaborator.getUser().getEmail(),
-                collaborator.getPermission().name(),
-                collaborator.getInvitedBy().getId(),
-                collaborator.getInvitedBy().getName(),
-                collaborator.getInvitedAt());
+            collaborator.getId(),
+            collaborator.getUser().getId(),
+            collaborator.getUser().getName(),
+            collaborator.getUser().getEmail(),
+            collaborator.getInvitedBy().getId(),
+            collaborator.getInvitedBy().getName(),
+            collaborator.getInvitedAt());
     }
 }

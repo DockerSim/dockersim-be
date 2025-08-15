@@ -1,13 +1,24 @@
 package com.dockersim.domain;
 
-import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * 시뮬레이션 엔티티
@@ -63,9 +74,9 @@ public class Simulation {
     /**
      * 협업자 추가
      */
-    public void addCollaborator(User user, Permission permission, User invitedBy) {
+    public void addCollaborator(User user, User invitedBy) {
         SimulationCollaborator collaborator = new SimulationCollaborator(
-                this, user, permission, invitedBy);
+            this, user, invitedBy);
         this.collaborators.add(collaborator);
     }
 
@@ -73,7 +84,8 @@ public class Simulation {
      * 협업자 제거
      */
     public void removeCollaborator(User user) {
-        this.collaborators.removeIf(collaborator -> collaborator.getUser().getId().equals(user.getId()));
+        this.collaborators.removeIf(
+            collaborator -> collaborator.getUser().getId().equals(user.getId()));
     }
 
     /**
@@ -87,7 +99,7 @@ public class Simulation {
 
         // 협업자인 경우
         return this.collaborators.stream()
-                .anyMatch(collaborator -> collaborator.getUser().getId().equals(user.getId()));
+            .anyMatch(collaborator -> collaborator.getUser().getId().equals(user.getId()));
     }
 
     /**
@@ -101,8 +113,7 @@ public class Simulation {
 
         // 협업자인 경우 WRITE 권한 확인
         return this.collaborators.stream()
-                .anyMatch(collaborator -> collaborator.getUser().getId().equals(user.getId()) &&
-                        collaborator.getPermission() == Permission.WRITE);
+            .anyMatch(collaborator -> collaborator.getUser().getId().equals(user.getId()));
     }
 
     /**
@@ -117,7 +128,7 @@ public class Simulation {
      */
     public boolean isCollaborator(User user) {
         return this.collaborators.stream()
-                .anyMatch(collaborator -> collaborator.getUser().getId().equals(user.getId()));
+            .anyMatch(collaborator -> collaborator.getUser().getId().equals(user.getId()));
     }
 
     /**
@@ -125,9 +136,9 @@ public class Simulation {
      */
     public SimulationCollaborator findCollaborator(User user) {
         return this.collaborators.stream()
-                .filter(collaborator -> collaborator.getUser().getId().equals(user.getId()))
-                .findFirst()
-                .orElse(null);
+            .filter(collaborator -> collaborator.getUser().getId().equals(user.getId()))
+            .findFirst()
+            .orElse(null);
     }
 
     /**

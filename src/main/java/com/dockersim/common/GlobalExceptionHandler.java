@@ -2,7 +2,7 @@ package com.dockersim.common;
 
 import com.dockersim.exception.BusinessException;
 import com.dockersim.exception.code.CommonErrorCode;
-import com.dockersim.exception.code.ErrorCode;
+import com.dockersim.exception.code.ResponseCode;
 import com.dockersim.web.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -12,13 +12,14 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ApiResponse<Void>> handleBusiness(BusinessException ex) {
-        ErrorCode ec = ex.getErrorCode();
+        ResponseCode ec = ex.getErrorCode();
         log.warn("BusinessException - code: {}, message: {}", ec.getCode(), ex.getMessage());
         return ResponseEntity
-                .status(ec.getStatus())
-                .body(ApiResponse.error(ec, ex.getMessage()));
+            .status(ec.getStatus())
+            .body(ApiResponse.error(ec, ex.getMessage()));
     }
     /**
      * 요청 파라미터 검증 실패 등 스프링 예외 처리 (필요 시 활성화)
@@ -41,9 +42,9 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleGeneric(Exception ex) {
         log.error("Unhandled exception", ex);
-        ErrorCode ec = CommonErrorCode.INTERNAL_SERVER_ERROR;
+        ResponseCode ec = CommonErrorCode.INTERNAL_SERVER_ERROR;
         return ResponseEntity
-                .status(ec.getStatus())
-                .body(ApiResponse.error(ec));
+            .status(ec.getStatus())
+            .body(ApiResponse.error(ec));
     }
 }
