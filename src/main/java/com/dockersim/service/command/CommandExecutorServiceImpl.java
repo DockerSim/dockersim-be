@@ -5,6 +5,9 @@ import com.dockersim.exception.BusinessException;
 import com.dockersim.exception.code.DockerCommandErrorCode;
 import com.dockersim.executor.CommandResult;
 import com.dockersim.parser.DockerCommandParser;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -26,35 +29,34 @@ public class CommandExecutorServiceImpl implements CommandExecutorService {
             throw new BusinessException(DockerCommandErrorCode.INVALID_DOCKER_COMMAND, rawCommand);
         }
 
-        // 2. 따옴표를 처리하는 CommandParser를 사용하여 안전하게 토큰화
+        // 명령어 토큰화
         List<String> tokenList = parser.tokenize(rawCommand);
         String[] args = tokenList.stream().skip(1).toArray(String[]::new);
 
-        // 3. Picocli 실행 및 결과 처리
-        CommandLine cmd = new CommandLine(root, factory);
-        cmd.execute(args);
+        // Help 메시지를 캡처하기 위한 StringWriter 설정
+        StringWriter writer = new StringWriter();
+        PrintWriter printWriter = new PrintWriter(writer);
 
+        CommandLine cmd = new CommandLine(root, factory);
+        cmd.setOut(printWriter);
+        cmd.setErr(printWriter);
+
+        // 명령어 실행
+        cmd.execute(args);
         ParseResult parseResult = cmd.getParseResult();
 
-        List<CommandLine> commandChain = parseResult.asCommandLineList();
+        // help나 version 옵션이 사용된 경우
+        if (parseResult.isUsageHelpRequested() || parseResult.isVersionHelpRequested()) {
+            String output = writer.toString();
+            return CommandResult.builder()
+                .console(Arrays.asList(output.split(System.lineSeparator())))
+                .build();
+        }
 
+        // 일반적인 명령어 실행 결과 처리
+        List<CommandLine> commandChain = parseResult.asCommandLineList();
         CommandLine executedCommand = commandChain.get(commandChain.size() - 1);
 
         return executedCommand.getExecutionResult();
-    }
-
-    /**
-     * ParseResult 계층 구조를 탐색하여 가장 마지막(가장 깊은) 하위 명령어의 실행 결과를 찾아 반환합니다.
-     *
-     * @param parseResult 최상위 파싱 결과
-     * @return 최종 실행 결과 (CommandResult)
-     */
-    private CommandResult findExecutionResult(ParseResult parseResult) {
-        ParseResult current = parseResult;
-        while (current.hasSubcommand()) {
-            current = current.subcommand();
-        }
-        // 가장 깊은 곳에 있는 명령어의 실행 결과를 가져옴
-        return current.commandSpec().commandLine().getExecutionResult();
     }
 }
