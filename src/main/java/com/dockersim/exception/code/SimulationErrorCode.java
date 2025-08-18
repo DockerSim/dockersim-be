@@ -19,7 +19,11 @@ public enum SimulationErrorCode implements ResponseCode {
         HttpStatus.BAD_REQUEST, "S006", "이미 협업자로 등록된 사용자입니다"),
     SIMULATION_COLLABORATOR_NOT_FOUND(HttpStatus.NOT_FOUND, "S007", "협업자를 찾을 수 없습니다"),
     SIMULATION_INVALID_PERMISSION(HttpStatus.BAD_REQUEST, "S008", "올바르지 않은 권한입니다"),
-    SIMULATION_ONLY_OWNER_CAN_MANAGE(HttpStatus.FORBIDDEN, "S009", "시뮬레이션 소유자만 관리할 수 있습니다");
+    SIMULATION_ONLY_OWNER_CAN_MANAGE(HttpStatus.FORBIDDEN, "S009", "시뮬레이션 소유자만 관리할 수 있습니다"),
+    SIMULATION_NOT_WRITABLE(HttpStatus.BAD_REQUEST, "SIM-006",
+        "시뮬레이션이 쓰기 가능한 상태가 아닙니다. simulationId: {0}"),
+    SIMULATION_MAX_COLLABORATORS_REACHED(HttpStatus.BAD_REQUEST, "SIM-007",
+        "최대 협업자 수({0}명)를 초과할 수 없습니다.");
 
     private final HttpStatus status;
     private final String code;

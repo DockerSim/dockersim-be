@@ -3,11 +3,13 @@ package com.dockersim.dto.request;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class CollaboratorRequest {
 
-    private String email; // 초대/제거할 협업자 이메일
+    private String email;
 }

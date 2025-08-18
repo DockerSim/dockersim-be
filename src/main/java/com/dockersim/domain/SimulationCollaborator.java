@@ -14,9 +14,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
- * 시뮬레이션 협업자 엔티티 (중간 테이블)
- */
+
 @Entity
 @Table(name = "simulation_collaborators")
 @Data

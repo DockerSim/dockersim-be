@@ -1,32 +1,34 @@
 package com.dockersim.repository;
 
 import com.dockersim.domain.Simulation;
-import com.dockersim.domain.User;
-import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
 public interface SimulationRepository extends JpaRepository<Simulation, Long> {
 
-    /**
-     * 소유자로 시뮬레이션 목록 조회
-     */
-    List<Simulation> findByOwner(User owner);
+    Optional<Simulation> findBySimulationId(UUID simulationId);
 
-    /**
-     * 소유자와 ID로 시뮬레이션 조회 (권한 확인용)
-     */
-    Optional<Simulation> findByIdAndOwner(Long id, User owner);
+    boolean existsBySimulationId(UUID simulationId);
 
-    /**
-     * 제목 중복 확인 (같은 소유자 내에서)
-     */
-    boolean existsByTitleAndOwner(String title, User owner);
+    @Query("SELECT COUNT(c) FROM Simulation s JOIN s.collaborators c WHERE s.simulationId = :simulationId")
+    long countCollaborators(@Param("simulationId") UUID simulationId);
 
-    /**
-     * 소유자 ID로 시뮬레이션 목록 조회
-     */
-    List<Simulation> findByOwnerId(Long ownerId);
+    @Query("SELECT COUNT(s) > 0 FROM Simulation s " +
+        "WHERE s.title = :title AND s.owner.userId = :ownerId AND s.simulationId != :excludeId")
+    boolean existsByTitleAndOwnerIdAndNotId(@Param("title") String title,
+        @Param("ownerId") UUID ownerId,
+        @Param("excludeId") UUID excludeId);
+
+    @Query("SELECT COUNT(s) > 0 FROM Simulation s " +
+        "WHERE s.title = :title AND s.owner.userId = :ownerId")
+    boolean existsByTitleAndOwnerId(@Param("title") String title, @Param("ownerId") UUID ownerId);
+
+    @Query("SELECT s FROM Simulation s LEFT JOIN FETCH s.collaborators WHERE s.simulationId = :simulationId")
+    Optional<Simulation> findBySimulationIdWithCollaborators(
+        @Param("simulationId") UUID simulationId);
 }

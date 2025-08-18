@@ -1,7 +1,6 @@
 package com.dockersim.dto.response;
 
 import com.dockersim.domain.Simulation;
-import com.dockersim.util.IdConverter;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
@@ -18,19 +17,19 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class SimulationResponse {
 
-    private UUID id;
+    private UUID simulationId;
     private String title;
     private String shareState;
-    private Long userId;
+    private UUID ownerId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
     public static SimulationResponse from(Simulation simulation) {
         return SimulationResponse.builder()
-            .id(IdConverter.toUUID(simulation.getId()))
+            .simulationId(simulation.getSimulationId())
             .title(simulation.getTitle())
             .shareState(simulation.getShareState().name())
-            .userId(simulation.getOwner().getId())
+            .ownerId(simulation.getOwner().getUserId())
             .createdAt(simulation.getCreatedAt())
             .updatedAt(simulation.getUpdatedAt())
             .build();

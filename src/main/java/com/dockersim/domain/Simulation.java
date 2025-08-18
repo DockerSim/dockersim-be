@@ -60,14 +60,12 @@ public class Simulation {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    /**
-     * 협업자 목록 (양방향 관계)
-     */
+
     @OneToMany(mappedBy = "simulation", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SimulationCollaborator> collaborators = new ArrayList<>();
 
 
-    public static Simulation fromSimulationRequest(
+    public static Simulation from(
         SimulationRequest request,
         SimulationShareState shareState,
         User owner
@@ -91,79 +89,45 @@ public class Simulation {
         }
     }
 
-    /**
-     * 협업자 추가
-     */
     public void addCollaborator(User user, User invitedBy) {
         SimulationCollaborator collaborator = new SimulationCollaborator(
             this, user, invitedBy);
         this.collaborators.add(collaborator);
     }
 
-    /**
-     * 협업자 제거
-     */
     public void removeCollaborator(User user) {
         this.collaborators.removeIf(
-            collaborator -> collaborator.getUser().getId().equals(user.getId()));
+            collaborator -> collaborator.getUser().getUserId().equals(user.getUserId()));
     }
 
-    /**
-     * 사용자가 이 시뮬레이션에 접근 권한이 있는지 확인
-     */
-    public boolean hasAccess(User user) {
-        // 소유자인 경우
-        if (this.owner.getId().equals(user.getId())) {  // owner로 변경
-            return true;
-        }
-
-        // 협업자인 경우 (변경 없음)
-        return this.collaborators.stream()
-            .anyMatch(collaborator -> collaborator.getUser().getId().equals(user.getId()));
+    public void removeAllCollaborators() {
+        this.collaborators.clear();
     }
+
 
     /**
      * 사용자가 이 시뮬레이션에 쓰기 권한이 있는지 확인
      */
     public boolean hasWriteAccess(User user) {
-        // 소유자인 경우
-        if (this.owner.getId().equals(user.getId())) {  // owner로 변경
-            return true;
-        }
-
-        // 협업자인 경우 (변경 없음)
-        return this.collaborators.stream()
-            .anyMatch(collaborator -> collaborator.getUser().getId().equals(user.getId()));
+        return isOwner(user) || isCollaborator(user);
     }
 
-    /**
-     * 사용자가 소유자인지 확인
-     */
     public boolean isOwner(User user) {
-        return this.owner.getId().equals(user.getId());  // owner로 변경
+        return this.owner.getUserId().equals(user.getUserId());
     }
 
-    /**
-     * 사용자가 이미 협업자인지 확인
-     */
     public boolean isCollaborator(User user) {
         return this.collaborators.stream()
-            .anyMatch(collaborator -> collaborator.getUser().getId().equals(user.getId()));
+            .anyMatch(collaborator -> collaborator.getUser().getUserId().equals(user.getUserId()));
     }
 
-    /**
-     * 특정 사용자의 협업자 정보 조회
-     */
     public SimulationCollaborator findCollaborator(User user) {
         return this.collaborators.stream()
-            .filter(collaborator -> collaborator.getUser().getId().equals(user.getId()))
+            .filter(collaborator -> collaborator.getUser().getUserId().equals(user.getUserId()))
             .findFirst()
             .orElse(null);
     }
 
-    /**
-     * 공유 상태 변경
-     */
     public void updateShareState(SimulationShareState shareState) {
         this.shareState = shareState;
         this.updatedAt = LocalDateTime.now();

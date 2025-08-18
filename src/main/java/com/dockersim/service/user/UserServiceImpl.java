@@ -26,6 +26,7 @@ public class UserServiceImpl implements UserService {
 
 
     @Transactional
+    @Override
     public UserResponse createUser(UserRequest request) {
         validateEmailFormat(request.getEmail());
         validateEmailDuplication(request.getEmail());
@@ -34,19 +35,15 @@ public class UserServiceImpl implements UserService {
         return UserResponse.from(savedUser);
     }
 
-
+    @Transactional(readOnly = true)
+    @Override
     public UserResponse getUser(UUID id) {
-        User user = repo.findByUserId(id)
-            .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND, id));
-
-        return UserResponse.from(user);
+        return UserResponse.from(findUserByUUID(id));
     }
 
+    @Override
     public void deleteUser(UUID id) {
-        User user = repo.findByUserId(id)
-            .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND, id));
-
-        repo.delete(user);
+        repo.delete(findUserByUUID(id));
     }
 
     private void validateEmailFormat(String email) {
@@ -59,5 +56,17 @@ public class UserServiceImpl implements UserService {
         if (repo.existsByEmail(email)) {
             throw new BusinessException(UserErrorCode.EMAIL_ALREADY_EXISTS, email);
         }
+    }
+
+    @Override
+    public User findUserByUUID(UUID userId) {
+        return repo.findByUserId(userId)
+            .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND, userId));
+    }
+
+    @Override
+    public User findUserByEmail(String email) {
+        return repo.findByEmail(email)
+            .orElseThrow(() -> new BusinessException(UserErrorCode.USER_EMAIL_NOT_FOUND, email));
     }
 }
