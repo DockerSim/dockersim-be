@@ -1,29 +1,31 @@
 package com.dockersim.dto.response;
 
 import com.dockersim.domain.User;
+import java.time.LocalDateTime;
+import java.util.UUID;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Builder;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
-
-@Data
+@Getter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class UserResponse {
-    private Long id;
+
+    private UUID userId;
     private String name;
     private String email;
     private LocalDateTime createdAt;
 
-    /**
-     * Entity로부터 DTO 생성을 위한 정적 메서드
-     */
     public static UserResponse from(User user) {
-        return new UserResponse(
-                user.getId(),
-                user.getName(),
-                user.getEmail(),
-                user.getCreatedAt());
+        return UserResponse.builder()
+            .userId(user.getUserId())
+            .name(user.getName())
+            .email(user.getEmail())
+            .createdAt(user.getCreatedAt())
+            .build();
+
     }
 }

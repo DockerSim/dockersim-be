@@ -1,40 +1,32 @@
 package com.dockersim.dto.response;
 
 import com.dockersim.domain.SimulationCollaborator;
+import java.time.LocalDateTime;
+import java.util.UUID;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
-
-/**
- * 협업자 정보 응답 DTO
- */
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class CollaboratorResponse {
-    private Long id;
-    private Long userId;
-    private String userName;
-    private String userEmail;
-    private String permission;
-    private Long invitedById;
-    private String invitedByName;
-    private LocalDateTime invitedAt;
 
-    /**
-     * SimulationCollaborator 엔티티를 DTO로 변환
-     */
+    private UUID userId;
+    private String email;
+    private String name;
+    private LocalDateTime invitedAt;
+    private UUID invitedBy;
+
     public static CollaboratorResponse from(SimulationCollaborator collaborator) {
-        return new CollaboratorResponse(
-                collaborator.getId(),
-                collaborator.getUser().getId(),
-                collaborator.getUser().getName(),
-                collaborator.getUser().getEmail(),
-                collaborator.getPermission().name(),
-                collaborator.getInvitedBy().getId(),
-                collaborator.getInvitedBy().getName(),
-                collaborator.getInvitedAt());
+        return CollaboratorResponse.builder()
+            .userId(collaborator.getUser().getUserId())
+            .email(collaborator.getUser().getEmail())
+            .name(collaborator.getUser().getName())
+            .invitedAt(collaborator.getInvitedAt())
+            .invitedBy(collaborator.getInvitedBy().getUserId())
+            .build();
     }
 }

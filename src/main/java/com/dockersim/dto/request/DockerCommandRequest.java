@@ -1,13 +1,11 @@
 package com.dockersim.dto.request;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
+@Getter
+@Setter
 public class DockerCommandRequest {
-    String command;
-    Long simulationId;
+
+    private String command;
 }
