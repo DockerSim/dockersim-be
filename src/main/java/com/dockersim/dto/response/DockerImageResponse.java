@@ -1,7 +1,7 @@
 package com.dockersim.dto.response;
 
 import com.dockersim.domain.DockerImage;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -24,18 +24,18 @@ public class DockerImageResponse {
     private String description;
     private int starCount;
     private long pullCount;
-    private LocalDate created;
+    private LocalDateTime createdAt;
     private String logoUrl;
-    private String tags;
+    private String tag;
 
-    public static DockerImageResponse fromDockerImage(DockerImage image, List<String> console) {
+    public static DockerImageResponse from(DockerImage image, List<String> console) {
         return DockerImageResponse.builder()
             .console(console)
             .imageId(image.getImageId())
             .name(image.getName())
             .namespace(image.getNamespace())
-            .created(image.getCreated())
-            .tags(image.getTags())
+            .createdAt(image.getCreatedAt())
+            .tag(image.getTag())
             .build();
     }
 }

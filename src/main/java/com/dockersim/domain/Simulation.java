@@ -1,5 +1,8 @@
 package com.dockersim.domain;
 
+import com.dockersim.dto.request.SimulationRequest;
+import com.dockersim.exception.BusinessException;
+import com.dockersim.exception.code.SimulationErrorCode;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -16,8 +19,10 @@ import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Builder;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
@@ -25,28 +30,29 @@ import lombok.NoArgsConstructor;
  */
 @Entity
 @Table(name = "simulations")
-@Data
+@Getter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class Simulation {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "simulation_id", unique = true, nullable = false, updatable = false)
+    private UUID simulationId;
+
     @Column(nullable = false)
     private String title;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "share_state", nullable = false)
-    private ShareState shareState;
+    private SimulationShareState shareState;
 
-    /**
-     * 시뮬레이션 소유자
-     */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "owner_id", nullable = false)
-    private User owner;
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
@@ -60,15 +66,29 @@ public class Simulation {
     @OneToMany(mappedBy = "simulation", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SimulationCollaborator> collaborators = new ArrayList<>();
 
-    /**
-     * 시뮬레이션 생성 시 사용할 생성자
-     */
-    public Simulation(String title, ShareState shareState, User owner) {
-        this.title = title;
-        this.shareState = shareState;
-        this.owner = owner;
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
+
+    public static Simulation fromSimulationRequest(
+        SimulationRequest request,
+        SimulationShareState shareState,
+        User owner
+    ) {
+        return Simulation.builder().
+            simulationId(UUID.randomUUID()).
+            title(request.getTitle()).
+            shareState(shareState).
+            user(owner).
+            createdAt(LocalDateTime.now()).
+            updatedAt(LocalDateTime.now()).
+            collaborators(new ArrayList<>()).
+            build();
+    }
+
+    public void updateTitle(String title) {
+        if (title != null && !title.isEmpty()) {
+            this.title = title;
+        } else {
+            throw new BusinessException(SimulationErrorCode.SIMULATION_TITLE_NOT_INVALID, title);
+        }
     }
 
     /**
@@ -93,7 +113,7 @@ public class Simulation {
      */
     public boolean hasAccess(User user) {
         // 소유자인 경우
-        if (this.owner.getId().equals(user.getId())) {
+        if (this.user.getId().equals(user.getId())) {
             return true;
         }
 
@@ -107,7 +127,7 @@ public class Simulation {
      */
     public boolean hasWriteAccess(User user) {
         // 소유자인 경우 항상 쓰기 권한 있음
-        if (this.owner.getId().equals(user.getId())) {
+        if (this.user.getId().equals(user.getId())) {
             return true;
         }
 
@@ -120,7 +140,7 @@ public class Simulation {
      * 사용자가 소유자인지 확인
      */
     public boolean isOwner(User user) {
-        return this.owner.getId().equals(user.getId());
+        return this.user.getId().equals(user.getId());
     }
 
     /**
@@ -144,7 +164,7 @@ public class Simulation {
     /**
      * 공유 상태 변경
      */
-    public void updateShareState(ShareState shareState) {
+    public void updateShareState(SimulationShareState shareState) {
         this.shareState = shareState;
         this.updatedAt = LocalDateTime.now();
     }

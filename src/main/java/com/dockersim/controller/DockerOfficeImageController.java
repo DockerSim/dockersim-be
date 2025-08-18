@@ -1,8 +1,8 @@
 package com.dockersim.controller;
 
+import com.dockersim.common.ApiResponse;
 import com.dockersim.dto.response.DockerOfficeImageResponse;
 import com.dockersim.service.image.DockerOfficeImageService;
-import com.dockersim.web.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import java.util.List;
@@ -16,22 +16,21 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/officeimage")
 @RequiredArgsConstructor
-public class DockerImageController {
+public class DockerOfficeImageController {
 
     private final DockerOfficeImageService service;
 
-    @Operation(summary = "Docker 이미지 이름으로 조회",
-        description = "이름(name)만으로 Docker 이미지를 조회합니다.")
+    @Operation(summary = "Docker 공식 이미지 이름으로 조회",
+        description = "이름(repositoryName)만으로 Docker 공식 이미지들을 조회합니다.")
     @GetMapping("/search")
-    public ResponseEntity<ApiResponse<DockerOfficeImageResponse>> findByName(
-        @Parameter(description = "조회할 Docker 이미지 이름", required = true)
-        @RequestParam String name
+    public ResponseEntity<ApiResponse<List<DockerOfficeImageResponse>>> findByName(
+        @Parameter(description = "조회할 Docker Image의 repository name", required = true)
+        @RequestParam String repositoryName
     ) {
-        DockerOfficeImageResponse dto = service.findByName(name);
-        return ResponseEntity.ok(ApiResponse.ok(dto));
+        return ResponseEntity.ok(ApiResponse.success(service.findAllByName(repositoryName)));
     }
 
-    @Operation(summary = "전체 Docker 이미지 조회",
+    @Operation(summary = "전체 Docker Image 조회",
         description = "offset: 시작 인덱스(기본 0), limit: 가져올 개수(기본 20)")
     @GetMapping
     public ResponseEntity<ApiResponse<List<DockerOfficeImageResponse>>> getAllImages(
@@ -39,6 +38,6 @@ public class DockerImageController {
         @RequestParam(defaultValue = "20") int limit
     ) {
         List<DockerOfficeImageResponse> list = service.getAllImages(offset, limit);
-        return ResponseEntity.ok(ApiResponse.ok(list));
+        return ResponseEntity.ok(ApiResponse.success(list));
     }
 }

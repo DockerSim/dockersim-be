@@ -1,9 +1,5 @@
-package com.dockersim.executor;
+package com.dockersim.dto.response;
 
-import com.dockersim.dto.response.DockerContainerResponse;
-import com.dockersim.dto.response.DockerImageResponse;
-import com.dockersim.dto.response.DockerNetworkResponse;
-import com.dockersim.dto.response.DockerVolumeResponse;
 import java.util.List;
 import lombok.Builder;
 import lombok.Getter;

@@ -1,6 +1,6 @@
 package com.dockersim.service.command;
 
-import com.dockersim.executor.CommandResult;
+import com.dockersim.dto.response.CommandResult;
 
 public interface CommandExecutorService {
 

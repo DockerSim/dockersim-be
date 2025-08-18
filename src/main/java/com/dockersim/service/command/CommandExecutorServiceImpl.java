@@ -1,9 +1,9 @@
 package com.dockersim.service.command;
 
 import com.dockersim.command.DockerCommand;
+import com.dockersim.dto.response.CommandResult;
 import com.dockersim.exception.BusinessException;
 import com.dockersim.exception.code.DockerCommandErrorCode;
-import com.dockersim.executor.CommandResult;
 import com.dockersim.parser.DockerCommandParser;
 import java.io.PrintWriter;
 import java.io.StringWriter;

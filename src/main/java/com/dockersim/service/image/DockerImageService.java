@@ -4,9 +4,6 @@ package com.dockersim.service.image;
 import com.dockersim.dto.response.DockerImageResponse;
 import java.util.List;
 
-/**
- * Docker 이미지 관련 모든 시뮬레이션 비즈니스 로직을 정의하는 인터페이스
- */
 public interface DockerImageService {
 
     /**
@@ -22,7 +19,7 @@ public interface DockerImageService {
      *
      * @return 다운로드한 이미지 목록
      */
-    List<DockerImageResponse> listImages();
+    List<DockerImageResponse> listImages(String name, boolean all, boolean quiet);
 
     /**
      * 로컬에 저장된 이미지를 삭제하는 동작을 시뮬레이션합니다.

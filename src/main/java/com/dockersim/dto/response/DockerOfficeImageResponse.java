@@ -1,7 +1,7 @@
 package com.dockersim.dto.response;
 
 import com.dockersim.domain.DockerOfficeImage;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -20,12 +20,12 @@ public class DockerOfficeImageResponse {
     private String description;
     private int starCount;
     private long pullCount;
-    private LocalDate lastUpdated;
-    private LocalDate dateRegistered;
+    private LocalDateTime lastUpdated;
+    private LocalDateTime dateRegistered;
     private String logoUrl;
-    private String tags;
+    private String tag;
 
-    public static DockerOfficeImageResponse fromDockerOfficeImage(DockerOfficeImage image) {
+    public static DockerOfficeImageResponse from(DockerOfficeImage image) {
         return DockerOfficeImageResponse.builder()
             .name(image.getName())
             .namespace(image.getNamespace())
@@ -35,7 +35,7 @@ public class DockerOfficeImageResponse {
             .lastUpdated(image.getLastUpdated())
             .dateRegistered(image.getDateRegistered())
             .logoUrl(image.getLogoUrl())
-            .tags(image.getTags())
+            .tag(image.getTag())
             .build();
     }
 }

@@ -8,7 +8,7 @@ import lombok.RequiredArgsConstructor;
  */
 @Getter
 @RequiredArgsConstructor
-public enum ShareState {
+public enum SimulationShareState {
 
     /**
      * 비공개 - 소유자만 접근 가능

@@ -24,39 +24,44 @@ public class DockerImageServiceImpl implements DockerImageService {
 
 
     @Override
-    public DockerImageResponse pullImage(String imageFullName) {
-        Map<String, String> image = parserImageName(imageFullName);
+    public DockerImageResponse pullImage(String name) {
+        Map<String, String> image = parserImageName(name);
 
-        Optional<DockerImage> userImage = repo.findByName(image.get("name"));
+        Optional<DockerImage> userImage = repo.findByNameAndTag(
+            image.get("repository"),
+            image.get("tag")
+        );
 
-        // Step 1. 사용자 이미지 조회 및 반환
         if (userImage.isPresent()) {
-            return DockerImageResponse.fromDockerImage(userImage.get(),
-                List.of(SuccessCode.COMMAND_EXECUTE_READ.getMessage("image", imageFullName)));
+            return DockerImageResponse.from(userImage.get(),
+                List.of(SuccessCode.COMMAND_EXECUTE_READ.getMessage("image", name)));
         }
 
-        // Step 2. 사용자 이미지가 없는 경우 공식 이미지 조회
-        DockerOfficeImage officeImage = officeImageService.findByNameForImageService(
-            image.get("name"));
+        DockerOfficeImage officeImage = officeImageService.findByNameAndTag(
+            image.get("repository"),
+            image.get("tag")
+        );
 
-        // Step 3. 공식 이미지 반환
+        // Step 3. 공식 이미지 반환 및 저장
         if (officeImage != null) {
-            return DockerImageResponse.fromDockerImage(
+//            repo.save(DockerImage.fromDockerOfficeImage(officeImage));
+
+            return DockerImageResponse.from(
                 DockerImage.fromDockerOfficeImage(officeImage),
                 List.of(
-                    DockerImageErrorCode.USER_IMAGE_NOT_FOUND.getMessage(imageFullName),
-                    SuccessCode.COMMAND_EXECUTE_PULL_IMAGE.getMessage(imageFullName)
+                    DockerImageErrorCode.USER_IMAGE_NOT_FOUND.getMessage(name),
+                    SuccessCode.COMMAND_EXECUTE_PULL_IMAGE.getMessage(name)
                 )
             );
         }
 
         // Step 4. 존재하지 않는 이미지, 예외 처리
-        throw new BusinessException(DockerImageErrorCode.IMAGE_NOT_FOUND, imageFullName);
+        throw new BusinessException(DockerImageErrorCode.IMAGE_NOT_FOUND, name);
     }
 
     @Override
-    public List<DockerImageResponse> listImages() {
-        return List.of();
+    public List<DockerImageResponse> listImages(String name, boolean all, boolean quiet) {
+        return null;
     }
 
     @Override
@@ -89,10 +94,10 @@ public class DockerImageServiceImpl implements DockerImageService {
         Map<String, String> map = new HashMap<>();
         if (name.contains(":")) {
             String[] parts = name.split(":");
-            map.put("name", parts[0]);
+            map.put("repository", parts[0]);
             map.put("tag", parts[1]);
         } else {
-            map.put("name", name);
+            map.put("repository", name);
             map.put("tag", "latest");
         }
         return map;

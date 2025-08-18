@@ -1,131 +1,143 @@
 package com.dockersim.controller;
 
-import com.dockersim.dto.request.*;
-import com.dockersim.dto.response.*;
-import com.dockersim.service.SimulationService;
-import com.dockersim.web.ApiResponse;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
+import com.dockersim.common.ApiResponse;
+import com.dockersim.dto.request.CollaboratorRequest;
+import com.dockersim.dto.request.SimulationRequest;
+import com.dockersim.dto.response.CollaboratorResponse;
+import com.dockersim.dto.response.SimulationResponse;
+import com.dockersim.service.simulation.SimulationService;
+import com.dockersim.util.IdConverter;
 import java.util.List;
+import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-@Slf4j
 @RestController
 @RequestMapping("/api/simulations")
 @RequiredArgsConstructor
 public class SimulationController {
 
-        private final SimulationService simulationService;
+    private final SimulationService service;
 
-        @PostMapping
-        public ResponseEntity<ApiResponse<SimulationResponse>> createSimulation(
-                        @RequestBody CreateSimulationRequest request) {
-                log.info("시뮬레이션 생성 요청: {}", request.getTitle());
+    /**
+     * 시뮬레이션 단건 조회
+     *
+     * @param userId       시뮬레이션 소유자 ID
+     * @param simulationId 조회할 시뮬레이션의 ID
+     * @return 시뮬레이션 정보 응답
+     */
+    @GetMapping("/{simulationId}")
+    public ResponseEntity<ApiResponse<SimulationResponse>> getSimulation(
+        /* @AuthenticationPrincipal */ Long userId,
+        @PathVariable UUID simulationId
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(
+            service.getSimulation(userId, IdConverter.toLong(simulationId))));
+    }
 
-                SimulationResponse simulationResponse = simulationService.createSimulation(request);
+    /**
+     * 새로운 시뮬레이션을 생성합니다.
+     *
+     * @param userId  시뮬레이션 소유자 ID
+     * @param request 생성할 시뮬레이션의 정보 (이름, 공유 상태)
+     * @return 생성된 시뮬레이션 정보 응답
+     */
+    @PostMapping
+    public ResponseEntity<ApiResponse<SimulationResponse>> createSimulation(
+        /* @AuthenticationPrincipal */ Long userId,
+        @RequestBody SimulationRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(
+            service.createSimulation(userId, request)));
+    }
 
-                ApiResponse<SimulationResponse> response = ApiResponse.ok(simulationResponse);
+    /**
+     * 특정 시뮬레이션을 수정합니다.
+     *
+     * @param userId       시뮬레이션 소유자 ID
+     * @param simulationId 수정할 시뮬레이션의 ID
+     * @param request      수정할 시뮬레이션의 정보 (이름, 공유 상태)
+     * @return 수정된 시뮬레이션 정보 응답
+     */
+    @PutMapping("/{simulationId}")
+    public ResponseEntity<ApiResponse<SimulationResponse>> updateSimulation(
+        @PathVariable UUID simulationId,
+        /* @AuthenticationPrincipal */ Long userId,
+        @RequestBody SimulationRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(
+            service.updateSimulation(IdConverter.toLong(simulationId), userId, request)));
+    }
 
-                return ResponseEntity.status(HttpStatus.CREATED).body(response);
-        }
+    /**
+     * 시뮬레이션을 삭제합니다. //     * @param userId       시뮬레이션 소유자 ID
+     *
+     * @param simulationId 삭제할 시뮬레이션의 ID
+     */
+    @DeleteMapping("/{simulationId}")
+    public ResponseEntity<ApiResponse<Void>> deleteSimulation(
+        /* @AuthenticationPrincipal */ Long userId,
+        @PathVariable UUID simulationId
+    ) {
+        service.deleteSimulation(IdConverter.toLong(simulationId), userId);
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
 
-        @GetMapping("/{id}")
-        public ResponseEntity<ApiResponse<SimulationResponse>> getSimulation(@PathVariable Long id) {
-                log.info("시뮬레이션 조회 요청: id={}", id);
+    /**
+     * 특정 시뮬레이션에 협업자를 초대합니다.
+     *
+     * @param userId       시뮬레이션 소유자 ID
+     * @param simulationId 협업자를 초대할 시뮬레이션의 ID
+     * @param request      초대할 협업자의 정보 (이메일)
+     * @return 초대된 협업자 정보 응답
+     */
+    @PostMapping("/{simulationId}/collaborators")
+    public ResponseEntity<ApiResponse<CollaboratorResponse>> inviteCollaborator(
+        /* @AuthenticationPrincipal */ Long userId,
+        @PathVariable UUID simulationId,
+        @RequestBody CollaboratorRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(
+            service.inviteCollaborator(IdConverter.toLong(simulationId), userId,
+                request)));
+    }
 
-                SimulationResponse simulationResponse = simulationService.getSimulation(id);
+    /**
+     * 특정 시뮬레이션의 협업자 목록을 조회합니다.
+     *
+     * @param simulationId 협업자를 조회할 시뮬레이션의 ID
+     * @param userId       요청자 ID
+     * @return 협업자 목록 응답
+     */
+    @GetMapping("/{simulationId}/collaborators")
+    public ResponseEntity<ApiResponse<List<CollaboratorResponse>>> getCollaborators(
+        @PathVariable UUID simulationId,
+        /* @AuthenticationPrincipal */ Long userId) {
+        return ResponseEntity.ok(ApiResponse.success(
+            service.getCollaborators(IdConverter.toLong(simulationId), userId)));
+    }
 
-                ApiResponse<SimulationResponse> response = ApiResponse.ok(simulationResponse);
-
-                return ResponseEntity.ok(response);
-        }
-
-        /**
-         * 시뮬레이션 공유 상태 변경 API
-         */
-        @PatchMapping("/{id}/shareState")
-        public ResponseEntity<ApiResponse<SimulationResponse>> updateShareState(
-                        @PathVariable Long id,
-                        @RequestParam Long ownerId,
-                        @RequestBody UpdateShareStateRequest request) {
-                log.info("공유 상태 변경 요청: simulationId={}, ownerId={}", id, ownerId);
-
-                SimulationResponse simulationResponse = simulationService.updateShareState(id, ownerId, request);
-
-                ApiResponse<SimulationResponse> response = ApiResponse.ok(simulationResponse);
-
-                return ResponseEntity.ok(response);
-        }
-
-        /**
-         * 협업자 초대 API
-         */
-        @PostMapping("/{id}/collaborators")
-        public ResponseEntity<ApiResponse<CollaboratorResponse>> inviteCollaborator(
-                        @PathVariable Long id,
-                        @RequestParam Long ownerId,
-                        @RequestBody InviteCollaboratorRequest request) {
-                log.info("협업자 초대 요청: simulationId={}, ownerId={}, email={}", id, ownerId, request.getEmail());
-
-                CollaboratorResponse collaboratorResponse = simulationService.inviteCollaborator(id, ownerId, request);
-
-                ApiResponse<CollaboratorResponse> response = ApiResponse.ok(collaboratorResponse);
-
-                return ResponseEntity.status(HttpStatus.CREATED).body(response);
-        }
-
-        /**
-         * 협업자 목록 조회 API
-         */
-        @GetMapping("/{id}/collaborators")
-        public ResponseEntity<ApiResponse<List<CollaboratorResponse>>> getCollaborators(
-                        @PathVariable Long id,
-                        @RequestParam Long userId) {
-                log.info("협업자 목록 조회 요청: simulationId={}, userId={}", id, userId);
-
-                List<CollaboratorResponse> collaborators = simulationService.getCollaborators(id, userId);
-
-                ApiResponse<List<CollaboratorResponse>> response = ApiResponse.ok(collaborators);
-
-                return ResponseEntity.ok(response);
-        }
-
-        /**
-         * 협업자 제거 API
-         */
-        @DeleteMapping("/{id}/collaborators/{userId}")
-        public ResponseEntity<ApiResponse<Void>> removeCollaborator(
-                        @PathVariable Long id,
-                        @PathVariable Long userId,
-                        @RequestParam Long requesterId) {
-                log.info("협업자 제거 요청: simulationId={}, collaboratorUserId={}, requesterId={}", id, userId, requesterId);
-
-                simulationService.removeCollaborator(id, userId, requesterId);
-
-                ApiResponse<Void> response = ApiResponse.ok(null);
-
-                return ResponseEntity.ok(response);
-        }
-
-        /**
-         * 협업자 권한 변경 API
-         */
-        @PatchMapping("/{id}/collaborators/{userId}/permission")
-        public ResponseEntity<ApiResponse<CollaboratorResponse>> updateCollaboratorPermission(
-                        @PathVariable Long id,
-                        @PathVariable Long userId,
-                        @RequestParam Long ownerId,
-                        @RequestBody UpdatePermissionRequest request) {
-                log.info("협업자 권한 변경 요청: simulationId={}, collaboratorUserId={}, ownerId={}", id, userId, ownerId);
-
-                CollaboratorResponse collaboratorResponse = simulationService.updateCollaboratorPermission(id, userId,
-                                ownerId, request);
-
-                ApiResponse<CollaboratorResponse> response = ApiResponse.ok(collaboratorResponse);
-
-                return ResponseEntity.ok(response);
-        }
+    /**
+     * 특정 시뮬레이션의 협업자를 제거합니다.
+     *
+     * @param simulationId   협업자를 제거할 시뮬레이션의 ID
+     * @param collaboratorId 제거할 협업자의 ID
+     * @param userId         요청자 ID (소유자 또는 본인)
+     */
+    @DeleteMapping("/{simulationId}/collaborators/{collaboratorId}")
+    public ResponseEntity<ApiResponse<Void>> removeCollaborator(
+        @PathVariable UUID simulationId,
+        @PathVariable UUID collaboratorId,
+        /* @AuthenticationPrincipal */ Long userId) {
+        service.removeCollaborator(
+            IdConverter.toLong(simulationId),
+            IdConverter.toLong(collaboratorId),
+            userId);
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
 }

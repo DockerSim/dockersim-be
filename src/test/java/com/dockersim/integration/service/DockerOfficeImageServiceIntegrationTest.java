@@ -45,17 +45,17 @@ public class DockerOfficeImageServiceIntegrationTest {
     @Test
     @DisplayName("2-1) 이름으로 도커 이미지 조회")
     void findByName_success() {
-        DockerOfficeImageResponse response = service.findByName("centos");
+        DockerOfficeImageResponse response = service.findAllByName("centos").get(0);
 
         assertThat(response).as("centos 이미지는 존재해야 한다.").isNotNull();
         assertThat(response.getName()).as("이름 필드").isEqualTo("centos");
-        assertThat(response.getTags()).as("태그 필드").isNotEmpty();
+        assertThat(response.getTag()).as("태그 필드").isNotEmpty();
     }
 
     @Test
     @DisplayName("2-2) 이름으로 조회 - 존재하지 않으면 예외 발생")
     void findByName_notFound() {
-        assertThatThrownBy(() -> service.findByName("notfound"))
+        assertThatThrownBy(() -> service.findAllByName("notfound"))
             .isInstanceOf(BusinessException.class)
             .extracting("errorCode")
             .isEqualTo(DockerImageErrorCode.OFFICE_IMAGE_NOT_FOUND);
@@ -73,7 +73,7 @@ public class DockerOfficeImageServiceIntegrationTest {
     @Test
     @DisplayName("3-2) 전체 조회 - offset 범위 벗어나면 빈 리스트")
     void getAllImages_outOfRange() {
-        List<DockerOfficeImageResponse> list = service.getAllImages(1000, 20);
+        List<DockerOfficeImageResponse> list = service.getAllImages(9999, 20);
         assertThat(list)
             .as("offset이 범위를 벗어나면 빈 리스트")
             .isEmpty();

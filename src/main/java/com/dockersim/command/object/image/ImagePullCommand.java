@@ -9,8 +9,8 @@ import static com.dockersim.command.option.DockerOption.Constants.DISABLE_CONTEN
 import static com.dockersim.command.option.DockerOption.Constants.PLATFORM;
 import static com.dockersim.command.option.DockerOption.Constants.PLATFORM_DESC;
 
+import com.dockersim.dto.response.CommandResult;
 import com.dockersim.dto.response.DockerImageResponse;
-import com.dockersim.executor.CommandResult;
 import com.dockersim.service.image.DockerImageServiceImpl;
 import java.util.concurrent.Callable;
 import lombok.RequiredArgsConstructor;
@@ -43,7 +43,12 @@ public class ImagePullCommand implements Callable<CommandResult> {
 
     @Override
     public CommandResult call() {
-        DockerImageResponse response = imageService.pullImage(imageName);
+        DockerImageResponse response = null;
+        if (allTags) {
+//            response = imageService.pullAllImage(imageName);
+        } else {
+            response = imageService.pullImage(imageName);
+        }
 
         return CommandResult.builder()
             .console(response.getConsole())

@@ -3,12 +3,13 @@ package com.dockersim.unit.domain;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.dockersim.domain.DockerOfficeImage;
-import com.dockersim.service.DockerImageJson;
+import com.dockersim.dto.DockerImageJson;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.InputStream;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -64,7 +65,7 @@ public class DockerOfficeImagePipeLineTest {
     void factoryMapping_basicFields() {
         DockerImageJson dto = jsonList.get(0);
 
-        DockerOfficeImage entity = DockerOfficeImage.fromJson(dto);
+        DockerOfficeImage entity = DockerOfficeImage.from(dto, "latest");
 
         assertThat(entity.getName()).as("name").isEqualTo(dto.getName());
         assertThat(entity.getNamespace()).as("namespace").isEqualTo(dto.getNamespace());
@@ -72,27 +73,30 @@ public class DockerOfficeImagePipeLineTest {
         assertThat(entity.getStarCount()).as("starCount").isEqualTo(dto.getStarCount());
         assertThat(entity.getPullCount()).as("pullCount").isEqualTo(dto.getPullCount());
         assertThat(entity.getLastUpdated()).as("lastUpdated")
-            .isEqualTo(LocalDate.parse(dto.getLastUpdated()));
+            .isEqualTo(
+                LocalDate.parse(dto.getLastUpdated(), DateTimeFormatter.ISO_DATE).atStartOfDay());
         assertThat(entity.getDateRegistered()).as("dateRegistered")
-            .isEqualTo(LocalDate.parse(dto.getDateRegistered()));
+            .isEqualTo(LocalDate.parse(dto.getDateRegistered(), DateTimeFormatter.ISO_DATE)
+                .atStartOfDay());
         assertThat(entity.getLogoUrl()).as("logoUrl").isEqualTo(dto.getLogoUrl());
+        assertThat(entity.getTag()).as("tag").isNotEmpty();
     }
 
     @Test
-    @DisplayName("태그 매핑 및 양방향 참조 검증")
+    @DisplayName("태그 매핑 검증")
     void factoryMapping_tagsAndBackReference() {
         DockerImageJson dto = jsonList.get(0);
-        DockerOfficeImage entity = DockerOfficeImage.fromJson(dto);
-        List<DockerOfficeTag> tags = entity.getTags();
+        List<String> tags = jsonList.get(0).getTags();
+
+        List<DockerOfficeImage> entityList = tags.stream()
+            .map(tag -> DockerOfficeImage.from(dto, tag))
+            .toList();
 
         assertThat(tags)
             .as("tags 개수와 순서")
-            .extracting(DockerOfficeTag::getTag)
-            .containsExactlyElementsOf(dto.getTags());
-
-        // then: 각 태그의 back-reference
-        assertThat(tags)
-            .as("각 태그의 image 참조")
-            .allSatisfy(tag -> assertThat(tag.getImage()).isSameAs(entity));
+            .hasSize(entityList.size())
+            .containsExactlyInAnyOrderElementsOf(entityList.stream()
+                .map(DockerOfficeImage::getTag)
+                .toList());
     }
 }

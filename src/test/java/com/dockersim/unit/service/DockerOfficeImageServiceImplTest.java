@@ -5,13 +5,13 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
 
 import com.dockersim.domain.DockerOfficeImage;
+import com.dockersim.dto.DockerImageJson;
 import com.dockersim.dto.response.DockerOfficeImageResponse;
 import com.dockersim.exception.BusinessException;
 import com.dockersim.exception.code.DockerImageErrorCode;
 import com.dockersim.repository.DockerOfficeImageRepository;
-import com.dockersim.service.DockerImageJson;
 import com.dockersim.service.image.DockerOfficeImageServiceImpl;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -43,21 +43,18 @@ public class DockerOfficeImageServiceImplTest {
             .description("desc")
             .starCount(1)
             .pullCount(2L)
-            .lastUpdated(LocalDate.now())
-            .dateRegistered(LocalDate.now().minusDays(1))
+            .lastUpdated(LocalDateTime.now())
+            .dateRegistered(LocalDateTime.now().minusDays(1))
             .logoUrl("url")
             .build();
-        List<DockerOfficeTag> tags = List.of("a", "b", "c").stream()
-            .map(t -> DockerOfficeTag.builder().tag(t).image(sampleImage).build())
-            .toList();
     }
 
     @Test
     @DisplayName("findByName - 성공: 모든 필드가 올바르게 매핑되야 한다.")
     void findByName_success() {
-        given(repo.findByName("test")).willReturn(Optional.of(sampleImage));
+        given(repo.findAllByName("test")).willReturn(Optional.of(List.of(sampleImage)));
 
-        DockerOfficeImageResponse response = service.findByName("test");
+        DockerOfficeImageResponse response = service.findAllByName("test").get(0);
 
         assertThat(response.getName()).as("name").isEqualTo("test");
         assertThat(response.getNamespace()).as("namespace").isEqualTo("lib");
@@ -70,9 +67,9 @@ public class DockerOfficeImageServiceImplTest {
     @Test
     @DisplayName("findByName - 실패: 존재하지 않는 이름의 이미지 BusinessException 발생")
     void findByName_notFound() {
-        given(repo.findByName("missing")).willReturn(Optional.empty());
+        given(repo.findAllByName("missing")).willReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.findByName("missing"))
+        assertThatThrownBy(() -> service.findAllByName("missing"))
             .isInstanceOf(BusinessException.class)
             .extracting("errorCode")
             .isEqualTo(DockerImageErrorCode.OFFICE_IMAGE_NOT_FOUND);
@@ -83,12 +80,12 @@ public class DockerOfficeImageServiceImplTest {
     void getAllImages_paging() {
         // repo.findAll 목업
         DockerOfficeImage img1 = sampleImage;
-        DockerOfficeImage img2 = DockerOfficeImage.fromJson(
+        DockerOfficeImage img2 = DockerOfficeImage.from(
             new DockerImageJson("n2", "ns", "d", 0, 0, "2020-01-01", "2020-01-01", "u",
-                List.of("x")));
-        DockerOfficeImage img3 = DockerOfficeImage.fromJson(
+                List.of("x")), "x");
+        DockerOfficeImage img3 = DockerOfficeImage.from(
             new DockerImageJson("n3", "ns", "d", 0, 0, "2020-01-01", "2020-01-01", "u",
-                List.of("y")));
+                List.of("y")), "y");
         given(repo.findAll()).willReturn(List.of(img1, img2, img3));
 
         List<DockerOfficeImageResponse> page = service.getAllImages(1, 2);
