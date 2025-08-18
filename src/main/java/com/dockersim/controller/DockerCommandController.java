@@ -5,11 +5,13 @@ import com.dockersim.context.SimulationContextHolder;
 import com.dockersim.dto.response.CommandResult;
 import com.dockersim.exception.code.DockerCommandErrorCode;
 import com.dockersim.service.command.CommandExecutorService;
-import java.util.Set;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -23,22 +25,26 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
+@Tag(name = "도커 명령어 API", description = "도커 명령어 API")
 public class DockerCommandController {
-
-    private static final Set<String> KNOWN_BUT_UNSUPPORTED = Set.of(
-        "swarm", "stack", "node", "service", "secret", "config", "context"
-    );
 
     private final CommandExecutorService commandExecutor;
 
     /**
      * Docker 명령어 실행 API
+     *
+     * @param userId       시뮬레이션을 조작핧 사용자 UUID
+     * @param simulationId 명령을 실행할 시뮬레이션 UUID
+     * @param command      실행할 도커 명령어
+     * @return 도커 명령어에 의한 상태 변화 응답
      */
+    @Operation(summary = "Docker 명령어 실행",
+        description = "시뮬레이션에서 Docker 명령어를 실행 후 상태 변화를 응답합니다. ")
     @PostMapping("/simulations/{simulationId}/command")
     public ResponseEntity<ApiResponse<CommandResult>> executeCommand(
-        @PathVariable String simulationId,
-        @RequestBody String command
-        // @AuthenticationPrincipal Long userId
+        @Parameter(description = "시뮬레이션을 조작핧 사용자 UUID", required = true, hidden = true)/* @AuthenticationPrincipal */ Long userId,
+        @Parameter(description = "명령을 실행할 시뮬레이션 UUID", required = true) @PathVariable UUID simulationId,
+        @Parameter(description = "실행할 도커 명령어", required = true) @RequestBody String command
     ) {
         SimulationContextHolder.setSimulationId(simulationId);
 
@@ -48,23 +54,5 @@ public class DockerCommandController {
                 ApiResponse.error(DockerCommandErrorCode.FAILED_EXECUTE_DOCKER_COMMAND));
         }
         return ResponseEntity.ok(ApiResponse.success(result));
-    }
-
-
-    /**
-     * 지원하는 Docker 명령어 목록 조회 API
-     */
-    @GetMapping("/help")
-    public ResponseEntity<ApiResponse<String[]>> getSupportedCommands() {
-        log.info("지원 명령어 목록 조회 요청");
-
-        String[] supportedCommands = {
-            "run", "ps", "start", "stop", "restart",
-            "rm", "logs", "inspect", "images", "pull", "rmi"
-        };
-
-        ApiResponse<String[]> response = ApiResponse.success(null);
-
-        return ResponseEntity.ok(response);
     }
 }
