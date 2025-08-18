@@ -51,8 +51,8 @@ public class Simulation {
     private SimulationShareState shareState;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @JoinColumn(name = "owner_id", nullable = false)
+    private User owner;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
@@ -72,15 +72,15 @@ public class Simulation {
         SimulationShareState shareState,
         User owner
     ) {
-        return Simulation.builder().
-            simulationId(UUID.randomUUID()).
-            title(request.getTitle()).
-            shareState(shareState).
-            user(owner).
-            createdAt(LocalDateTime.now()).
-            updatedAt(LocalDateTime.now()).
-            collaborators(new ArrayList<>()).
-            build();
+        return Simulation.builder()
+            .simulationId(UUID.randomUUID())
+            .title(request.getTitle())
+            .shareState(shareState)
+            .owner(owner)
+            .createdAt(LocalDateTime.now())
+            .updatedAt(LocalDateTime.now())
+            .collaborators(new ArrayList<>())
+            .build();
     }
 
     public void updateTitle(String title) {
@@ -113,11 +113,11 @@ public class Simulation {
      */
     public boolean hasAccess(User user) {
         // 소유자인 경우
-        if (this.user.getId().equals(user.getId())) {
+        if (this.owner.getId().equals(user.getId())) {  // owner로 변경
             return true;
         }
 
-        // 협업자인 경우
+        // 협업자인 경우 (변경 없음)
         return this.collaborators.stream()
             .anyMatch(collaborator -> collaborator.getUser().getId().equals(user.getId()));
     }
@@ -126,12 +126,12 @@ public class Simulation {
      * 사용자가 이 시뮬레이션에 쓰기 권한이 있는지 확인
      */
     public boolean hasWriteAccess(User user) {
-        // 소유자인 경우 항상 쓰기 권한 있음
-        if (this.user.getId().equals(user.getId())) {
+        // 소유자인 경우
+        if (this.owner.getId().equals(user.getId())) {  // owner로 변경
             return true;
         }
 
-        // 협업자인 경우 WRITE 권한 확인
+        // 협업자인 경우 (변경 없음)
         return this.collaborators.stream()
             .anyMatch(collaborator -> collaborator.getUser().getId().equals(user.getId()));
     }
@@ -140,7 +140,7 @@ public class Simulation {
      * 사용자가 소유자인지 확인
      */
     public boolean isOwner(User user) {
-        return this.user.getId().equals(user.getId());
+        return this.owner.getId().equals(user.getId());  // owner로 변경
     }
 
     /**

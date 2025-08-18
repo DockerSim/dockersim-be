@@ -13,20 +13,20 @@ public interface SimulationRepository extends JpaRepository<Simulation, Long> {
     /**
      * 소유자로 시뮬레이션 목록 조회
      */
-    List<Simulation> findByUser(User user);
+    List<Simulation> findByOwner(User owner);
 
     /**
      * 소유자와 ID로 시뮬레이션 조회 (권한 확인용)
      */
-    Optional<Simulation> findByIdAndUser(Long id, User user);
+    Optional<Simulation> findByIdAndOwner(Long id, User owner);
 
     /**
      * 제목 중복 확인 (같은 소유자 내에서)
      */
-    boolean existsByTitleAndUser(String title, User user);
+    boolean existsByTitleAndOwner(String title, User owner);
 
     /**
      * 소유자 ID로 시뮬레이션 목록 조회
      */
-    List<Simulation> findByUserId(Long userId);
+    List<Simulation> findByOwnerId(Long ownerId);
 }

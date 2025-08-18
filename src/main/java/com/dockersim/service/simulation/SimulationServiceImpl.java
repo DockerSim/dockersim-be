@@ -42,7 +42,7 @@ public class SimulationServiceImpl implements SimulationService {
             .orElseThrow(
                 () -> new BusinessException(UserErrorCode.USER_NOT_FOUND, ownerId));
 
-        if (simulationRepository.existsByTitleAndUser(request.getTitle(), owner)) {
+        if (simulationRepository.existsByTitleAndOwner(request.getTitle(), owner)) {
             throw new BusinessException(SimulationErrorCode.SIMULATION_TITLE_DUPLICATE,
                 request.getTitle());
         }
@@ -94,7 +94,7 @@ public class SimulationServiceImpl implements SimulationService {
                 request.getEmail()));
         validateCollaboratorInvitation(simulation, invitee);
 
-        simulation.addCollaborator(invitee, simulation.getUser());
+        simulation.addCollaborator(invitee, simulation.getOwner());
         simulationRepository.save(simulation);
         SimulationCollaborator collab = simulation.findCollaborator(invitee);
         log.info("협업자 초대 완료: simulationId={}, userId={}", simulationId, invitee.getId());
@@ -178,7 +178,7 @@ public class SimulationServiceImpl implements SimulationService {
 
         // 제목 중복 확인 (자신의 것은 제외)
         if (!simulation.getTitle().equals(request.getTitle()) &&
-            simulationRepository.existsByTitleAndUser(request.getTitle(), simulation.getUser())) {
+            simulationRepository.existsByTitleAndOwner(request.getTitle(), simulation.getOwner())) {
             throw new BusinessException(SimulationErrorCode.SIMULATION_TITLE_DUPLICATE,
                 request.getTitle());
         }

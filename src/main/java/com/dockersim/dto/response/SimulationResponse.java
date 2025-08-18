@@ -30,7 +30,7 @@ public class SimulationResponse {
             .id(IdConverter.toUUID(simulation.getId()))
             .title(simulation.getTitle())
             .shareState(simulation.getShareState().name())
-            .userId(simulation.getUser().getId())
+            .userId(simulation.getOwner().getId())
             .createdAt(simulation.getCreatedAt())
             .updatedAt(simulation.getUpdatedAt())
             .build();
