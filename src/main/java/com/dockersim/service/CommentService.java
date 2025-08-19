@@ -32,7 +32,7 @@ public class CommentService {
             author,
             post
         );
-        PostCommentRepository.save(comment);
+        commentRepository.save(comment);
         return new PostCommentResponse(comment);
     }
     
@@ -47,7 +47,7 @@ public class CommentService {
     // 댓글 수정
     @Transactional
     public PostCommentResponse updateComment(Long commentId, PostCommentRequest requestDto, String author) {
-        Comments comment = PostCommentRepository.findById(commentId)
+        Comments comment = commentRepository.findById(commentId)
             .orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
             
         if (!comment.getAuthor().equals(author)) {
@@ -68,7 +68,7 @@ public class CommentService {
             throw new IllegalArgumentException("댓글 삭제 권한이 없습니다.");
         }
 
-        PostCommentRepository.delete(comment);
+        commentRepository.delete(comment);
     }
     
     // 내가 작성한 댓글 목록 조회
