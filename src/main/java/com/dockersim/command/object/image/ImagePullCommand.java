@@ -11,7 +11,7 @@ import static com.dockersim.command.option.DockerOption.Constants.PLATFORM_DESC;
 
 import com.dockersim.dto.response.CommandResult;
 import com.dockersim.dto.response.DockerImageResponse;
-import com.dockersim.service.image.DockerImageServiceImpl;
+import com.dockersim.service.image.DockerImageService;
 import java.util.concurrent.Callable;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -27,7 +27,7 @@ import picocli.CommandLine.Option;
 @RequiredArgsConstructor
 public class ImagePullCommand implements Callable<CommandResult> {
 
-    private final DockerImageServiceImpl imageService;
+    private final DockerImageService imageService;
 
     @Option(names = {ALL_TAGS_SHORT, ALL_TAGS_LONG}, description = ALL_TAGS_DESC)
     private boolean allTags;
@@ -43,15 +43,9 @@ public class ImagePullCommand implements Callable<CommandResult> {
 
     @Override
     public CommandResult call() {
-        DockerImageResponse response = null;
-        if (allTags) {
-//            response = imageService.pullAllImage(imageName);
-        } else {
-            response = imageService.pullImage(imageName);
-        }
+        DockerImageResponse response = imageService.pullImage(imageName);
 
         return CommandResult.builder()
-            .console(response.getConsole())
             .changedImage(response)
             .build();
     }

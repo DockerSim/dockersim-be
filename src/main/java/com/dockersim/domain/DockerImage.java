@@ -7,7 +7,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
-import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -36,24 +35,22 @@ public class DockerImage {
     private String namespace;
 
 
-    @Column(name = "pull_count")
-    private Long pullCount;
-
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
     private String tag;
 
-    public static DockerImage fromDockerOfficeImage(DockerOfficeImage officeImage) {
+    public static DockerImage from(DockerOfficeImage officeImage) {
         return DockerImage.builder()
-            .imageId(UUID.randomUUID().toString())
+            .imageId(officeImage.getImageId())
             .name(officeImage.getName())
             .namespace(officeImage.getNamespace())
+            .createdAt(officeImage.getLastUpdated())
             .tag(officeImage.getTag())
-            .pullCount(0L)
-            .createdAt(LocalDateTime.now())
             .build();
+
     }
+
 
     public String getFullName() {
         return namespace + "/" + name;
@@ -61,12 +58,5 @@ public class DockerImage {
 
     public String getFullNameWithTag(String tag) {
         return getFullName() + ":" + tag;
-    }
-
-    public void incrementPullCount() {
-        if (pullCount == null) {
-            pullCount = 0L;
-        }
-        pullCount++;
     }
 }
