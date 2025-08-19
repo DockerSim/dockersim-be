@@ -1,6 +1,6 @@
 package com.dockersim.dto.response;
 
-import com.dockersim.domain.CommunityPost;
+import com.dockersim.domain.Post;
 import com.dockersim.domain.enums.PostType;
 import lombok.Getter;
 import lombok.Setter;
@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 
 @Getter
 @Setter
-public class PostResponseDto {
+public class PostResponse {
 
     private Long id;
     private String title;

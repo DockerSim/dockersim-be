@@ -1,7 +1,7 @@
 package com.dockersim.repository;
 
-import com.dockersim.domain.CommunityPost;
-import com.dockersim.domain.CommunityPostLike;
+import com.dockersim.domain.Post;
+import com.dockersim.domain.PostLike;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -10,7 +10,7 @@ import java.util.Optional;
 
 
 @Repository
-public interface PostLikeRepository extends JpaRepository<CommunityPostLike, Long> {
+public interface PostLikeRepository extends JpaRepository<PostLike, Long> {
 
     // 특정 게시글에 대한 좋아요 조회(공감은 한 번만 누를 수 있도록)
     Optional<PostLike> findByAuthorAndPost(String author, Post post);

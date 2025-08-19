@@ -1,10 +1,10 @@
 package com.dockersim.service;
 
-import com.dockersim.domain.CommunityPost;
-import com.dockersim.domain.CommunityPostLike;
+import com.dockersim.domain.Post;
+import com.dockersim.domain.PostLike;
 import com.dockersim.domain.enums.PostType;
-import com.dockersim.dto.PostRequest;
-import com.dockersim.dto.PostResponse;
+import com.dockersim.dto.request.PostRequest;
+import com.dockersim.dto.response.PostResponse;
 import com.dockersim.repository.PostLikeRepository;
 import com.dockersim.repository.PostRepository;
 import lombok.RequiredArgsConstructor;

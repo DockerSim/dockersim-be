@@ -1,6 +1,6 @@
 package com.dockersim.dto.response;
 
-import com.dockersim.domain.CommunityComments;
+import com.dockersim.domain.Comments;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -17,7 +17,7 @@ public class PostCommentResponse {
     private Long postId;
 
     // Entity를 DTO로 변환하는 생성자
-    public CommentResponse(Comment comment) {
+    public PostCommentResponse(Comments comment) {
         this.id = comment.getId();
         this.content = comment.getContent();
         this.author = comment.getAuthor();

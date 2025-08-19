@@ -3,7 +3,7 @@ package com.dockersim.domain;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Comment {
+public class Comments {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -39,7 +39,7 @@ public class Comment {
     /**
      * 댓글 생성 시 사용할 생성자
      */
-    public Comment(String content, String author, Post post) {
+    public Comments(String content, String author, Post post) {
         this.content = content;
         this.author = author;
         this.post = post;

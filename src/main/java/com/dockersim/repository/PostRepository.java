@@ -1,6 +1,6 @@
 package com.dockersim.repository;
 
-import com.dockersim.domain.CommunityPost;
+import com.dockersim.domain.Post;
 import com.dockersim.domain.enums.PostType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
