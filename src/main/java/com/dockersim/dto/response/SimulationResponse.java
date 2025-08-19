@@ -1,22 +1,37 @@
 package com.dockersim.dto.response;
 
+import com.dockersim.domain.Simulation;
+import java.time.LocalDateTime;
+import java.util.UUID;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
 
 /**
  * TDD Green 단계 2: 시뮬레이션 응답 DTO
  */
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class SimulationResponse {
-    private Long id;
+
+    private UUID simulationId;
     private String title;
     private String shareState;
-    private Long userId;
+    private UUID ownerId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    public static SimulationResponse from(Simulation simulation) {
+        return SimulationResponse.builder()
+            .simulationId(simulation.getSimulationId())
+            .title(simulation.getTitle())
+            .shareState(simulation.getShareState().name())
+            .ownerId(simulation.getOwner().getUserId())
+            .createdAt(simulation.getCreatedAt())
+            .updatedAt(simulation.getUpdatedAt())
+            .build();
+    }
 }

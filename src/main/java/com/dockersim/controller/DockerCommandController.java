@@ -1,71 +1,59 @@
 package com.dockersim.controller;
 
-import com.dockersim.dto.request.DockerCommandRequest;
-import com.dockersim.executor.CommandExecuteResult;
-import com.dockersim.executor.CommandExecutor;
-import com.dockersim.parser.DockerCommandParser;
-import com.dockersim.parser.ParsedDockerCommand;
-import com.dockersim.web.ApiResponse;
+import com.dockersim.common.ApiResponse;
+import com.dockersim.context.SimulationContextHolder;
+import com.dockersim.dto.response.CommandResult;
+import com.dockersim.exception.code.DockerCommandErrorCode;
+import com.dockersim.service.command.CommandExecutorService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Docker 명령어 실행 API 컨트롤러
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/docker")
+@RequestMapping("/api")
 @RequiredArgsConstructor
+@Tag(name = "도커 명령어 API", description = "도커 명령어 API")
 public class DockerCommandController {
 
-        private final CommandExecutor commandExecutor;
-        private final DockerCommandParser dockerCommandParser;
+    private final CommandExecutorService commandExecutor;
 
-        /**
-         * Docker 명령어 실행 API
-         */
-        @PostMapping("/execute")
-        public ResponseEntity<ApiResponse<CommandExecuteResult>> executeCommand(
-                        @RequestBody DockerCommandRequest request) {
+    /**
+     * Docker 명령어 실행 API
+     *
+     * @param userId       시뮬레이션을 조작핧 사용자 UUID
+     * @param simulationId 명령을 실행할 시뮬레이션 UUID
+     * @param command      실행할 도커 명령어
+     * @return 도커 명령어에 의한 상태 변화 응답
+     */
+    @Operation(summary = "Docker 명령어 실행",
+        description = "시뮬레이션에서 Docker 명령어를 실행 후 상태 변화를 응답합니다. ")
+    @PostMapping("/simulations/{simulationId}/command")
+    public ResponseEntity<ApiResponse<CommandResult>> executeCommand(
+        @Parameter(description = "시뮬레이션을 조작핧 사용자 UUID", required = true, hidden = true) @AuthenticationPrincipal Long userId,
+        @Parameter(description = "명령을 실행할 시뮬레이션 UUID", required = true) @PathVariable UUID simulationId,
+        @Parameter(description = "실행할 도커 명령어", required = true) @RequestBody String command
+    ) {
+        SimulationContextHolder.setSimulationId(simulationId);
 
-                String command = request.getCommand();
-                Long simulationId = request.getSimulationId();
-
-                log.info("Docker 명령어 실행 요청: command={}, simulationId={}", command, simulationId);
-
-                try {
-                        // 1. 명령어 파싱
-                        ParsedDockerCommand parsedCommand = dockerCommandParser.parse(command);
-
-                        // 2. 명령어 실행
-                        CommandExecuteResult result = commandExecutor.execute(parsedCommand, simulationId);
-
-                        ApiResponse<CommandExecuteResult> apiResponse = ApiResponse.ok(result);
-
-                        return ResponseEntity.ok(apiResponse);
-
-                } catch (Exception e) {
-                        log.error("Docker 명령어 실행 실패: {}", e.getMessage(), e);
-                        return ResponseEntity.ok(null);
-                }
+        CommandResult result = commandExecutor.execute(command);
+        if (result == null) {
+            return ResponseEntity.ok(
+                ApiResponse.error(DockerCommandErrorCode.FAILED_EXECUTE_DOCKER_COMMAND));
         }
-
-        /**
-         * 지원하는 Docker 명령어 목록 조회 API
-         */
-        @GetMapping("/commands")
-        public ResponseEntity<ApiResponse<String[]>> getSupportedCommands() {
-                log.info("지원 명령어 목록 조회 요청");
-
-                String[] supportedCommands = {
-                                "run", "ps", "start", "stop", "restart",
-                                "rm", "logs", "inspect", "images", "pull", "rmi"
-                };
-
-                ApiResponse<String[]> response = ApiResponse.ok(null);
-
-                return ResponseEntity.ok(response);
-        }
+        return ResponseEntity.ok(ApiResponse.success(result));
+    }
 }

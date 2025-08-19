@@ -1,49 +1,76 @@
 package com.dockersim.controller;
 
-import com.dockersim.dto.request.CreateUserRequest;
+import com.dockersim.common.ApiResponse;
+import com.dockersim.dto.request.UserRequest;
 import com.dockersim.dto.response.UserResponse;
-import com.dockersim.service.UserService;
-import com.dockersim.web.ApiResponse;
+import com.dockersim.service.user.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-/**
- * 실무 표준: 사용자 컨트롤러
- */
+
 @Slf4j
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
+@Tag(name = "사용자 API", description = "사용자 생성, 조회, 삭제 관리 API")
 public class UserController {
 
     private final UserService userService;
 
     /**
-     * 사용자 생성 API
+     * 새로운 사용자 생성을 진행합니다.
+     *
+     * @param request 사용자 생성 요청 정보
+     * @return 생성된 사용자 정보
      */
+    @Operation(summary = "사용자 생성", description = "사용자를 생성합니다.")
     @PostMapping
-    public ResponseEntity<ApiResponse<UserResponse>> createUser(@RequestBody CreateUserRequest request) {
-        log.info("사용자 생성 API 호출: {}", request.getEmail());
-
-        UserResponse userResponse = userService.createUser(request);
-        ApiResponse<UserResponse> response = ApiResponse.ok(userResponse);
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    public ResponseEntity<ApiResponse<UserResponse>> createUser(
+        @Parameter(description = "사용자 생성 요청 정보") @RequestBody UserRequest request
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(userService.createUser(request)));
     }
 
+
     /**
-     * 사용자 조회 API
+     * 사용자 정보를 조회합니다.
+     *
+     * @param userId 조회할 사용자 UUID
+     * @return 조회된 사용자 정보
      */
-    @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<UserResponse>> getUser(@PathVariable Long id) {
-        log.info("사용자 조회 API 호출: ID={}", id);
+    @Operation(summary = "사용자 정보 조회", description = "사용자 정보를 조회합니다.")
+    @GetMapping
+    public ResponseEntity<ApiResponse<UserResponse>> getUser(
+        @Parameter(hidden = true, description = "조회할 사용자 UUID") @AuthenticationPrincipal UUID userId
+    ) {
+        System.out.println(userId);
+        return ResponseEntity.ok(ApiResponse.success(userService.getUser(userId)));
+    }
 
-        UserResponse userResponse = userService.getUser(id);
-        ApiResponse<UserResponse> response = ApiResponse.ok(userResponse);
 
-        return ResponseEntity.ok(response);
+    /**
+     * 사용자를 삭제합니다.
+     *
+     * @param userId 삭제할 사용자 UUID
+     */
+    @Operation(summary = "사용자 삭제", description = "사용자를 삭제합니다.")
+    @DeleteMapping
+    public ResponseEntity<ApiResponse<Void>> deleteUser(
+        @Parameter(hidden = true, description = "삭제할 사용자 UUID") @AuthenticationPrincipal UUID userId
+    ) {
+        userService.deleteUser(userId);
+        return ResponseEntity.ok(ApiResponse.success());
     }
 }

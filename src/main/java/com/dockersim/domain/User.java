@@ -1,29 +1,35 @@
 package com.dockersim.domain;
 
-import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
+import com.dockersim.dto.request.UserRequest;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import java.time.LocalDateTime;
+import java.util.UUID;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 
-/**
- * Table User {
- * id long [pk, increment]
- * name string
- * email string
- * }
- */
 @Entity
 @Table(name = "users")
-@Data
+@Getter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
+@ToString
 public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(name = "user_id", unique = true, nullable = false, updatable = false)
+    private UUID userId;
 
     @Column(nullable = false)
     private String name;
@@ -34,12 +40,13 @@ public class User {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    /**
-     * 사용자 생성 시 사용할 생성자
-     */
-    public User(String name, String email) {
-        this.name = name;
-        this.email = email;
-        this.createdAt = LocalDateTime.now();
+
+    public static User fromUserRequest(UserRequest request) {
+        return User.builder()
+            .userId(UUID.randomUUID())
+            .name(request.getName())
+            .email(request.getEmail())
+            .createdAt(LocalDateTime.now())
+            .build();
     }
 }
