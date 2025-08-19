@@ -1,6 +1,7 @@
 package com.dockersim.dto.response;
 
 import com.dockersim.domain.DockerImage;
+import com.dockersim.domain.DockerOfficeImage;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -16,7 +17,6 @@ import lombok.NoArgsConstructor;
 public class DockerImageResponse {
 
     private List<String> console;
-    private boolean success;
 
     private String imageId;
     private String name;
@@ -36,6 +36,21 @@ public class DockerImageResponse {
             .namespace(image.getNamespace())
             .createdAt(image.getCreatedAt())
             .tag(image.getTag())
+            .build();
+    }
+
+    public static DockerImageResponse from(DockerOfficeImage officeImage, List<String> console) {
+        return DockerImageResponse.builder()
+            .console(console)
+            .imageId(officeImage.getImageId())
+            .name(officeImage.getName())
+            .namespace(officeImage.getNamespace())
+            .description(officeImage.getDescription())
+            .starCount(officeImage.getStarCount())
+            .pullCount(officeImage.getPullCount())
+            .createdAt(officeImage.getLastUpdated())
+            .tag(officeImage.getTag())
+            .logoUrl(officeImage.getLogoUrl())
             .build();
     }
 }

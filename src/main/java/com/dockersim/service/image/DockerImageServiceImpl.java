@@ -41,13 +41,9 @@ public class DockerImageServiceImpl implements DockerImageService {
             image.get("repository"),
             image.get("tag")
         );
-
-        // Step 3. 공식 이미지 반환 및 저장
         if (officeImage != null) {
-//            repo.save(DockerImage.fromDockerOfficeImage(officeImage));
-
-            return DockerImageResponse.from(
-                DockerImage.fromDockerOfficeImage(officeImage),
+            repo.save(DockerImage.from(officeImage));
+            return DockerImageResponse.from(officeImage,
                 List.of(
                     DockerImageErrorCode.USER_IMAGE_NOT_FOUND.getMessage(name),
                     SuccessCode.COMMAND_EXECUTE_PULL_IMAGE.getMessage(name)
