@@ -25,9 +25,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-/**
- * 시뮬레이션 엔티티
- */
 @Entity
 @Table(name = "simulations")
 @Getter
@@ -60,10 +57,17 @@ public class Simulation {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-
     @OneToMany(mappedBy = "simulation", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<SimulationCollaborator> collaborators = new ArrayList<>();
 
+    @OneToMany(mappedBy = "simulation", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<DockerImage> dockerImages = new ArrayList<>();
+
+    @OneToMany(mappedBy = "simulation", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<DockerContainer> dockerContainers = new ArrayList<>();
 
     public static Simulation from(
         SimulationRequest request,
@@ -78,6 +82,8 @@ public class Simulation {
             .createdAt(LocalDateTime.now())
             .updatedAt(LocalDateTime.now())
             .collaborators(new ArrayList<>())
+            .dockerImages(new ArrayList<>()) 
+            .dockerContainers(new ArrayList<>()) // DockerContainer 목록 초기화
             .build();
     }
 
@@ -104,10 +110,6 @@ public class Simulation {
         this.collaborators.clear();
     }
 
-
-    /**
-     * 사용자가 이 시뮬레이션에 쓰기 권한이 있는지 확인
-     */
     public boolean hasWriteAccess(User user) {
         return isOwner(user) || isCollaborator(user);
     }

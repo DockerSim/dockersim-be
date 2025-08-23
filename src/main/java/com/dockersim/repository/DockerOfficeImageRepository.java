@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface DockerOfficeImageRepository extends JpaRepository<DockerOfficeImage, Long> {
 
-    Optional<List<DockerOfficeImage>> findAllByName(String name);
+    List<DockerOfficeImage> findAllByName(String name);
 
     Optional<DockerOfficeImage> findByNameAndTag(String repositoryName, String tag);
 }

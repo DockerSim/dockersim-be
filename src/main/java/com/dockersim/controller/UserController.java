@@ -55,7 +55,6 @@ public class UserController {
     public ResponseEntity<ApiResponse<UserResponse>> getUser(
         @Parameter(hidden = true, description = "조회할 사용자 UUID") @AuthenticationPrincipal UUID userId
     ) {
-        System.out.println(userId);
         return ResponseEntity.ok(ApiResponse.success(userService.getUser(userId)));
     }
 

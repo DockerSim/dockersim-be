@@ -18,19 +18,20 @@ import org.junit.jupiter.api.Test;
 @DisplayName("DockerOfficeImage 전체 파이프라인 테스트 ")
 public class DockerOfficeImagePipeLineTest {
 
-    private static ObjectMapper mapper;
     private static List<DockerImageJson> jsonList;
 
     @BeforeAll
     @DisplayName("JSON 파일 로드 및 DTO 리스트 생성")
     static void setUp() throws Exception {
-        mapper = new ObjectMapper()
+        // FIX: ObjectMapper를 지역 변수로 변경
+        ObjectMapper mapper = new ObjectMapper()
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         InputStream is = DockerOfficeImagePipeLineTest.class.getClassLoader()
             .getResourceAsStream("static/data/docker_images.json");
 
         assertThat(is).as("등록된 경로에서 JSON파일을 찾을 수 있어야 한다.").isNotNull();
-        jsonList = mapper.readValue(is, new TypeReference<List<DockerImageJson>>() {
+        // FIX: 다이아몬드 연산자(<>) 사용
+        jsonList = mapper.readValue(is, new TypeReference<>() {
         });
     }
 

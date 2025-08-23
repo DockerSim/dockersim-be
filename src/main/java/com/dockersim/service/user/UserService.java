@@ -4,7 +4,7 @@ import com.dockersim.dto.request.UserRequest;
 import com.dockersim.dto.response.UserResponse;
 import java.util.UUID;
 
-public interface UserService extends UserFinder {
+public interface UserService {
 
     /**
      * 사용자 생성

@@ -7,7 +7,7 @@ import com.dockersim.dto.response.SimulationResponse;
 import java.util.List;
 import java.util.UUID;
 
-public interface SimulationService extends SimulationFinder {
+public interface SimulationService {
 
     /**
      * 시뮬레이션 생성

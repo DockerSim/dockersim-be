@@ -11,7 +11,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.InputStream;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -81,13 +80,13 @@ public class DockerOfficeImageServiceImpl implements DockerOfficeImageService {
     @Transactional(readOnly = true)
     public List<DockerOfficeImageResponse> findAllByName(String repositoryName) {
 
-        Optional<List<DockerOfficeImage>> optionalImages = repo.findAllByName(repositoryName);
+        List<DockerOfficeImage> images = repo.findAllByName(repositoryName);
 
-        if (optionalImages.isEmpty() || optionalImages.get().isEmpty()) {
+        if (images.isEmpty()) {
             throw new BusinessException(DockerImageErrorCode.OFFICE_IMAGE_NOT_FOUND,
                 repositoryName);
         }
-        return optionalImages.get().stream()
+        return images.stream()
             .map(DockerOfficeImageResponse::from)
             .collect(Collectors.toList());
     }

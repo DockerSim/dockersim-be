@@ -16,34 +16,35 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
+@Transactional
 public class UserServiceImpl implements UserService {
 
-    // 이메일 유효성 검증을 위한 정규표현식
     private static final Pattern EMAIL_PATTERN = Pattern.compile(
         "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
-    private final UserRepository repo;
+    private final UserRepository userRepository;
+    private final UserFinder userFinder; // UserFinder 주입
 
 
-    @Transactional
     @Override
     public UserResponse createUser(UserRequest request) {
         validateEmailFormat(request.getEmail());
         validateEmailDuplication(request.getEmail());
 
-        User savedUser = repo.save(User.fromUserRequest(request));
+        User savedUser = userRepository.save(User.fromUserRequest(request));
         return UserResponse.from(savedUser);
     }
 
-    @Transactional(readOnly = true)
     @Override
+    @Transactional(readOnly = true)
     public UserResponse getUser(UUID id) {
-        return UserResponse.from(findUserByUUID(id));
+        // 주입된 userFinder 사용
+        return UserResponse.from(userFinder.findUserByUUID(id));
     }
 
     @Override
     public void deleteUser(UUID id) {
-        repo.delete(findUserByUUID(id));
+        // 주입된 userFinder 사용
+        userRepository.delete(userFinder.findUserByUUID(id));
     }
 
     private void validateEmailFormat(String email) {
@@ -53,20 +54,10 @@ public class UserServiceImpl implements UserService {
     }
 
     private void validateEmailDuplication(String email) {
-        if (repo.existsByEmail(email)) {
+        if (userRepository.existsByEmail(email)) {
             throw new BusinessException(UserErrorCode.EMAIL_ALREADY_EXISTS, email);
         }
     }
 
-    @Override
-    public User findUserByUUID(UUID userId) {
-        return repo.findByUserId(userId)
-            .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND, userId));
-    }
-
-    @Override
-    public User findUserByEmail(String email) {
-        return repo.findByEmail(email)
-            .orElseThrow(() -> new BusinessException(UserErrorCode.USER_EMAIL_NOT_FOUND, email));
-    }
+    // findUserByUUID, findUserByEmail 메서드 제거
 }
