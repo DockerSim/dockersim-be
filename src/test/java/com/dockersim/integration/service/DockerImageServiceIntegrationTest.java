@@ -108,7 +108,7 @@ class DockerImageServiceIntegrationTest extends IntegrationTestSupport {
             ImageLocation.LOCAL);
         assertThat(localImages).hasSize(1);
 
-        ImageListResponse lsResponse = dockerImageService.listImages();
+        ImageListResponse lsResponse = dockerImageService.listImages(false, false);
         assertThat(lsResponse.getConsole()).anyMatch(line -> line.contains(repositoryName));
 
         dockerImageService.removeImage(imageName);

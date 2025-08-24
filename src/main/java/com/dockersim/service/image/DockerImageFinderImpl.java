@@ -1,6 +1,7 @@
 package com.dockersim.service.image;
 
 import com.dockersim.domain.DockerImage;
+import com.dockersim.domain.ImageLocation;
 import com.dockersim.domain.Simulation;
 import com.dockersim.repository.DockerImageRepository;
 import java.util.ArrayList;
@@ -32,12 +33,18 @@ public class DockerImageFinderImpl implements DockerImageFinder {
                 .ifPresent(byId::add);
             // If full ID doesn't match, try partial ID
             if (byId.isEmpty()) {
-                byId.addAll(repo.findAllByImageIdStartingWithAndSimulation(imageNameOrId, simulation));
+                byId.addAll(
+                    repo.findAllByImageIdStartingWithAndSimulation(imageNameOrId, simulation));
             }
         }
 
         // 3. Combine results, ensuring no duplicates
         return Stream.concat(byName.stream(), byId.stream()).distinct().toList();
+    }
+
+    @Override
+    public List<DockerImage> getImages(Simulation simulation, ImageLocation location) {
+        return repo.findAllBySimulationAndLocation(simulation, location);
     }
 
     private List<DockerImage> findImagesByName(String name, Simulation simulation) {

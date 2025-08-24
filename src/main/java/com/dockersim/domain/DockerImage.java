@@ -62,7 +62,7 @@ public class DockerImage {
             .namespace(officeImage.getNamespace())
             .createdAt(officeImage.getLastUpdated())
             .tag(officeImage.getTag())
-            .location(ImageLocation.LOCAL) // pull한 이미지는 로컬에 저장되므로 LOCAL
+            .location(ImageLocation.LOCAL)
             .simulation(simulation)
             .build();
     }

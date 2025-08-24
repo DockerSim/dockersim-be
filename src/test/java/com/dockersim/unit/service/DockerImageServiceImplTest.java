@@ -8,11 +8,11 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import com.dockersim.domain.User;
 import com.dockersim.domain.ContainerStatus;
 import com.dockersim.domain.DockerImage;
 import com.dockersim.domain.ImageLocation;
 import com.dockersim.domain.Simulation;
+import com.dockersim.domain.User;
 import com.dockersim.dto.response.DockerImageResponse;
 import com.dockersim.dto.response.ImageListResponse;
 import com.dockersim.dto.response.ImageRemoveResponse;
@@ -87,7 +87,7 @@ class DockerImageServiceImplTest {
             ImageLocation.LOCAL);
         given(dockerImageRepository.findAllBySimulationAndLocation(simulation,
             ImageLocation.LOCAL)).willReturn(List.of(localImage));
-        ImageListResponse response = dockerImageService.listImages();
+        ImageListResponse response = dockerImageService.listImages(false, false);
         assertThat(response.getConsole()).anyMatch(line -> line.contains("testuser/local-img"));
     }
 
@@ -175,7 +175,8 @@ class DockerImageServiceImplTest {
         given(dockerImageFinder.parserImageName(anyString())).willReturn(
             Map.of("repository", "my-app", "tag", "1.0"));
         given(dockerImageRepository.findByNameAndNamespaceAndTagAndLocationAndSimulation("my-app",
-            user.getName(), "1.0", ImageLocation.LOCAL, simulation)).willReturn(Optional.of(oldImage));
+            user.getName(), "1.0", ImageLocation.LOCAL, simulation)).willReturn(
+            Optional.of(oldImage));
         dockerImageService.buildImage(imageNameWithTag);
         ArgumentCaptor<DockerImage> imageCaptor = ArgumentCaptor.forClass(DockerImage.class);
         verify(dockerImageRepository, times(2)).save(imageCaptor.capture());

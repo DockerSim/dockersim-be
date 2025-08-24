@@ -24,12 +24,14 @@ public interface DockerImageService {
      */
     DockerImageResponse pushImage(String imageName);
 
+
     /**
      * 로컬에 저장된 이미지 목록을 보여주는 동작을 시뮬레이션합니다.
      *
-     * @return 다운로드한 이미지 목록
+     * @param all   모든 이미지를 보여줄지 결정합니다.
+     * @param quiet 이미지의 ID만 보여줄지 결정합니다.
      */
-    ImageListResponse listImages();
+    ImageListResponse listImages(boolean all, boolean quiet);
 
     /**
      * 로컬에 저장된 이미지를 삭제하는 동작을 시뮬레이션합니다.
@@ -62,4 +64,15 @@ public interface DockerImageService {
      */
     String inspectImage(String imageName);
 
+    /**
+     * 이미지를 tar로 압축
+     */
+
+    /**
+     * tar을 압축해제애 이미지 생성
+     */
+
+    /**
+     * 이미지의 layer을 보여줌
+     */
 }

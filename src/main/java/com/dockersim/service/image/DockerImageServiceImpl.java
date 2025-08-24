@@ -67,7 +67,8 @@ public class DockerImageServiceImpl implements DockerImageService {
             .orElseThrow(
                 () -> new BusinessException(DockerImageErrorCode.IMAGE_NOT_FOUND_IN_HUB, name));
 
-        if (dockerImageRepository.existsByNameAndNamespaceAndTagAndLocationAndSimulation(imageName, namespace, tag, ImageLocation.LOCAL, simulation)) {
+        if (dockerImageRepository.existsByNameAndNamespaceAndTagAndLocationAndSimulation(imageName,
+            namespace, tag, ImageLocation.LOCAL, simulation)) {
             return DockerImageResponse.from(hubImage, List.of("Image is up to date for " + name));
         }
 
@@ -106,7 +107,8 @@ public class DockerImageServiceImpl implements DockerImageService {
             .orElseThrow(
                 () -> new BusinessException(DockerImageErrorCode.IMAGE_NOT_FOUND, imageName));
 
-        if (dockerImageRepository.existsByNameAndNamespaceAndTagAndLocationAndSimulation(localImage.getName(),
+        if (dockerImageRepository.existsByNameAndNamespaceAndTagAndLocationAndSimulation(
+            localImage.getName(),
             localImage.getNamespace(), localImage.getTag(), ImageLocation.HUB, simulation)) {
             return DockerImageResponse.from(localImage, List.of("Image already exists in HUB"));
         }
@@ -119,30 +121,29 @@ public class DockerImageServiceImpl implements DockerImageService {
 
     @Override
     @Transactional(readOnly = true)
-    public ImageListResponse listImages() {
+    public ImageListResponse listImages(boolean all, boolean quiet) {
         Simulation simulation = getCurrentSimulation();
         List<DockerImage> localImages = dockerImageRepository.findAllBySimulationAndLocation(
             simulation, ImageLocation.LOCAL);
 
         List<String> consoleOutput = new ArrayList<>();
-        String header = String.format("%-25s %-20s %-15s %-20s %s", "REPOSITORY", "TAG", "IMAGE ID",
-            "CREATED", "SIZE");
-        consoleOutput.add(header);
-
-        for (DockerImage image : localImages) {
-            String repository = "<none>".equals(image.getName()) ? "<none>"
-                : image.getNamespace() + "/" + image.getName();
-            String tag = image.getTag();
-            String imageId = image.getImageId().length() > 12 ? image.getImageId().substring(0, 12)
-                : image.getImageId();
-            String created = formatDuration(
-                Duration.between(image.getCreatedAt(), LocalDateTime.now()));
-            String size = "N/A";
-            String imageLine = String.format("%-25s %-20s %-15s %-20s %s", repository, tag, imageId,
-                created, size);
-            consoleOutput.add(imageLine);
+        if (quiet) {
+            for (DockerImage image : localImages) {
+                consoleOutput.add(getShortId(image.getImageId()));
+            }
+        } else {
+            consoleOutput.add(getConsoleHeader());
+            for (DockerImage image : localImages) {
+                String repository = image.getNamespace().equals("library") ?
+                    image.getName() : image.getNamespace() + "/" + image.getName();
+                String shortId = getShortId(image.getImageId());
+                String created = formatDuration(
+                    Duration.between(image.getCreatedAt(), LocalDateTime.now()));
+                String imageLine = String.format("%-25s %-20s %-15s %-20s", repository,
+                    image.getTag(), shortId, created);
+                consoleOutput.add(imageLine);
+            }
         }
-
         return ImageListResponse.from(consoleOutput);
     }
 
@@ -198,7 +199,8 @@ public class DockerImageServiceImpl implements DockerImageService {
             }
 
             // 네임스페이스를 포함하여 정확한 기존 이미지를 찾아 Dangling 처리합니다.
-            dockerImageRepository.findByNameAndNamespaceAndTagAndLocationAndSimulation(imageName, namespace, tag,
+            dockerImageRepository.findByNameAndNamespaceAndTagAndLocationAndSimulation(imageName,
+                    namespace, tag,
                     ImageLocation.LOCAL, simulation)
                 .ifPresent(oldImage -> {
                     oldImage.convertToDangling();
@@ -232,7 +234,7 @@ public class DockerImageServiceImpl implements DockerImageService {
         Simulation simulation = getCurrentSimulation();
         List<DockerImage> allLocalImages = dockerImageRepository.findAllBySimulationAndLocation(
             simulation, ImageLocation.LOCAL);
-        
+
         // 현재 시뮬레이션에 존재하는 모든 컨테이너 목록을 가져옵니다.
         List<DockerContainer> allContainers = simulation.getDockerContainers();
         Set<String> usedImageIds = allContainers.stream()
@@ -311,5 +313,13 @@ public class DockerImageServiceImpl implements DockerImageService {
             return false;
         }
         return str.matches("^[0-9a-fA-F]+$");
+    }
+
+    private String getConsoleHeader() {
+        return String.format("%-25s %-20s %-15s %-20s", "REPOSITORY", "TAG", "IMAGE ID", "CREATED");
+    }
+
+    private String getShortId(String id) {
+        return id.length() > 12 ? id.substring(0, 12) : id;
     }
 }
