@@ -38,7 +38,7 @@ public class Simulation {
     private Long id;
 
     @Column(name = "simulation_id", unique = true, nullable = false, updatable = false)
-    private UUID simulationId;
+    private String simulationId;
 
     @Column(nullable = false)
     private String title;
@@ -75,14 +75,14 @@ public class Simulation {
         User owner
     ) {
         return Simulation.builder()
-            .simulationId(UUID.randomUUID())
+            .simulationId(UUID.randomUUID().toString())
             .title(request.getTitle())
             .shareState(shareState)
             .owner(owner)
             .createdAt(LocalDateTime.now())
             .updatedAt(LocalDateTime.now())
             .collaborators(new ArrayList<>())
-            .dockerImages(new ArrayList<>()) 
+            .dockerImages(new ArrayList<>())
             .dockerContainers(new ArrayList<>()) // DockerContainer 목록 초기화
             .build();
     }

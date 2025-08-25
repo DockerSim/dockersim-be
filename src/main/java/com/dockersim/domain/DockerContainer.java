@@ -1,5 +1,7 @@
 package com.dockersim.domain;
 
+import com.dockersim.common.IdGenerator;
+import com.dockersim.dto.request.CreateContainerRequest;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -34,26 +36,25 @@ public class DockerContainer {
     @JoinColumn(name = "simulation_id", nullable = false)
     private Simulation simulation;
 
-    @Column(name = "image_id", nullable = false)
-    private String imageId;
+    @Column(name = "simulation_id", nullable = false)
+    private String simulationId;
 
-    @Column(name = "image_name", nullable = false)
-    private String imageName; // 예: "nginx:latest"
+
+    @Column(name = "base_image_id", nullable = false)
+    private String baseImageId;
 
     @Column(nullable = false, unique = true)
     private String name;
+
+    @Column(name = "container_id", nullable = false)
+    private String containerId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ContainerStatus status;
 
     private String hostPort;
-
     private String containerPort;
-
-    private String workingDir;
-
-    private String command;
 
     @Column(columnDefinition = "TEXT")
     private String environment;
@@ -66,4 +67,62 @@ public class DockerContainer {
 
     @Column(name = "stopped_at")
     private LocalDateTime stoppedAt;
+
+
+    public static DockerContainer from(CreateContainerRequest request) {
+        return DockerContainer.builder()
+            .containerId(IdGenerator.generateFullId())
+            .baseImageId(request.getBaseImageId())
+            .name(request.getName())
+            .status(request.getStatus())
+            .hostPort(request.getHostPort())
+            .containerPort(request.getContainerPort())
+            .environment(request.getEnvironment())
+            .createdAt(LocalDateTime.now())
+            .build();
+    }
+
+    public boolean start() {
+        if (this.status == ContainerStatus.CREATED ||
+            this.status == ContainerStatus.EXITED) {
+            this.status = ContainerStatus.RUNNING;
+            this.startedAt = LocalDateTime.now();
+            return true;
+        }
+        return false;
+    }
+
+    public boolean kill() {
+        if (this.status == ContainerStatus.RUNNING || this.status == ContainerStatus.PAUSED) {
+            this.status = ContainerStatus.EXITED;
+            this.stoppedAt = LocalDateTime.now();
+            return true;
+        }
+        return false;
+    }
+
+    public boolean stop() {
+        if (this.status == ContainerStatus.RUNNING) {
+            this.status = ContainerStatus.EXITED;
+            this.stoppedAt = LocalDateTime.now();
+            return true;
+        }
+        return false;
+    }
+
+    public boolean pause() {
+        if (this.status == ContainerStatus.RUNNING) {
+            this.status = ContainerStatus.PAUSED;
+            return true;
+        }
+        return false;
+    }
+
+    public boolean unpause() {
+        if (this.status == ContainerStatus.PAUSED) {
+            this.status = ContainerStatus.RUNNING;
+            return true;
+        }
+        return false;
+    }
 }

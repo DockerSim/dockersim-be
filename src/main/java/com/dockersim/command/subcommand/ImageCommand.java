@@ -12,15 +12,17 @@ import picocli.CommandLine.Command;
 
 @Component
 @Command(name = "image",
-        description = "Manage images",
-        subcommands = {
-                ImagePullCommand.class,
-                ImagePushCommand.class, // push 명령어 등록
-                ImageRemoveCommand.class,
-                ImageBuildCommand.class,
-                ImagePruneCommand.class,
-                ImageInspectCommand.class,
-                ImageLsCommand.class
-        }
+    description = "image command",
+    subcommands = {
+        ImagePullCommand.class,
+        ImagePushCommand.class, // push 명령어 등록
+        ImageRemoveCommand.class,
+        ImageBuildCommand.class,
+        ImagePruneCommand.class,
+        ImageInspectCommand.class,
+        ImageLsCommand.class
+    }
 )
-public class ImageCommand { }
+public class ImageCommand {
+
+}

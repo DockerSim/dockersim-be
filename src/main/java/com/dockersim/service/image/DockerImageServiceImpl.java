@@ -1,5 +1,6 @@
 package com.dockersim.service.image;
 
+import com.dockersim.common.IdGenerator;
 import com.dockersim.context.SimulationContextHolder;
 import com.dockersim.domain.ContainerStatus;
 import com.dockersim.domain.DockerContainer;
@@ -129,14 +130,14 @@ public class DockerImageServiceImpl implements DockerImageService {
         List<String> consoleOutput = new ArrayList<>();
         if (quiet) {
             for (DockerImage image : localImages) {
-                consoleOutput.add(getShortId(image.getImageId()));
+                consoleOutput.add(IdGenerator.getShortId(image.getImageId()));
             }
         } else {
             consoleOutput.add(getConsoleHeader());
             for (DockerImage image : localImages) {
                 String repository = image.getNamespace().equals("library") ?
                     image.getName() : image.getNamespace() + "/" + image.getName();
-                String shortId = getShortId(image.getImageId());
+                String shortId = IdGenerator.getShortId(image.getImageId());
                 String created = formatDuration(
                     Duration.between(image.getCreatedAt(), LocalDateTime.now()));
                 String imageLine = String.format("%-25s %-20s %-15s %-20s", repository,
@@ -288,7 +289,7 @@ public class DockerImageServiceImpl implements DockerImageService {
     }
 
     private Simulation getCurrentSimulation() {
-        UUID simulationId = SimulationContextHolder.getSimulationId();
+        String simulationId = SimulationContextHolder.getSimulationId();
         return simulationFinder.findSimulationByUUID(simulationId);
     }
 
@@ -317,9 +318,5 @@ public class DockerImageServiceImpl implements DockerImageService {
 
     private String getConsoleHeader() {
         return String.format("%-25s %-20s %-15s %-20s", "REPOSITORY", "TAG", "IMAGE ID", "CREATED");
-    }
-
-    private String getShortId(String id) {
-        return id.length() > 12 ? id.substring(0, 12) : id;
     }
 }

@@ -29,7 +29,7 @@ public class User {
     private Long id;
 
     @Column(name = "user_id", unique = true, nullable = false, updatable = false)
-    private UUID userId;
+    private String userId;
 
     @Column(nullable = false)
     private String name;
@@ -43,7 +43,7 @@ public class User {
 
     public static User fromUserRequest(UserRequest request) {
         return User.builder()
-            .userId(UUID.randomUUID())
+            .userId(UUID.randomUUID().toString())
             .name(request.getName())
             .email(request.getEmail())
             .createdAt(LocalDateTime.now())

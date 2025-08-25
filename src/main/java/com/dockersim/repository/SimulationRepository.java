@@ -11,9 +11,9 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface SimulationRepository extends JpaRepository<Simulation, Long> {
 
-    Optional<Simulation> findBySimulationId(UUID simulationId);
+    Optional<Simulation> findBySimulationId(String simulationId);
 
-    boolean existsBySimulationId(UUID simulationId);
+    boolean existsBySimulationId(String simulationId);
 
     @Query("SELECT COUNT(c) FROM Simulation s JOIN s.collaborators c WHERE s.simulationId = :simulationId")
     long countCollaborators(@Param("simulationId") UUID simulationId);
@@ -21,8 +21,8 @@ public interface SimulationRepository extends JpaRepository<Simulation, Long> {
     @Query("SELECT COUNT(s) > 0 FROM Simulation s " +
         "WHERE s.title = :title AND s.owner.userId = :ownerId AND s.simulationId != :excludeId")
     boolean existsByTitleAndOwnerIdAndNotId(@Param("title") String title,
-        @Param("ownerId") UUID ownerId,
-        @Param("excludeId") UUID excludeId);
+        @Param("ownerId") String ownerId,
+        @Param("excludeId") String excludeId);
 
     @Query("SELECT COUNT(s) > 0 FROM Simulation s " +
         "WHERE s.title = :title AND s.owner.userId = :ownerId")
@@ -30,5 +30,5 @@ public interface SimulationRepository extends JpaRepository<Simulation, Long> {
 
     @Query("SELECT s FROM Simulation s LEFT JOIN FETCH s.collaborators WHERE s.simulationId = :simulationId")
     Optional<Simulation> findBySimulationIdWithCollaborators(
-        @Param("simulationId") UUID simulationId);
+        @Param("simulationId") String simulationId);
 }

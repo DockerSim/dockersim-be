@@ -1,5 +1,6 @@
 package com.dockersim.domain;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -10,8 +11,11 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -55,6 +59,10 @@ public class DockerImage {
     @JoinColumn(name = "simulation_id", nullable = false)
     private Simulation simulation;
 
+    @OneToMany(mappedBy = "dockerImage", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<DockerContainer> containers = new ArrayList<>();
+
     public static DockerImage from(DockerOfficeImage officeImage, Simulation simulation) {
         return DockerImage.builder()
             .imageId(officeImage.getImageId())
@@ -62,7 +70,7 @@ public class DockerImage {
             .namespace(officeImage.getNamespace())
             .createdAt(officeImage.getLastUpdated())
             .tag(officeImage.getTag())
-            .location(ImageLocation.LOCAL)
+            .location(ImageLocation.LOCAL) // pull한 이미지는 로컬에 저장되므로 LOCAL
             .simulation(simulation)
             .build();
     }
