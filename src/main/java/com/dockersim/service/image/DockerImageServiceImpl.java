@@ -164,7 +164,8 @@ public class DockerImageServiceImpl implements DockerImageService {
         }
 
         DockerImage image = imagesToRemove.get(0);
-        if (containerFinder.existsByImageIdAndStatus(image.getImageId(), ContainerStatus.RUNNING)) {
+        if (containerFinder.existsByBaseImageIdAndStatus(image.getImageId(),
+            ContainerStatus.RUNNING)) {
             String errorMessage = String.format(
                 "Error response from daemon: conflict: unable to remove repository reference \"%s:%s\" (must force) - container is using its referenced image",
                 image.getName(), image.getTag());
@@ -239,7 +240,7 @@ public class DockerImageServiceImpl implements DockerImageService {
         // 현재 시뮬레이션에 존재하는 모든 컨테이너 목록을 가져옵니다.
         List<DockerContainer> allContainers = simulation.getDockerContainers();
         Set<String> usedImageIds = allContainers.stream()
-            .map(DockerContainer::getImageId)
+            .map(DockerContainer::getBaseImageId)
             .collect(Collectors.toSet());
 
         List<DockerImage> imagesToPrune = allLocalImages.stream()
@@ -290,7 +291,7 @@ public class DockerImageServiceImpl implements DockerImageService {
 
     private Simulation getCurrentSimulation() {
         String simulationId = SimulationContextHolder.getSimulationId();
-        return simulationFinder.findSimulationByUUID(simulationId);
+        return simulationFinder.findBySimulationId(simulationId);
     }
 
     private String formatDuration(Duration duration) {

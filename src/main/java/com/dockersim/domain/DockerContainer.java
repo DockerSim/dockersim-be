@@ -36,11 +36,11 @@ public class DockerContainer {
     @JoinColumn(name = "simulation_id", nullable = false)
     private Simulation simulation;
 
-    @Column(name = "simulation_id", nullable = false)
+    @Column(name = "simulation_id_str", nullable = false)
     private String simulationId;
 
 
-    @Column(name = "base_image_id", nullable = false)
+    @Column(name = "image_id", nullable = false)
     private String baseImageId;
 
     @Column(nullable = false, unique = true)

@@ -10,6 +10,7 @@ import com.dockersim.exception.code.UserErrorCode;
 import com.dockersim.integration.IntegrationTestSupport;
 import com.dockersim.repository.UserRepository;
 import com.dockersim.service.user.UserService;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -102,7 +103,7 @@ class UserServiceIntegrationTest extends IntegrationTestSupport {
     @Test
     @DisplayName("존재하지 않는 사용자 조회 시 실패")
     void getUserNotFound() {
-        assertThatThrownBy(() -> userService.getUser(java.util.UUID.randomUUID()))
+        assertThatThrownBy(() -> userService.getUser(UUID.randomUUID().toString()))
             .isInstanceOf(BusinessException.class)
             .hasFieldOrPropertyWithValue("errorCode", UserErrorCode.USER_NOT_FOUND);
     }
@@ -110,7 +111,7 @@ class UserServiceIntegrationTest extends IntegrationTestSupport {
     @Test
     @DisplayName("존재하지 않는 사용자 삭제 시 실패")
     void deleteUserNotFound() {
-        assertThatThrownBy(() -> userService.deleteUser(java.util.UUID.randomUUID()))
+        assertThatThrownBy(() -> userService.deleteUser(UUID.randomUUID().toString()))
             .isInstanceOf(BusinessException.class)
             .hasFieldOrPropertyWithValue("errorCode", UserErrorCode.USER_NOT_FOUND);
     }

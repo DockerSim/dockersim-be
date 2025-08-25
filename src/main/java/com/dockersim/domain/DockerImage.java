@@ -59,7 +59,7 @@ public class DockerImage {
     @JoinColumn(name = "simulation_id", nullable = false)
     private Simulation simulation;
 
-    @OneToMany(mappedBy = "dockerImage", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "baseImageId", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<DockerContainer> containers = new ArrayList<>();
 

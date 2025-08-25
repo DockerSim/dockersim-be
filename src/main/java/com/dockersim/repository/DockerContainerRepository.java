@@ -9,7 +9,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface DockerContainerRepository extends JpaRepository<DockerContainer, Long> {
 
-    boolean existsByImageIdAndStatus(String imageId, ContainerStatus status);
+    boolean existsByBaseImageIdAndStatus(String imageId, ContainerStatus status);
 
     Optional<DockerContainer> findByNameAndStatusAndSimulationId(String name,
         ContainerStatus status, String simulationId);

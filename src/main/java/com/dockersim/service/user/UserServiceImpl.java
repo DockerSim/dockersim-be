@@ -6,7 +6,6 @@ import com.dockersim.dto.response.UserResponse;
 import com.dockersim.exception.BusinessException;
 import com.dockersim.exception.code.UserErrorCode;
 import com.dockersim.repository.UserRepository;
-import java.util.UUID;
 import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,15 +35,15 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(readOnly = true)
-    public UserResponse getUser(UUID id) {
+    public UserResponse getUser(String id) {
         // 주입된 userFinder 사용
-        return UserResponse.from(userFinder.findUserByUUID(id));
+        return UserResponse.from(userFinder.findUserByUserId(id));
     }
 
     @Override
-    public void deleteUser(UUID id) {
+    public void deleteUser(String id) {
         // 주입된 userFinder 사용
-        userRepository.delete(userFinder.findUserByUUID(id));
+        userRepository.delete(userFinder.findUserByUserId(id));
     }
 
     private void validateEmailFormat(String email) {

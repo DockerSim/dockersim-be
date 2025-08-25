@@ -14,11 +14,11 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class CollaboratorResponse {
 
-    private UUID userId;
+    private String userId;
     private String email;
     private String name;
     private LocalDateTime invitedAt;
-    private UUID invitedBy;
+    private String invitedBy;
 
     public static CollaboratorResponse from(SimulationCollaborator collaborator) {
         return CollaboratorResponse.builder()

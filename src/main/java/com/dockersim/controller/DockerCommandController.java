@@ -8,7 +8,6 @@ import com.dockersim.service.command.CommandExecutorService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -44,7 +43,7 @@ public class DockerCommandController {
     @PostMapping("/simulations/{simulationId}/command")
     public ResponseEntity<ApiResponse<CommandResult>> executeCommand(
         @Parameter(description = "시뮬레이션을 조작핧 사용자 UUID", required = true, hidden = true) @AuthenticationPrincipal Long userId,
-        @Parameter(description = "명령을 실행할 시뮬레이션 UUID", required = true) @PathVariable UUID simulationId,
+        @Parameter(description = "명령을 실행할 시뮬레이션 UUID", required = true) @PathVariable String simulationId,
         @Parameter(description = "실행할 도커 명령어", required = true) @RequestBody String command
     ) {
         SimulationContextHolder.setSimulationId(simulationId);

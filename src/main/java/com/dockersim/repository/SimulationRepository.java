@@ -2,7 +2,6 @@ package com.dockersim.repository;
 
 import com.dockersim.domain.Simulation;
 import java.util.Optional;
-import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,7 +15,7 @@ public interface SimulationRepository extends JpaRepository<Simulation, Long> {
     boolean existsBySimulationId(String simulationId);
 
     @Query("SELECT COUNT(c) FROM Simulation s JOIN s.collaborators c WHERE s.simulationId = :simulationId")
-    long countCollaborators(@Param("simulationId") UUID simulationId);
+    long countCollaborators(@Param("simulationId") String simulationId);
 
     @Query("SELECT COUNT(s) > 0 FROM Simulation s " +
         "WHERE s.title = :title AND s.owner.userId = :ownerId AND s.simulationId != :excludeId")
@@ -26,7 +25,7 @@ public interface SimulationRepository extends JpaRepository<Simulation, Long> {
 
     @Query("SELECT COUNT(s) > 0 FROM Simulation s " +
         "WHERE s.title = :title AND s.owner.userId = :ownerId")
-    boolean existsByTitleAndOwnerId(@Param("title") String title, @Param("ownerId") UUID ownerId);
+    boolean existsByTitleAndOwnerId(@Param("title") String title, @Param("ownerId") String ownerId);
 
     @Query("SELECT s FROM Simulation s LEFT JOIN FETCH s.collaborators WHERE s.simulationId = :simulationId")
     Optional<Simulation> findBySimulationIdWithCollaborators(

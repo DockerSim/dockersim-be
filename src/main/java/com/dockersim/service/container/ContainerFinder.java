@@ -15,7 +15,7 @@ public interface ContainerFinder {
      * @param status  확인할 컨테이너 상태
      * @return 존재하면 true, 그렇지 않으면 false
      */
-    boolean existsByImageIdAndStatus(String imageId, ContainerStatus status);
+    boolean existsByBaseImageIdAndStatus(String imageId, ContainerStatus status);
 
     /**
      * 현재 시뮬레이션의 모든 컨테이너를 조회합니다.

@@ -10,18 +10,15 @@ import static org.mockito.Mockito.verify;
 import com.dockersim.domain.Simulation;
 import com.dockersim.domain.SimulationShareState;
 import com.dockersim.domain.User;
-import com.dockersim.dto.request.CollaboratorRequest;
 import com.dockersim.dto.request.SimulationRequest;
 import com.dockersim.dto.response.SimulationResponse;
 import com.dockersim.exception.BusinessException;
-import com.dockersim.exception.code.SimulationErrorCode;
 import com.dockersim.exception.code.UserErrorCode;
 import com.dockersim.repository.SimulationRepository;
 import com.dockersim.service.simulation.SimulationFinder;
 import com.dockersim.service.simulation.SimulationServiceImpl;
 import com.dockersim.service.user.UserFinder;
 import java.time.LocalDateTime;
-import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -51,13 +48,13 @@ class SimulationServiceTest {
     private User testCollaborator;
     private Simulation testSimulation;
     private SimulationRequest testRequest;
-    private UUID simulationId;
-    private UUID ownerId;
+    private String simulationId;
+    private String ownerId;
 
     @BeforeEach
     void setUp() {
-        ownerId = UUID.randomUUID();
-        simulationId = UUID.randomUUID();
+        ownerId = UUID.randomUUID().toString();
+        simulationId = UUID.randomUUID().toString();
 
         testOwner = User.builder()
             .userId(ownerId)
@@ -67,7 +64,7 @@ class SimulationServiceTest {
             .build();
 
         testCollaborator = User.builder()
-            .userId(UUID.randomUUID())
+            .userId(UUID.randomUUID().toString())
             .email("collaborator@example.com")
             .name("Test Collaborator")
             .createdAt(LocalDateTime.now())
@@ -85,7 +82,7 @@ class SimulationServiceTest {
     @DisplayName("시뮬레이션 생성 - 성공")
     void createSimulation_Success() {
         // given
-        given(userFinder.findUserByUUID(ownerId)).willReturn(testOwner);
+        given(userFinder.findUserByUserId(ownerId)).willReturn(testOwner);
         given(simulationRepository.existsByTitleAndOwnerId(testRequest.getTitle(), ownerId))
             .willReturn(false);
         given(simulationRepository.save(any(Simulation.class))).willReturn(testSimulation);
@@ -104,7 +101,8 @@ class SimulationServiceTest {
     @DisplayName("시뮬레이션 생성 - 소유자 없음 실패")
     void createSimulation_OwnerNotFound() {
         // given
-        given(userFinder.findUserByUUID(ownerId)).willThrow(new BusinessException(UserErrorCode.USER_NOT_FOUND));
+        given(userFinder.findUserByUserId(ownerId)).willThrow(
+            new BusinessException(UserErrorCode.USER_NOT_FOUND));
 
         // when & then
         assertThatThrownBy(() -> simulationService.createSimulation(ownerId, testRequest))

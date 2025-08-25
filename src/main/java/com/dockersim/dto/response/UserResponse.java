@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 @Builder
 public class UserResponse {
 
-    private UUID userId;
+    private String userId;
     private String name;
     private String email;
     private LocalDateTime createdAt;

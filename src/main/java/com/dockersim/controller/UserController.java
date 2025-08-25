@@ -7,7 +7,6 @@ import com.dockersim.service.user.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -53,7 +52,7 @@ public class UserController {
     @Operation(summary = "사용자 정보 조회", description = "사용자 정보를 조회합니다.")
     @GetMapping
     public ResponseEntity<ApiResponse<UserResponse>> getUser(
-        @Parameter(hidden = true, description = "조회할 사용자 UUID") @AuthenticationPrincipal UUID userId
+        @Parameter(hidden = true, description = "조회할 사용자 UUID") @AuthenticationPrincipal String userId
     ) {
         return ResponseEntity.ok(ApiResponse.success(userService.getUser(userId)));
     }
@@ -67,7 +66,7 @@ public class UserController {
     @Operation(summary = "사용자 삭제", description = "사용자를 삭제합니다.")
     @DeleteMapping
     public ResponseEntity<ApiResponse<Void>> deleteUser(
-        @Parameter(hidden = true, description = "삭제할 사용자 UUID") @AuthenticationPrincipal UUID userId
+        @Parameter(hidden = true, description = "삭제할 사용자 UUID") @AuthenticationPrincipal String userId
     ) {
         userService.deleteUser(userId);
         return ResponseEntity.ok(ApiResponse.success());

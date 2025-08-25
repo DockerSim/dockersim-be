@@ -9,10 +9,10 @@ import com.dockersim.repository.DockerContainerRepository;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service
+@Component
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class ContainerFinderImpl implements ContainerFinder {
@@ -20,8 +20,8 @@ public class ContainerFinderImpl implements ContainerFinder {
     private final DockerContainerRepository repo;
 
     @Override
-    public boolean existsByImageIdAndStatus(String imageId, ContainerStatus status) {
-        return repo.existsByImageIdAndStatus(imageId, status);
+    public boolean existsByBaseImageIdAndStatus(String imageId, ContainerStatus status) {
+        return repo.existsByBaseImageIdAndStatus(imageId, status);
     }
 
     @Override

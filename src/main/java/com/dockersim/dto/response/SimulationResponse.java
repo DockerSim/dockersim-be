@@ -2,7 +2,6 @@ package com.dockersim.dto.response;
 
 import com.dockersim.domain.Simulation;
 import java.time.LocalDateTime;
-import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -17,10 +16,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class SimulationResponse {
 
-    private UUID simulationId;
+    private String simulationId;
     private String title;
     private String shareState;
-    private UUID ownerId;
+    private String ownerId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 

@@ -4,7 +4,6 @@ import com.dockersim.domain.User;
 import com.dockersim.exception.BusinessException;
 import com.dockersim.exception.code.UserErrorCode;
 import com.dockersim.repository.UserRepository;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,7 +16,7 @@ public class UserFinderImpl implements UserFinder {
     private final UserRepository userRepository;
 
     @Override
-    public User findUserByUUID(UUID userId) {
+    public User findUserByUserId(String userId) {
         return userRepository.findByUserId(userId)
             .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND, userId));
     }

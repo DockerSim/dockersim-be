@@ -12,7 +12,6 @@ import com.dockersim.exception.code.SimulationErrorCode;
 import com.dockersim.repository.SimulationRepository;
 import com.dockersim.service.user.UserFinder;
 import java.util.List;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -31,8 +30,8 @@ public class SimulationServiceImpl implements SimulationService {
     private final SimulationRepository simulationRepository;
 
     @Override
-    public SimulationResponse createSimulation(UUID ownerId, SimulationRequest request) {
-        User owner = userFinder.findUserByUUID(ownerId);
+    public SimulationResponse createSimulation(String ownerId, SimulationRequest request) {
+        User owner = userFinder.findUserByUserId(ownerId);
         validateSimulationTitle(request.getTitle(), ownerId);
         SimulationShareState shareState = validateShareState(request.getShareState());
 
@@ -42,11 +41,11 @@ public class SimulationServiceImpl implements SimulationService {
 
     @Override
     @Transactional(readOnly = true)
-    public SimulationResponse getSimulation(UUID userId, UUID simulationId) {
-        Simulation simulation = simulationFinder.findSimulationByUUID(simulationId);
+    public SimulationResponse getSimulation(String userId, String simulationId) {
+        Simulation simulation = simulationFinder.findBySimulationId(simulationId);
 
         if (simulation.getShareState() != SimulationShareState.READ) {
-            User user = userFinder.findUserByUUID(userId);
+            User user = userFinder.findUserByUserId(userId);
             validateSimulationAccess(simulation, user);
         }
 
@@ -54,10 +53,10 @@ public class SimulationServiceImpl implements SimulationService {
     }
 
     @Override
-    public SimulationResponse updateSimulation(UUID ownerId, UUID simulationId,
+    public SimulationResponse updateSimulation(String ownerId, String simulationId,
         SimulationRequest request) {
-        User owner = userFinder.findUserByUUID(ownerId);
-        Simulation simulation = simulationFinder.findSimulationByUUID(simulationId);
+        User owner = userFinder.findUserByUserId(ownerId);
+        Simulation simulation = simulationFinder.findBySimulationId(simulationId);
 
         validateOwnership(simulation, owner);
         validateSimulationTitle(request.getTitle(), ownerId, simulationId);
@@ -75,9 +74,9 @@ public class SimulationServiceImpl implements SimulationService {
     }
 
     @Override
-    public void deleteSimulation(UUID ownerId, UUID simulationId) {
-        User owner = userFinder.findUserByUUID(ownerId);
-        Simulation simulation = simulationFinder.findSimulationByUUID(simulationId);
+    public void deleteSimulation(String ownerId, String simulationId) {
+        User owner = userFinder.findUserByUserId(ownerId);
+        Simulation simulation = simulationFinder.findBySimulationId(simulationId);
 
         validateOwnership(simulation, owner);
 
@@ -85,9 +84,9 @@ public class SimulationServiceImpl implements SimulationService {
     }
 
     @Override
-    public CollaboratorResponse inviteCollaborator(UUID simulationId, UUID ownerId,
+    public CollaboratorResponse inviteCollaborator(String simulationId, String ownerId,
         CollaboratorRequest request) {
-        User owner = userFinder.findUserByUUID(ownerId);
+        User owner = userFinder.findUserByUserId(ownerId);
         Simulation simulation = simulationFinder.findSimulationWithCollaborators(simulationId);
 
         validateOwnership(simulation, owner);
@@ -104,8 +103,8 @@ public class SimulationServiceImpl implements SimulationService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<CollaboratorResponse> getCollaborators(UUID userId, UUID simulationId) {
-        User user = userFinder.findUserByUUID(userId);
+    public List<CollaboratorResponse> getCollaborators(String userId, String simulationId) {
+        User user = userFinder.findUserByUserId(userId);
         Simulation simulation = simulationFinder.findSimulationWithCollaborators(simulationId);
 
         validateSimulationAccess(simulation, user);
@@ -116,9 +115,9 @@ public class SimulationServiceImpl implements SimulationService {
     }
 
     @Override
-    public void removeCollaborator(UUID ownerId, UUID simulationId, UUID collaboratorId) {
-        User owner = userFinder.findUserByUUID(ownerId);
-        User collaborator = userFinder.findUserByUUID(collaboratorId);
+    public void removeCollaborator(String ownerId, String simulationId, String collaboratorId) {
+        User owner = userFinder.findUserByUserId(ownerId);
+        User collaborator = userFinder.findUserByUserId(collaboratorId);
         Simulation simulation = simulationFinder.findSimulationWithCollaborators(simulationId);
 
         validateOwnership(simulation, owner);
@@ -128,9 +127,9 @@ public class SimulationServiceImpl implements SimulationService {
         simulationRepository.save(simulation);
     }
 
-    // findSimulationByUUID, findSimulationWithCollaborators 메서드 제거
+    // findSimulationByString, findSimulationWithCollaborators 메서드 제거
 
-    private void validateSimulationTitle(String title, UUID ownerId, UUID currentSimulationId) {
+    private void validateSimulationTitle(String title, String ownerId, String currentSimulationId) {
         if (currentSimulationId != null) {
             if (simulationRepository.existsByTitleAndOwnerIdAndNotId(title, ownerId,
                 currentSimulationId)) {
@@ -143,7 +142,7 @@ public class SimulationServiceImpl implements SimulationService {
         }
     }
 
-    private void validateSimulationTitle(String title, UUID ownerId) {
+    private void validateSimulationTitle(String title, String ownerId) {
         validateSimulationTitle(title, ownerId, null);
     }
 
