@@ -147,4 +147,8 @@ public class PostService {
             })
             .collect(Collectors.toList());
     }
+
+    public int getLikesCount(Long postId) {
+        return (int) postLikeRepository.countByPostId(postId);
+    }
 }
