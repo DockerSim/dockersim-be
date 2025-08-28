@@ -1,33 +1,37 @@
 package com.dockersim.command.subcommand.image;
 
+import com.dockersim.command.subcommand.ImageCommand;
 import com.dockersim.dto.response.CommandResult;
-import com.dockersim.dto.response.ImageListResponse;
+import com.dockersim.dto.response.CommandResultStatus;
 import com.dockersim.service.image.DockerImageService;
 import java.util.concurrent.Callable;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
+import picocli.CommandLine.ParentCommand;
 
-@Command(name = "ls",
-    aliases = "list",
-    description = "List images"
-)
+@Command(name = "ls", aliases = "list")
+@Component
 @RequiredArgsConstructor
 public class ImageLsCommand implements Callable<CommandResult> {
 
-    private final DockerImageService dockerImageService;
+    private final DockerImageService service;
+
+    @ParentCommand
+    private ImageCommand parent;
 
     @Option(names = {"-a", "--all"}, description = "댕글링 이미지를 포함합니다.")
     private boolean all;
 
-    @Option(names = {"-q", "--quiet"}, description = "이미지 ID만 출력합니다.")
+    @Option(names = {"-q", "--quiet"}, description = "Hex ID만 출력합니다.")
     private boolean quiet;
 
     @Override
-    public CommandResult call() {
-        ImageListResponse response = dockerImageService.listImages(all, quiet);
+    public CommandResult call() throws Exception {
         return CommandResult.builder()
-            .console(response.getConsole())
+            .console(service.ls(parent.getPrincipal(), all, quiet))
+            .status(CommandResultStatus.READ)
             .build();
     }
 }

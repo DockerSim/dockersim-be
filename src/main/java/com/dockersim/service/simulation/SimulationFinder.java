@@ -4,7 +4,11 @@ import com.dockersim.domain.Simulation;
 
 public interface SimulationFinder {
 
-    Simulation findBySimulationId(String simulationId);
+    boolean existsByPublicId(String publicId);
+
+    Simulation findById(Long id);
+
+    Simulation findByPublicId(String publicId);
 
     Simulation findSimulationWithCollaborators(String simulationId);
 }

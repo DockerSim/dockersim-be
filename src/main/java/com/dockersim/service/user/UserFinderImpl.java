@@ -5,25 +5,31 @@ import com.dockersim.exception.BusinessException;
 import com.dockersim.exception.code.UserErrorCode;
 import com.dockersim.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service
+@Component
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class UserFinderImpl implements UserFinder {
 
-    private final UserRepository userRepository;
+    private final UserRepository repo;
 
     @Override
-    public User findUserByUserId(String userId) {
-        return userRepository.findByUserId(userId)
-            .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND, userId));
+    public User findUserById(Long id) {
+        return repo.findById(id).orElseThrow(
+            () -> new BusinessException(UserErrorCode.USER_NOT_FOUND, id));
+    }
+
+    @Override
+    public User findUserByPublicId(String publicId) {
+        return repo.findByPublicId(publicId).orElseThrow(
+            () -> new BusinessException(UserErrorCode.USER_NOT_FOUND, publicId));
     }
 
     @Override
     public User findUserByEmail(String email) {
-        return userRepository.findByEmail(email)
+        return repo.findByEmail(email)
             .orElseThrow(() -> new BusinessException(UserErrorCode.USER_EMAIL_NOT_FOUND, email));
     }
 }

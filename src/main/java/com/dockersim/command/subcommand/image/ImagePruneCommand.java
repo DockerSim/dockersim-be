@@ -1,39 +1,39 @@
 package com.dockersim.command.subcommand.image;
 
+import com.dockersim.command.subcommand.ImageCommand;
 import com.dockersim.dto.response.CommandResult;
+import com.dockersim.dto.response.CommandResultStatus;
+import com.dockersim.dto.response.DockerImageResponse;
 import com.dockersim.service.image.DockerImageService;
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
+import picocli.CommandLine.ParentCommand;
 
-@Command(name = "prune", description = "Remove unused images")
+@Command(name = "prune")
+@Component
+@RequiredArgsConstructor
 public class ImagePruneCommand implements Callable<CommandResult> {
 
-    private final DockerImageService dockerImageService;
+    private final DockerImageService service;
 
-    public ImagePruneCommand(DockerImageService dockerImageService) {
-        this.dockerImageService = dockerImageService;
-    }
+    @ParentCommand
+    private ImageCommand parent;
+
+    @Option(names = {"-a", "--all"}, description = "기본 동작 변경: 컨테이너에 연결되지 않는 모든 이미지 삭제")
+    private boolean all;
 
     @Override
     public CommandResult call() throws Exception {
-        List<String> prunedImageIds = dockerImageService.pruneImages();
-
-        List<String> consoleOutput = prunedImageIds.stream()
-            .map(id -> "Deleted: " + id)
-            .collect(Collectors.toList());
-
-        if (!consoleOutput.isEmpty()) {
-            consoleOutput.add(0, "The following images were pruned:");
-            // In a real scenario, we would calculate the actual space reclaimed.
-            consoleOutput.add("Total reclaimed space: 0B");
-        } else {
-            consoleOutput.add("Total reclaimed space: 0B");
-        }
-
+        List<DockerImageResponse> prune = service.prune(parent.getPrincipal(), all);
         return CommandResult.builder()
-            .console(consoleOutput)
+            .console(prune.stream()
+                .flatMap(response -> response.getConsole().stream()).toList())
+            .status(CommandResultStatus.DELETE)
+            .changedImages(prune)
             .build();
     }
 }

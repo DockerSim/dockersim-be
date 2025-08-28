@@ -53,5 +53,5 @@ public interface ContainerFinder {
      * @return 조회환 컨테이너 반환
      */
     DockerContainer findByNameOrIdAndStatusAndSimulationId(String nameOrId, ContainerStatus status,
-        String simulationId);
+        Long simulationId);
 }

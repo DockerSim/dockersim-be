@@ -37,13 +37,13 @@ public class UserServiceImpl implements UserService {
     @Transactional(readOnly = true)
     public UserResponse getUser(String id) {
         // 주입된 userFinder 사용
-        return UserResponse.from(userFinder.findUserByUserId(id));
+        return UserResponse.from(userFinder.findUserByPublicId(id));
     }
 
     @Override
     public void deleteUser(String id) {
         // 주입된 userFinder 사용
-        userRepository.delete(userFinder.findUserByUserId(id));
+        userRepository.delete(userFinder.findUserByPublicId(id));
     }
 
     private void validateEmailFormat(String email) {

@@ -58,18 +58,18 @@ class DockerImageServiceImplTest {
     void setUp() {
         user = User.builder().name("testuser").build();
         simulation = Simulation.builder()
-            .simulationId(UUID.randomUUID())
+            .publicId(UUID.randomUUID().toString())
             .owner(user)
             .dockerImages(new ArrayList<>())
             .dockerContainers(new ArrayList<>())
             .build();
-        given(simulationFinder.findSimulationByUUID(any())).willReturn(simulation);
+        given(simulationFinder.findByPublicId(any())).willReturn(simulation);
     }
 
     private DockerImage createTestImage(String id, String name, String tag,
         ImageLocation location) {
         return DockerImage.builder()
-            .imageId(id).name(name).namespace(user.getName()).tag(tag)
+            .hexId(id).name(name).namespace(user.getName()).tag(tag)
             .location(location).createdAt(LocalDateTime.now()).simulation(simulation).build();
     }
 

@@ -2,6 +2,7 @@ package com.dockersim.domain;
 
 import com.dockersim.common.IdGenerator;
 import com.dockersim.dto.request.CreateContainerRequest;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -12,8 +13,12 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -32,32 +37,33 @@ public class DockerContainer {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "simulation_id", nullable = false)
-    private Simulation simulation;
-
-    @Column(name = "simulation_id_str", nullable = false)
-    private String simulationId;
-
-
-    @Column(name = "image_id", nullable = false)
-    private String baseImageId;
-
-    @Column(nullable = false, unique = true)
     private String name;
 
-    @Column(name = "container_id", nullable = false)
-    private String containerId;
+    @Column(name = "hex_id", unique = true, nullable = false, updatable = false)
+    private String hexId;
+
+    @Column(name = "hex_short_id", unique = true, nullable = false, updatable = false)
+    private String hexShortId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ContainerStatus status;
 
-    private String hostPort;
-    private String containerPort;
 
-    @Column(columnDefinition = "TEXT")
-    private String environment;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "simulation_id", nullable = false)
+    private Simulation simulation;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "image_id")
+    private DockerImage baseImage;
+
+    @OneToMany(mappedBy = "container", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<ContainerVolume> containerVolumes = new HashSet<>();
+
+    private String ports;
+    private String bindVolumes;
+    private String envs;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
@@ -70,15 +76,17 @@ public class DockerContainer {
 
 
     public static DockerContainer from(CreateContainerRequest request) {
+        String hexId = IdGenerator.generateHexFullId();
         return DockerContainer.builder()
-            .containerId(IdGenerator.generateFullId())
+            .hexId(hexId)
+            .shortPublidId(IdGenerator.getShortId(hexId))
+
             .baseImageId(request.getBaseImageId())
             .name(request.getName())
             .status(request.getStatus())
-            .hostPort(request.getHostPort())
-            .containerPort(request.getContainerPort())
-            .environment(request.getEnvironment())
-            .createdAt(LocalDateTime.now())
+            .ports(request.getPorts())
+            .bindVolumes(request.getBindVolumes())
+            .envs(request.getEnvs())
             .build();
     }
 
@@ -124,5 +132,10 @@ public class DockerContainer {
             return true;
         }
         return false;
+    }
+
+    @PrePersist
+    public void onPrePersist() {
+        this.createdAt = LocalDateTime.now();
     }
 }

@@ -41,7 +41,7 @@ public class ContainerFinderImpl implements ContainerFinder {
 
     @Override
     public DockerContainer findByNameOrIdAndStatusAndSimulationId(
-        String nameOrId, ContainerStatus status, String simulationId
+        String nameOrId, ContainerStatus status, Long simulationId
     ) {
         return repo.findByNameAndStatusAndSimulationId(
             nameOrId,

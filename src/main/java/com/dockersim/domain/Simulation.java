@@ -1,5 +1,6 @@
 package com.dockersim.domain;
 
+import com.dockersim.common.IdGenerator;
 import com.dockersim.dto.request.SimulationRequest;
 import com.dockersim.exception.BusinessException;
 import com.dockersim.exception.code.SimulationErrorCode;
@@ -19,7 +20,6 @@ import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -37,8 +37,8 @@ public class Simulation {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "simulation_id", unique = true, nullable = false, updatable = false)
-    private String simulationId;
+    @Column(name = "public_id", unique = true, nullable = false, updatable = false)
+    private String publicId;
 
     @Column(nullable = false)
     private String title;
@@ -47,26 +47,23 @@ public class Simulation {
     @Column(name = "share_state", nullable = false)
     private SimulationShareState shareState;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "owner_id", nullable = false)
-    private User owner;
-
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User owner;
 
     @OneToMany(mappedBy = "simulation", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
     private List<SimulationCollaborator> collaborators = new ArrayList<>();
 
     @OneToMany(mappedBy = "simulation", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
     private List<DockerImage> dockerImages = new ArrayList<>();
 
     @OneToMany(mappedBy = "simulation", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
     private List<DockerContainer> dockerContainers = new ArrayList<>();
 
     public static Simulation from(
@@ -75,7 +72,7 @@ public class Simulation {
         User owner
     ) {
         return Simulation.builder()
-            .simulationId(UUID.randomUUID().toString())
+            .publicId(IdGenerator.generatePublicId())
             .title(request.getTitle())
             .shareState(shareState)
             .owner(owner)
@@ -103,7 +100,7 @@ public class Simulation {
 
     public void removeCollaborator(User user) {
         this.collaborators.removeIf(
-            collaborator -> collaborator.getUser().getUserId().equals(user.getUserId()));
+            collaborator -> collaborator.getUser().getPublicId().equals(user.getPublicId()));
     }
 
     public void removeAllCollaborators() {
@@ -115,17 +112,18 @@ public class Simulation {
     }
 
     public boolean isOwner(User user) {
-        return this.owner.getUserId().equals(user.getUserId());
+        return this.owner.getPublicId().equals(user.getPublicId());
     }
 
     public boolean isCollaborator(User user) {
         return this.collaborators.stream()
-            .anyMatch(collaborator -> collaborator.getUser().getUserId().equals(user.getUserId()));
+            .anyMatch(
+                collaborator -> collaborator.getUser().getPublicId().equals(user.getPublicId()));
     }
 
     public SimulationCollaborator findCollaborator(User user) {
         return this.collaborators.stream()
-            .filter(collaborator -> collaborator.getUser().getUserId().equals(user.getUserId()))
+            .filter(collaborator -> collaborator.getUser().getPublicId().equals(user.getPublicId()))
             .findFirst()
             .orElse(null);
     }

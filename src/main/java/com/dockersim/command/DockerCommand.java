@@ -21,15 +21,20 @@ import com.dockersim.command.aliases.container.UnpauseCommand;
 import com.dockersim.command.aliases.image.ImagesCommand;
 import com.dockersim.command.subcommand.ContainerCommand;
 import com.dockersim.command.subcommand.ImageCommand;
+import com.dockersim.command.subcommand.VolumeCommand;
+import com.dockersim.config.SimulationUserPrincipal;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.stereotype.Component;
 import picocli.CommandLine.Command;
 
 @Component
-@Command(name = "docker", mixinStandardHelpOptions = true,
+@Command(name = "docker",
     subcommands = {
         // Docker Object
         ImageCommand.class,
         ContainerCommand.class,
+        VolumeCommand.class,
 
         // Image Aliases
         ImagesCommand.class,
@@ -53,9 +58,12 @@ import picocli.CommandLine.Command;
         StartCommand.class,
         StopCommand.class,
         UnpauseCommand.class
-
     }
 )
+
+@Getter
+@Setter
 public class DockerCommand {
 
+    private SimulationUserPrincipal principal;
 }

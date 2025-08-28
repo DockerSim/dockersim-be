@@ -2,7 +2,7 @@ package com.dockersim.dto.request;
 
 
 import com.dockersim.domain.ContainerStatus;
-import com.dockersim.domain.DockerImage;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -15,17 +15,17 @@ public class CreateContainerRequest {
     String baseImageId;
     String name;
     ContainerStatus status;
-    String hostPort;
-    String containerPort;
-    String environment;
+    String ports;
+    String bindVolumes;
+    String envs;
 
-    public CreateContainerRequest(DockerImage baseImage, String name, ContainerStatus status,
-        String hostPort, String containerPort, String environment) {
-        this.baseImageId = baseImage.getImageId();
+    public CreateContainerRequest(String baseImage, String name, ContainerStatus status,
+        List<String> port, List<String> volume, List<String> env) {
+        this.baseImageId = baseImage;
         this.name = name;
         this.status = status;
-        this.hostPort = hostPort;
-        this.containerPort = containerPort;
-        this.environment = environment;
+        this.ports = String.join(",", port);
+        this.bindVolumes = String.join(",", volume);
+        this.envs = String.join(",", env);
     }
 }

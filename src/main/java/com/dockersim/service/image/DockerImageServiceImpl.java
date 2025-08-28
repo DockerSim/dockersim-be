@@ -1,34 +1,26 @@
 package com.dockersim.service.image;
 
-import com.dockersim.common.IdGenerator;
-import com.dockersim.context.SimulationContextHolder;
-import com.dockersim.domain.ContainerStatus;
-import com.dockersim.domain.DockerContainer;
+import com.dockersim.config.SimulationUserPrincipal;
+import com.dockersim.domain.DockerFile;
 import com.dockersim.domain.DockerImage;
 import com.dockersim.domain.ImageLocation;
 import com.dockersim.domain.Simulation;
+import com.dockersim.domain.User;
 import com.dockersim.dto.response.DockerImageResponse;
-import com.dockersim.dto.response.ImageListResponse;
-import com.dockersim.dto.response.ImageRemoveResponse;
 import com.dockersim.exception.BusinessException;
 import com.dockersim.exception.code.DockerImageErrorCode;
 import com.dockersim.repository.DockerImageRepository;
 import com.dockersim.service.container.ContainerFinder;
+import com.dockersim.service.dockerfile.DockerFileFinder;
 import com.dockersim.service.simulation.SimulationFinder;
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Collections;
+import com.dockersim.service.user.UserFinder;
+import com.dockersim.util.ImageUtil;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
 @Service
 @RequiredArgsConstructor
@@ -36,18 +28,21 @@ import org.springframework.util.StringUtils;
 public class DockerImageServiceImpl implements DockerImageService {
 
     private final DockerImageRepository dockerImageRepository;
+
     private final SimulationFinder simulationFinder;
     private final ContainerFinder containerFinder;
     private final DockerImageFinder dockerImageFinder;
+    private final UserFinder userFinder;
+    private final DockerFileFinder dockerFileFinder;
 
-    @Override
+    /*
     @Transactional
     public DockerImageResponse pullImage(String name) {
         if (isPotentialHexId(name)) {
             throw new BusinessException(DockerImageErrorCode.PULL_BY_ID_NOT_ALLOWED);
         }
 
-        Map<String, String> parsed = dockerImageFinder.parserImageName(name);
+        Map<String, String> parsed = ImageUtil.parserFullName(name);
         String repository = parsed.get("repository");
         String tag = parsed.get("tag");
         String namespace;
@@ -80,7 +75,6 @@ public class DockerImageServiceImpl implements DockerImageService {
             List.of("Status: Downloaded newer image for " + name));
     }
 
-    @Override
     @Transactional
     public DockerImageResponse pushImage(String imageName) {
         if (isPotentialHexId(imageName)) {
@@ -120,7 +114,6 @@ public class DockerImageServiceImpl implements DockerImageService {
         return DockerImageResponse.from(hubImage, List.of("Image successfully pushed to HUB"));
     }
 
-    @Override
     @Transactional(readOnly = true)
     public ImageListResponse listImages(boolean all, boolean quiet) {
         Simulation simulation = getCurrentSimulation();
@@ -148,7 +141,6 @@ public class DockerImageServiceImpl implements DockerImageService {
         return ImageListResponse.from(consoleOutput);
     }
 
-    @Override
     @Transactional
     public ImageRemoveResponse removeImage(String imageNameOrId) {
         Simulation simulation = getCurrentSimulation();
@@ -177,7 +169,6 @@ public class DockerImageServiceImpl implements DockerImageService {
             List.of("Untagged: " + image.getFullNameWithTag(), "Deleted: " + image.getImageId()));
     }
 
-    @Override
     @Transactional
     public String buildImage(String name) {
         Simulation simulation = getCurrentSimulation();
@@ -230,7 +221,6 @@ public class DockerImageServiceImpl implements DockerImageService {
     }
 
 
-    @Override
     @Transactional
     public List<String> pruneImages() {
         Simulation simulation = getCurrentSimulation();
@@ -260,7 +250,6 @@ public class DockerImageServiceImpl implements DockerImageService {
         return prunedImageIds;
     }
 
-    @Override
     @Transactional(readOnly = true)
     public String inspectImage(String imageNameOrId) {
         Simulation simulation = getCurrentSimulation();
@@ -290,8 +279,7 @@ public class DockerImageServiceImpl implements DockerImageService {
     }
 
     private Simulation getCurrentSimulation() {
-        String simulationId = SimulationContextHolder.getSimulationId();
-        return simulationFinder.findBySimulationId(simulationId);
+        return simulationFinder.findByPublicId(SimulationContextHolder.getSimulationId());
     }
 
     private String formatDuration(Duration duration) {
@@ -319,5 +307,96 @@ public class DockerImageServiceImpl implements DockerImageService {
 
     private String getConsoleHeader() {
         return String.format("%-25s %-20s %-15s %-20s", "REPOSITORY", "TAG", "IMAGE ID", "CREATED");
+    }
+     */
+
+    // ----------------------------------------------
+
+    @Override
+    @Transactional
+    public DockerImageResponse build(SimulationUserPrincipal principal, String dockerFilePath,
+        String name) {
+        User user = userFinder.findUserById(principal.getUserId());
+        DockerFile dockerFile = dockerFileFinder.findByPathAndUser(dockerFilePath, user);
+        Simulation simulation = simulationFinder.findById(principal.getUserId());
+
+        Map<String, String> imageNameMap = ImageUtil.parserFullName(name);
+        String namespace = imageNameMap.get("namespace");
+
+        if (!namespace.isEmpty() && !namespace.equals(user.getName())) {
+            throw new BusinessException(DockerImageErrorCode.INVALID_NAMESPACE,
+                imageNameMap.get("namespace"));
+        }
+
+        DockerImage image = DockerImage.from(simulation, dockerFile, imageNameMap);
+
+        DockerImage prevImage = dockerImageFinder.findSameImage(
+            namespace,
+            image.getName(),
+            image.getTag(),
+            ImageLocation.LOCAL
+        );
+        if (prevImage != null) {
+            prevImage.convertToDangling();
+            dockerImageRepository.save(prevImage);
+        }
+        Stream<String> headerStream = Stream.of(
+            String.format("'%s'에 위치한 Dockerfile로 Docker Image '%s'를 생성했습니다.",
+                dockerFilePath,
+                image.getName().isEmpty() ? image.getShortHexId() : image.getFullNameWithTag()
+            ));
+        Stream<String> bodyStream = Stream.empty();
+
+        if (prevImage != null) {
+            bodyStream = Stream.of(
+                "로컬에 존재하는 동일한 기존 Docker Image는 댕글링이미지로 변환됩니다:",
+                prevImage.getShortHexId()
+            );
+        }
+
+        return DockerImageResponse.from(dockerImageRepository.save(image),
+            Stream.concat(headerStream, bodyStream).toList()
+        );
+    }
+
+    @Override
+    public List<String> history(SimulationUserPrincipal principal, String nameOrHexId) {
+        // 이름으로 먼저 검색
+        // 없으면 id로 검색
+        // layer를 반환
+
+        return List.of();
+    }
+
+    @Override
+    public List<String> inspect(SimulationUserPrincipal principal, String nameOrId) {
+        return List.of();
+    }
+
+    @Override
+    public List<String> ls(SimulationUserPrincipal principal, boolean all, boolean quiet) {
+        return List.of();
+    }
+
+    @Override
+    public List<DockerImageResponse> prune(SimulationUserPrincipal principal, boolean all) {
+        return List.of();
+    }
+
+    @Override
+    public List<DockerImageResponse> pull(SimulationUserPrincipal principal, String name,
+        boolean all) {
+        return List.of();
+    }
+
+    @Override
+    public DockerImageResponse push(SimulationUserPrincipal principal, String name) {
+        return null;
+    }
+
+    @Override
+    public DockerImageResponse rm(SimulationUserPrincipal principal, String nameOrId,
+        boolean force) {
+        return null;
     }
 }

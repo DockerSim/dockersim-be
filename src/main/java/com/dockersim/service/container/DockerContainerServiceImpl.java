@@ -2,6 +2,7 @@ package com.dockersim.service.container;
 
 import com.dockersim.context.SimulationContextHolder;
 import com.dockersim.domain.ContainerStatus;
+import com.dockersim.dto.request.CreateContainerRequest;
 import com.dockersim.dto.response.DockerContainerResponse;
 import com.dockersim.repository.DockerContainerRepository;
 import com.dockersim.service.simulation.SimulationFinder;
@@ -38,7 +39,7 @@ public class DockerContainerServiceImpl implements DockerContainerService {
     }
 
     @Override
-    public DockerContainerResponse createContainer(String imageName, String containerName) {
+    public DockerContainerResponse create(CreateContainerRequest request) {
         return null;
     }
 

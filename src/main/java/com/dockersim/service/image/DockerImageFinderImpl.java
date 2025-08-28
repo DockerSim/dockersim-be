@@ -4,21 +4,32 @@ import com.dockersim.domain.DockerImage;
 import com.dockersim.domain.ImageLocation;
 import com.dockersim.domain.Simulation;
 import com.dockersim.repository.DockerImageRepository;
+import com.dockersim.util.ImageUtil;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class DockerImageFinderImpl implements DockerImageFinder {
 
     private final DockerImageRepository repo;
 
+
+    @Override
+    public DockerImage findSameImage(String namespace, String name, String tag,
+        ImageLocation location) {
+        return repo.findByNamespaceAndNameAndTagAndLocation(namespace, name, tag, location)
+            .orElse(null);
+    }
+
+    // ------------------
     @Override
     public List<DockerImage> findImages(String imageNameOrId, Simulation simulation) {
         // Search for images by both name and ID to handle ambiguity.
@@ -47,8 +58,9 @@ public class DockerImageFinderImpl implements DockerImageFinder {
         return repo.findAllBySimulationAndLocation(simulation, location);
     }
 
+
     private List<DockerImage> findImagesByName(String name, Simulation simulation) {
-        Map<String, String> parsed = parserImageName(name);
+        Map<String, String> parsed = ImageUtil.parserFullName(name);
         String repository = parsed.get("repository");
         String tag = parsed.get("tag");
 
@@ -66,25 +78,6 @@ public class DockerImageFinderImpl implements DockerImageFinder {
         }
     }
 
-
-    @Override
-    public Map<String, String> parserImageName(String fullName) {
-        Map<String, String> map = new HashMap<>();
-        String repository = fullName;
-        String tag = "latest";
-
-        int lastColon = fullName.lastIndexOf(':');
-        if (lastColon > 0) {
-            int lastSlash = fullName.lastIndexOf('/');
-            if (lastSlash < lastColon) {
-                repository = fullName.substring(0, lastColon);
-                tag = fullName.substring(lastColon + 1);
-            }
-        }
-        map.put("repository", repository);
-        map.put("tag", tag);
-        return map;
-    }
 
     private boolean isPotentialId(String str) {
         if (str == null || str.isEmpty()) {

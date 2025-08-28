@@ -4,7 +4,9 @@ import com.dockersim.domain.User;
 
 public interface UserFinder {
 
-    User findUserByUserId(String userId);
+    User findUserById(Long id);
+
+    User findUserByPublicId(String userPublicId);
 
     User findUserByEmail(String email);
 }

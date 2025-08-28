@@ -6,9 +6,6 @@ import lombok.Getter;
 import lombok.Singular;
 
 
-/**
- * Docker 명령어 실행 결과
- */
 @Getter
 @Builder
 public class CommandResult {
@@ -18,9 +15,12 @@ public class CommandResult {
      */
     private final List<String> console;
 
+
     /**
      * 상태 변화 정보
      */
+    private CommandResultStatus status;
+
     @Singular
     private List<DockerImageResponse> changedImages;
 

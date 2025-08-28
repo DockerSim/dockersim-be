@@ -1,6 +1,7 @@
 package com.dockersim.service.command;
 
 import com.dockersim.command.DockerCommand;
+import com.dockersim.config.SimulationUserPrincipal;
 import com.dockersim.dto.response.CommandResult;
 import com.dockersim.dto.response.ImageRemoveResponse;
 import com.dockersim.exception.BusinessException;
@@ -22,11 +23,10 @@ import picocli.CommandLine.ParseResult;
 public class CommandExecutorServiceImpl implements CommandExecutorService {
 
     private final CommandLine.IFactory factory;
-    private final DockerCommand root;
     private final DockerCommandParser parser;
 
     @Override
-    public CommandResult execute(String rawCommand) {
+    public CommandResult execute(String rawCommand, SimulationUserPrincipal principal) {
         if (rawCommand == null || !rawCommand.trim().toLowerCase().startsWith("docker")) {
             throw new BusinessException(DockerCommandErrorCode.INVALID_DOCKER_COMMAND, rawCommand);
         }
@@ -37,7 +37,10 @@ public class CommandExecutorServiceImpl implements CommandExecutorService {
         StringWriter writer = new StringWriter();
         PrintWriter printWriter = new PrintWriter(writer);
 
-        CommandLine cmd = new CommandLine(root, factory);
+        DockerCommand rootCommand = new DockerCommand();
+        rootCommand.setPrincipal(principal);
+
+        CommandLine cmd = new CommandLine(rootCommand, factory);
 
         cmd.setOut(printWriter);
         cmd.setErr(printWriter);

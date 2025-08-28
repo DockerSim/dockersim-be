@@ -10,24 +10,30 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface SimulationRepository extends JpaRepository<Simulation, Long> {
 
-    Optional<Simulation> findBySimulationId(String simulationId);
+    Optional<Simulation> findByPublicId(String publicId);
 
-    boolean existsBySimulationId(String simulationId);
+    boolean existsByPublicId(String publicId);
 
-    @Query("SELECT COUNT(c) FROM Simulation s JOIN s.collaborators c WHERE s.simulationId = :simulationId")
+    @Query("SELECT COUNT(c) FROM Simulation s "
+        + "JOIN s.collaborators c "
+        + "WHERE s.publicId = :simulationId"
+    )
     long countCollaborators(@Param("simulationId") String simulationId);
 
     @Query("SELECT COUNT(s) > 0 FROM Simulation s " +
-        "WHERE s.title = :title AND s.owner.userId = :ownerId AND s.simulationId != :excludeId")
+        "WHERE s.title = :title AND s.owner.publicId = :ownerId AND s.publicId != :excludeId")
     boolean existsByTitleAndOwnerIdAndNotId(@Param("title") String title,
         @Param("ownerId") String ownerId,
         @Param("excludeId") String excludeId);
 
     @Query("SELECT COUNT(s) > 0 FROM Simulation s " +
-        "WHERE s.title = :title AND s.owner.userId = :ownerId")
+        "WHERE s.title = :title AND s.owner.publicId = :ownerId")
     boolean existsByTitleAndOwnerId(@Param("title") String title, @Param("ownerId") String ownerId);
 
-    @Query("SELECT s FROM Simulation s LEFT JOIN FETCH s.collaborators WHERE s.simulationId = :simulationId")
-    Optional<Simulation> findBySimulationIdWithCollaborators(
-        @Param("simulationId") String simulationId);
+    @Query("SELECT s FROM Simulation s "
+        + "LEFT JOIN FETCH s.collaborators "
+        + "WHERE s.publicId = :publicId"
+    )
+    Optional<Simulation> findByPublicIdWithCollaborators(
+        @Param("publicId") String publicId);
 }

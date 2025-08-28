@@ -1,25 +1,42 @@
 package com.dockersim.command.subcommand.image;
 
+import com.dockersim.command.subcommand.ImageCommand;
+import com.dockersim.dto.response.CommandResult;
+import com.dockersim.dto.response.CommandResultStatus;
+import com.dockersim.dto.response.DockerImageResponse;
 import com.dockersim.service.image.DockerImageService;
 import java.util.concurrent.Callable;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
+import picocli.CommandLine.ParentCommand;
 
-@Command(name = "build", description = "Build an image from a Dockerfile")
-public class ImageBuildCommand implements Callable<String> {
 
-    private final DockerImageService dockerImageService;
+@Command(name = "build")
+@Component
+@RequiredArgsConstructor
+public class ImageBuildCommand implements Callable<CommandResult> {
 
-    @Option(names = {"-t",
-        "--tag"}, description = "Name and optionally a tag in the 'name:tag' format")
+    private final DockerImageService service;
+
+    @ParentCommand
+    private ImageCommand parent;
+
+    @Option(names = {"-t", "--tag"}, description = "새로 생성하는 Docker Image 이름")
     private String name;
 
-    public ImageBuildCommand(DockerImageService dockerImageService) {
-        this.dockerImageService = dockerImageService;
-    }
+    @CommandLine.Parameters(index = "0", description = "DockerFile 경로")
+    private String path;
 
     @Override
-    public String call() {
-        return dockerImageService.buildImage(name);
+    public CommandResult call() throws Exception {
+        DockerImageResponse response = service.build(parent.getPrincipal(), path, name);
+        return CommandResult.builder()
+            .console(response.getConsole())
+            .status(CommandResultStatus.CREATE)
+            .changedImage(response)
+            .build();
     }
 }

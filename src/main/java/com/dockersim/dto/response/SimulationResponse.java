@@ -7,28 +7,26 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
- * TDD Green 단계 2: 시뮬레이션 응답 DTO
- */
+
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class SimulationResponse {
 
-    private String simulationId;
+    private String simulationPublicId;
     private String title;
     private String shareState;
-    private String ownerId;
+    private String ownerPublicId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
     public static SimulationResponse from(Simulation simulation) {
         return SimulationResponse.builder()
-            .simulationId(simulation.getSimulationId())
+            .simulationPublicId(simulation.getPublicId())
             .title(simulation.getTitle())
             .shareState(simulation.getShareState().name())
-            .ownerId(simulation.getOwner().getUserId())
+            .ownerPublicId(simulation.getOwner().getPublicId())
             .createdAt(simulation.getCreatedAt())
             .updatedAt(simulation.getUpdatedAt())
             .build();

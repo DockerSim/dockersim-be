@@ -12,10 +12,10 @@ public interface DockerContainerRepository extends JpaRepository<DockerContainer
     boolean existsByBaseImageIdAndStatus(String imageId, ContainerStatus status);
 
     Optional<DockerContainer> findByNameAndStatusAndSimulationId(String name,
-        ContainerStatus status, String simulationId);
+        ContainerStatus status, Long simulationId);
 
     Optional<DockerContainer> findByContainerIdAndStatusAndSimulationId(String containerId,
-        ContainerStatus status, String simulationId);
+        ContainerStatus status, Long simulationId);
 
     List<DockerContainer> findAllBySimulation(Simulation simulation);
 

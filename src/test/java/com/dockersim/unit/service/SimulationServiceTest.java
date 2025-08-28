@@ -82,7 +82,7 @@ class SimulationServiceTest {
     @DisplayName("시뮬레이션 생성 - 성공")
     void createSimulation_Success() {
         // given
-        given(userFinder.findUserByUserId(ownerId)).willReturn(testOwner);
+        given(userFinder.findUserByPublicId(ownerId)).willReturn(testOwner);
         given(simulationRepository.existsByTitleAndOwnerId(testRequest.getTitle(), ownerId))
             .willReturn(false);
         given(simulationRepository.save(any(Simulation.class))).willReturn(testSimulation);
@@ -101,7 +101,7 @@ class SimulationServiceTest {
     @DisplayName("시뮬레이션 생성 - 소유자 없음 실패")
     void createSimulation_OwnerNotFound() {
         // given
-        given(userFinder.findUserByUserId(ownerId)).willThrow(
+        given(userFinder.findUserByPublicId(ownerId)).willThrow(
             new BusinessException(UserErrorCode.USER_NOT_FOUND));
 
         // when & then

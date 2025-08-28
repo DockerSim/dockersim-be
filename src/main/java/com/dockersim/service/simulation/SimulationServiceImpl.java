@@ -31,7 +31,7 @@ public class SimulationServiceImpl implements SimulationService {
 
     @Override
     public SimulationResponse createSimulation(String ownerId, SimulationRequest request) {
-        User owner = userFinder.findUserByUserId(ownerId);
+        User owner = userFinder.findUserByPublicId(ownerId);
         validateSimulationTitle(request.getTitle(), ownerId);
         SimulationShareState shareState = validateShareState(request.getShareState());
 
@@ -41,11 +41,11 @@ public class SimulationServiceImpl implements SimulationService {
 
     @Override
     @Transactional(readOnly = true)
-    public SimulationResponse getSimulation(String userId, String simulationId) {
-        Simulation simulation = simulationFinder.findBySimulationId(simulationId);
+    public SimulationResponse getSimulation(String userId, String simulationPublicId) {
+        Simulation simulation = simulationFinder.findByPublicId(simulationPublicId);
 
         if (simulation.getShareState() != SimulationShareState.READ) {
-            User user = userFinder.findUserByUserId(userId);
+            User user = userFinder.findUserByPublicId(userId);
             validateSimulationAccess(simulation, user);
         }
 
@@ -53,13 +53,13 @@ public class SimulationServiceImpl implements SimulationService {
     }
 
     @Override
-    public SimulationResponse updateSimulation(String ownerId, String simulationId,
+    public SimulationResponse updateSimulation(String ownerId, String simulationPublicId,
         SimulationRequest request) {
-        User owner = userFinder.findUserByUserId(ownerId);
-        Simulation simulation = simulationFinder.findBySimulationId(simulationId);
+        User owner = userFinder.findUserByPublicId(ownerId);
+        Simulation simulation = simulationFinder.findByPublicId(simulationPublicId);
 
         validateOwnership(simulation, owner);
-        validateSimulationTitle(request.getTitle(), ownerId, simulationId);
+        validateSimulationTitle(request.getTitle(), ownerId, simulationPublicId);
         SimulationShareState newShareState = validateShareState(request.getShareState());
 
         if (simulation.getShareState() == SimulationShareState.WRITE &&
@@ -74,9 +74,9 @@ public class SimulationServiceImpl implements SimulationService {
     }
 
     @Override
-    public void deleteSimulation(String ownerId, String simulationId) {
-        User owner = userFinder.findUserByUserId(ownerId);
-        Simulation simulation = simulationFinder.findBySimulationId(simulationId);
+    public void deleteSimulation(String ownerId, String simulationPublicId) {
+        User owner = userFinder.findUserByPublicId(ownerId);
+        Simulation simulation = simulationFinder.findByPublicId(simulationPublicId);
 
         validateOwnership(simulation, owner);
 
@@ -86,7 +86,7 @@ public class SimulationServiceImpl implements SimulationService {
     @Override
     public CollaboratorResponse inviteCollaborator(String simulationId, String ownerId,
         CollaboratorRequest request) {
-        User owner = userFinder.findUserByUserId(ownerId);
+        User owner = userFinder.findUserByPublicId(ownerId);
         Simulation simulation = simulationFinder.findSimulationWithCollaborators(simulationId);
 
         validateOwnership(simulation, owner);
@@ -104,7 +104,7 @@ public class SimulationServiceImpl implements SimulationService {
     @Override
     @Transactional(readOnly = true)
     public List<CollaboratorResponse> getCollaborators(String userId, String simulationId) {
-        User user = userFinder.findUserByUserId(userId);
+        User user = userFinder.findUserByPublicId(userId);
         Simulation simulation = simulationFinder.findSimulationWithCollaborators(simulationId);
 
         validateSimulationAccess(simulation, user);
@@ -116,8 +116,8 @@ public class SimulationServiceImpl implements SimulationService {
 
     @Override
     public void removeCollaborator(String ownerId, String simulationId, String collaboratorId) {
-        User owner = userFinder.findUserByUserId(ownerId);
-        User collaborator = userFinder.findUserByUserId(collaboratorId);
+        User owner = userFinder.findUserByPublicId(ownerId);
+        User collaborator = userFinder.findUserByPublicId(collaboratorId);
         Simulation simulation = simulationFinder.findSimulationWithCollaborators(simulationId);
 
         validateOwnership(simulation, owner);
@@ -157,26 +157,23 @@ public class SimulationServiceImpl implements SimulationService {
 
     private void validateOwnership(Simulation simulation, User user) {
         if (!simulation.isOwner(user)) {
-            throw new BusinessException(SimulationErrorCode.SIMULATION_ONLY_OWNER_CAN_MANAGE,
-                user.getUserId(), simulation.getSimulationId());
+            throw new BusinessException(SimulationErrorCode.SIMULATION_ONLY_OWNER_CAN_MANAGE);
         }
     }
 
     private void validateSimulationAccess(Simulation simulation, User user) {
         if (!simulation.hasWriteAccess(user)) {
-            throw new BusinessException(SimulationErrorCode.SIMULATION_ACCESS_DENIED,
-                simulation.getSimulationId(), user.getUserId());
+            throw new BusinessException(SimulationErrorCode.SIMULATION_ACCESS_DENIED);
         }
     }
 
     private void validateCollaboratorInvitation(Simulation simulation) {
         if (simulation.getShareState() != SimulationShareState.WRITE) {
-            throw new BusinessException(SimulationErrorCode.SIMULATION_NOT_WRITABLE,
-                simulation.getSimulationId());
+            throw new BusinessException(SimulationErrorCode.SIMULATION_NOT_WRITABLE);
         }
 
         long collaboratorCount = simulationRepository.countCollaborators(
-            simulation.getSimulationId());
+            simulation.getPublicId());
         if (collaboratorCount >= MAX_COLLABORATORS) {
             throw new BusinessException(SimulationErrorCode.SIMULATION_MAX_COLLABORATORS_REACHED,
                 MAX_COLLABORATORS);
@@ -186,7 +183,7 @@ public class SimulationServiceImpl implements SimulationService {
     private void validateInvitee(Simulation simulation, User invitee) {
         if (simulation.isOwner(invitee)) {
             throw new BusinessException(SimulationErrorCode.SIMULATION_OWNER_CANNOT_BE_COLLABORATOR,
-                invitee.getUserId());
+                invitee.getPublicId());
         }
         if (simulation.isCollaborator(invitee)) {
             throw new BusinessException(SimulationErrorCode.SIMULATION_COLLABORATOR_ALREADY_EXISTS,
@@ -197,7 +194,7 @@ public class SimulationServiceImpl implements SimulationService {
     private void validateCollaboratorRemoval(Simulation simulation, User collaborator) {
         if (!simulation.isCollaborator(collaborator)) {
             throw new BusinessException(SimulationErrorCode.SIMULATION_COLLABORATOR_NOT_FOUND,
-                collaborator.getUserId());
+                collaborator.getPublicId());
         }
     }
 }

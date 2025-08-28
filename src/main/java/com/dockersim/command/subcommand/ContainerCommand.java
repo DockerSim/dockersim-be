@@ -1,6 +1,7 @@
 package com.dockersim.command.subcommand;
 
 
+import com.dockersim.command.DockerCommand;
 import com.dockersim.command.aliases.container.AttachCommand;
 import com.dockersim.command.aliases.container.CommitCommand;
 import com.dockersim.command.aliases.container.CpCommand;
@@ -21,14 +22,17 @@ import com.dockersim.command.subcommand.container.ContainerInspect;
 import com.dockersim.command.subcommand.container.ContainerLsCommand;
 import com.dockersim.command.subcommand.container.ContainerPruneCommand;
 import com.dockersim.command.subcommand.container.ContainerRemoveCommand;
+import com.dockersim.config.SimulationUserPrincipal;
 import org.springframework.stereotype.Component;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.ParentCommand;
 
 @Component
-@Command(name = "container",
-    description = "컨테이너를 관리합니다.",
+@Command(
+    name = "container",
+    description = "container command",
     subcommands = {
-        // Container Aliases
+        // Aliases
         AttachCommand.class,
         CommitCommand.class,
         CpCommand.class,
@@ -48,7 +52,7 @@ import picocli.CommandLine.Command;
         StopCommand.class,
         UnpauseCommand.class,
 
-        // Container Subcommands
+        // Subcommands
         ContainerInspect.class,
         ContainerLsCommand.class,
         ContainerPruneCommand.class,
@@ -57,5 +61,11 @@ import picocli.CommandLine.Command;
 )
 public class ContainerCommand {
 
+    @ParentCommand
+    private DockerCommand parent;
+
+    public SimulationUserPrincipal getPrincipal() {
+        return parent.getPrincipal();
+    }
 }
 

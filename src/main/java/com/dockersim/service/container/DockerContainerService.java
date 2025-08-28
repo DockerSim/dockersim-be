@@ -1,6 +1,7 @@
 package com.dockersim.service.container;
 
 
+import com.dockersim.dto.request.CreateContainerRequest;
 import com.dockersim.dto.response.DockerContainerResponse;
 import java.util.List;
 
@@ -29,11 +30,11 @@ public interface DockerContainerService {
     /**
      * 지정된 이미지를 기반으로 새로운 컨테이너를 생성합니다. (실행은 하지 않음)
      * <p>
-     * 생성할 컨테이너의 정보 (이미지, 이름, 포트 등)
      *
+     * @param request 컨테이너의 정보 (이미지, 이름, 포트 등)
      * @return 생성된 컨테이너의 정보
      */
-    DockerContainerResponse createContainer(String imageName, String containerName);
+    DockerContainerResponse create(CreateContainerRequest request);
 
     /**
      * 호스트와 컨테이너 간에 파일을 복사합니다. (시뮬레이션)

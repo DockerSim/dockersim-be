@@ -1,5 +1,6 @@
 package com.dockersim.domain;
 
+import com.dockersim.common.IdGenerator;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -16,6 +17,7 @@ import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -29,24 +31,24 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-@Builder
+@Builder(toBuilder = true)
 public class DockerImage {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "image_id", nullable = false, unique = true)
-    private String imageId;
+    @Column(name = "hex_id", nullable = false, unique = true, updatable = false)
+    private String hexId;
 
-    @Column(nullable = false)
-    private String name;
+    @Column(name = "short_hex_id", nullable = false, unique = true, updatable = false)
+    private String shortHexId;
 
     @Column(nullable = false)
     private String namespace;
 
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
+    @Column(nullable = false)
+    private String name;
 
     @Column(nullable = false)
     private String tag;
@@ -55,48 +57,61 @@ public class DockerImage {
     @Column(nullable = false)
     private ImageLocation location;
 
+    private String layer;
+
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "simulation_id", nullable = false)
     private Simulation simulation;
 
-    @OneToMany(mappedBy = "baseImageId", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
+    @OneToMany(mappedBy = "baseImage", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DockerContainer> containers = new ArrayList<>();
 
     public static DockerImage from(DockerOfficeImage officeImage, Simulation simulation) {
         return DockerImage.builder()
-            .imageId(officeImage.getImageId())
-            .name(officeImage.getName())
+            .hexId(officeImage.getHexId())
+            .hexId(officeImage.getShortHexId())
             .namespace(officeImage.getNamespace())
-            .createdAt(officeImage.getLastUpdated())
+            .name(officeImage.getName())
             .tag(officeImage.getTag())
-            .location(ImageLocation.LOCAL) // pull한 이미지는 로컬에 저장되므로 LOCAL
+            .location(ImageLocation.LOCAL)
+            .layer(null)
+            .createdAt(officeImage.getLastUpdated())
             .simulation(simulation)
             .build();
     }
 
-    public static DockerImage from(DockerImage image, Simulation simulation,
+    public static DockerImage from(DockerImage pullImage, Simulation simulation,
         ImageLocation location) {
-        return DockerImage.builder()
-            .imageId(image.getImageId())
-            .name(image.getName())
-            .namespace(image.getNamespace())
-            .createdAt(image.getCreatedAt())
-            .tag(image.getTag())
-            .location(location)
+        return pullImage.toBuilder()
             .simulation(simulation)
+            .location(location)
             .build();
     }
 
-    public String getFullName() {
-        return namespace + "/" + name;
+    public static DockerImage from(Simulation simulation, DockerFile dockerFile,
+        Map<String, String> imageNameMap) {
+        String hexId = IdGenerator.generateHexFullId();
+        return DockerImage.builder()
+            .hexId(hexId)
+            .shortHexId(IdGenerator.getShortId(hexId))
+            .namespace(imageNameMap.get("namespace"))
+            .name(imageNameMap.get("repository"))
+            .tag(imageNameMap.get("tag"))
+            .location(ImageLocation.LOCAL)
+            .layer(dockerFile.getContent())
+            .createdAt(LocalDateTime.now())
+            .simulation(simulation)
+            .build();
     }
 
     public String getFullNameWithTag() {
         if ("<none>".equals(name)) {
             return "<none>:<none>";
         }
-        return getFullName() + ":" + tag;
+        return namespace + "/" + name + ":" + tag;
     }
 
     public void convertToDangling() {
