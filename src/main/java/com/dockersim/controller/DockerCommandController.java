@@ -43,7 +43,7 @@ public class DockerCommandController {
         description = "시뮬레이션에서 Docker 명령어를 실행 후 상태 변화를 응답합니다. ")
     @PostMapping("/simulations/{simulationId}/command")
     public ResponseEntity<ApiResponse<CommandResult>> executeCommand(
-        @Parameter(description = "시뮬레이션을 조작핧 사용자 UUID", required = true, hidden = true) @AuthenticationPrincipal Long userId,
+        @Parameter(description = "시뮬레이션을 조작할 사용자 UUID", required = true, hidden = true) @AuthenticationPrincipal Long userId,
         @Parameter(description = "명령을 실행할 시뮬레이션 UUID", required = true) @PathVariable UUID simulationId,
         @Parameter(description = "실행할 도커 명령어", required = true) @RequestBody String command
     ) {

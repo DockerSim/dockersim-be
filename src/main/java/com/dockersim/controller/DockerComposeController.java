@@ -54,7 +54,7 @@ public class DockerComposeController {
     ) {
         ComposeGenerationResponse response = dockerComposeService.generateCompose(userId, simulationId);
         
-        if (response.getSuccess()) {
+        if (response.getErrorMessage() == null) {
             return ResponseEntity.ok(ApiResponse.success(response));
         } else {
             return ResponseEntity.badRequest().body(ApiResponse.error(
@@ -69,9 +69,9 @@ public class DockerComposeController {
         description = """
             제공된 인프라 정보를 바탕으로 최적화된 docker-compose.yml 파일을 생성합니다.
             
-            ### 권한:
-            - READ 상태: 모든 사용자 접근 가능
-            - PRIVATE/WRITE 상태: 소유자 및 협업자만 접근 가능
+            ### 특징:
+            - 시뮬레이션에 독립적으로 작동
+            - 사용자가 제공한 인프라 정보만 사용
             
             ### 생성 과정:
             1. 제공된 인프라 정보를 분석하여 프롬프트 생성
@@ -79,17 +79,15 @@ public class DockerComposeController {
             3. 프로덕션 환경에 적합한 설정 포함 (보안, 리소스 제한, 헬스체크 등)
             """
     )
-    @PostMapping("/{simulationId}/compose/manual")
+    @PostMapping("/compose/manual")
     public ResponseEntity<ApiResponse<ComposeGenerationResponse>> generateComposeManual(
         @Parameter(hidden = true) @AuthenticationPrincipal UUID userId,
-        @Parameter(description = "시뮬레이션 ID", example = "123e4567-e89b-12d3-a456-426614174000") 
-        @PathVariable UUID simulationId,
         @Parameter(description = "Docker-compose 생성 요청 정보")
         @Valid @RequestBody ComposeGenerationRequest request
     ) {
-        ComposeGenerationResponse response = dockerComposeService.generateComposeFromRequest(userId, simulationId, request);
+        ComposeGenerationResponse response = dockerComposeService.generateComposeFromRequest(userId, null, request);
         
-        if (response.getSuccess()) {
+        if (response.getErrorMessage() == null) {
             return ResponseEntity.ok(ApiResponse.success(response));
         } else {
             return ResponseEntity.badRequest().body(ApiResponse.error(

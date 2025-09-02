@@ -60,20 +60,46 @@ public class SimulationStateExtractorImpl implements SimulationStateExtractor {
 
     private List<ContainerInfo> extractContainers() {
         try {
-            // docker ps -a 명령어로 컨테이너 정보 가져오기
-            // 실제 구현에서는 시뮬레이션의 현재 컨테이너 상태를 조회해야 함
-            // 여기서는 예시로 구현
+            log.debug("컨테이너 정보 추출 중 (더미 데이터)...");
             
-            log.debug("컨테이너 정보 추출 중...");
-            
-            // 현재는 시뮬레이션에 실제 Docker 명령어가 실행되지 않으므로
-            // 기본값으로 빈 리스트 반환하고, 실제 구현 시 CommandResult에서 추출
             List<ContainerInfo> containers = new ArrayList<>();
             
-            // TODO: 실제 구현 시 다음과 같이 구현 예정
-            // CommandResult result = commandExecutorService.execute("docker ps -a --format table");
-            // 결과를 파싱하여 ContainerInfo로 변환
+            // 더미 컨테이너 데이터 생성
+            containers.add(ContainerInfo.builder()
+                .name("nginx-web-server")
+                .image("nginx:latest")
+                .ports(Arrays.asList("80:80", "443:443"))
+                .volumes(Arrays.asList("./html:/usr/share/nginx/html:ro"))
+                .environment(Arrays.asList("NGINX_HOST=localhost", "NGINX_PORT=80"))
+                .networkMode("bridge")
+                .status("running")
+                .build());
+                
+            containers.add(ContainerInfo.builder()
+                .name("redis-cache")
+                .image("redis:7-alpine")
+                .ports(Arrays.asList("6379:6379"))
+                .volumes(Arrays.asList("redis-data:/data"))
+                .environment(Arrays.asList("REDIS_PASSWORD=secret"))
+                .networkMode("app-network")
+                .status("running")
+                .build());
+                
+            containers.add(ContainerInfo.builder()
+                .name("postgres-db")
+                .image("postgres:15")
+                .ports(Arrays.asList("5432:5432"))
+                .volumes(Arrays.asList("postgres-data:/var/lib/postgresql/data"))
+                .environment(Arrays.asList(
+                    "POSTGRES_DB=myapp", 
+                    "POSTGRES_USER=admin", 
+                    "POSTGRES_PASSWORD=password123"
+                ))
+                .networkMode("app-network")
+                .status("running")
+                .build());
             
+            log.debug("더미 컨테이너 정보 생성 완료: {} 개", containers.size());
             return containers;
             
         } catch (Exception e) {
@@ -84,14 +110,36 @@ public class SimulationStateExtractorImpl implements SimulationStateExtractor {
 
     private List<ImageInfo> extractImages() {
         try {
-            log.debug("이미지 정보 추출 중...");
+            log.debug("이미지 정보 추출 중 (더미 데이터)...");
             
             List<ImageInfo> images = new ArrayList<>();
             
-            // TODO: 실제 구현 시 다음과 같이 구현 예정
-            // CommandResult result = commandExecutorService.execute("docker images --format table");
-            // 결과를 파싱하여 ImageInfo로 변환
+            // 더미 이미지 데이터 생성
+            images.add(ImageInfo.builder()
+                .name("nginx")
+                .tag("latest")
+                .size("142MB")
+                .build());
+                
+            images.add(ImageInfo.builder()
+                .name("redis")
+                .tag("7-alpine")
+                .size("32.3MB")
+                .build());
+                
+            images.add(ImageInfo.builder()
+                .name("postgres")
+                .tag("15")
+                .size("379MB")
+                .build());
+                
+            images.add(ImageInfo.builder()
+                .name("node")
+                .tag("18-alpine")
+                .size("172MB")
+                .build());
             
+            log.debug("더미 이미지 정보 생성 완료: {} 개", images.size());
             return images;
             
         } catch (Exception e) {
@@ -102,14 +150,30 @@ public class SimulationStateExtractorImpl implements SimulationStateExtractor {
 
     private List<NetworkInfo> extractNetworks() {
         try {
-            log.debug("네트워크 정보 추출 중...");
+            log.debug("네트워크 정보 추출 중 (더미 데이터)...");
             
             List<NetworkInfo> networks = new ArrayList<>();
             
-            // TODO: 실제 구현 시 다음과 같이 구현 예정
-            // CommandResult result = commandExecutorService.execute("docker network ls --format table");
-            // 결과를 파싱하여 NetworkInfo로 변환
+            // 더미 네트워크 데이터 생성
+            networks.add(NetworkInfo.builder()
+                .name("bridge")
+                .driver("bridge")
+                .subnet("172.17.0.0/16")
+                .build());
+                
+            networks.add(NetworkInfo.builder()
+                .name("app-network")
+                .driver("bridge")
+                .subnet("172.18.0.0/16")
+                .build());
+                
+            networks.add(NetworkInfo.builder()
+                .name("db-network")
+                .driver("bridge")
+                .subnet("172.19.0.0/16")
+                .build());
             
+            log.debug("더미 네트워크 정보 생성 완료: {} 개", networks.size());
             return networks;
             
         } catch (Exception e) {
@@ -120,14 +184,30 @@ public class SimulationStateExtractorImpl implements SimulationStateExtractor {
 
     private List<VolumeInfo> extractVolumes() {
         try {
-            log.debug("볼륨 정보 추출 중...");
+            log.debug("볼륨 정보 추출 중 (더미 데이터)...");
             
             List<VolumeInfo> volumes = new ArrayList<>();
             
-            // TODO: 실제 구현 시 다음과 같이 구현 예정
-            // CommandResult result = commandExecutorService.execute("docker volume ls --format table");
-            // 결과를 파싱하여 VolumeInfo로 변환
+            // 더미 볼륨 데이터 생성
+            volumes.add(VolumeInfo.builder()
+                .name("redis-data")
+                .driver("local")
+                .mountpoint("/var/lib/docker/volumes/redis-data/_data")
+                .build());
+                
+            volumes.add(VolumeInfo.builder()
+                .name("postgres-data")
+                .driver("local")
+                .mountpoint("/var/lib/docker/volumes/postgres-data/_data")
+                .build());
+                
+            volumes.add(VolumeInfo.builder()
+                .name("app-logs")
+                .driver("local")
+                .mountpoint("/var/lib/docker/volumes/app-logs/_data")
+                .build());
             
+            log.debug("더미 볼륨 정보 생성 완료: {} 개", volumes.size());
             return volumes;
             
         } catch (Exception e) {
