@@ -31,8 +31,11 @@ public class DockerOfficeImage {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "image_id")
-    private String imageId;
+    @Column(name = "hex_id")
+    private String hexId;
+
+    @Column(name = "short_hex_id")
+    private String shortHexId;
 
     private String name;
     private String namespace;
@@ -54,9 +57,12 @@ public class DockerOfficeImage {
     private String tag;
 
     public static DockerOfficeImage from(DockerImageJson image, String tag) {
+        String hexId = IdGenerator.generateHexFullId();
+        
         return DockerOfficeImage.builder()
             .name(image.getName())
-            .imageId(IdGenerator.generateFullId())
+            .hexId(hexId)
+            .shortHexId(IdGenerator.getShortId(hexId))
             .namespace(image.getNamespace())
             .description(image.getDescription())
             .starCount(image.getStarCount())

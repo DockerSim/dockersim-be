@@ -12,16 +12,18 @@ import com.dockersim.exception.code.DockerImageErrorCode;
 import com.dockersim.repository.DockerOfficeImageRepository;
 import com.dockersim.service.image.DockerOfficeImageServiceImpl;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 @DisplayName("DockerOfficeImageServiceImpl 단위 테스트")
+@ExtendWith(MockitoExtension.class) // FIX: Use MockitoExtension for automatic lifecycle management
 public class DockerOfficeImageServiceImplTest {
 
     @Mock
@@ -34,7 +36,8 @@ public class DockerOfficeImageServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
+        // FIX: Manual initialization is no longer needed with MockitoExtension
+        // MockitoAnnotations.openMocks(this);
 
         // Sample Entity
         sampleImage = DockerOfficeImage.builder()
@@ -52,7 +55,7 @@ public class DockerOfficeImageServiceImplTest {
     @Test
     @DisplayName("findByName - 성공: 모든 필드가 올바르게 매핑되야 한다.")
     void findByName_success() {
-        given(repo.findAllByName("test")).willReturn(Optional.of(List.of(sampleImage)));
+        given(repo.findAllByName("test")).willReturn(List.of(sampleImage));
 
         DockerOfficeImageResponse response = service.findAllByName("test").get(0);
 
@@ -67,7 +70,7 @@ public class DockerOfficeImageServiceImplTest {
     @Test
     @DisplayName("findByName - 실패: 존재하지 않는 이름의 이미지 BusinessException 발생")
     void findByName_notFound() {
-        given(repo.findAllByName("missing")).willReturn(Optional.empty());
+        given(repo.findAllByName("missing")).willReturn(Collections.emptyList());
 
         assertThatThrownBy(() -> service.findAllByName("missing"))
             .isInstanceOf(BusinessException.class)

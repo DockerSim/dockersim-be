@@ -1,71 +1,80 @@
 package com.dockersim.service.image;
 
 
+import com.dockersim.config.SimulationUserPrincipal;
 import com.dockersim.dto.response.DockerImageResponse;
 import java.util.List;
 
 public interface DockerImageService {
 
     /**
-     * 원격 저장소에서 이미지를 다운로드하는 동작을 시뮬레이션합니다.
+     * Dockerfile을 통해 이미지를 생성합니다.
      *
-     * @param imageName 다운로드할 이미지 이름
-     * @return 다운로드한 이미지 정보
+     * @param principal      인증 정보
+     * @param dockerFilePath 도커 파일 경로
+     * @param name           생성할 이미지 이름(repo[:tag])
      */
-    DockerImageResponse pullImage(String imageName);
+    DockerImageResponse build(SimulationUserPrincipal principal, String dockerFilePath,
+        String name);
 
     /**
-     * 로컬에 저장된 이미지 목록을 보여주는 동작을 시뮬레이션합니다.
+     * Show the history of an image
      *
-     * @return 다운로드한 이미지 목록
+     * @param principal   인증 정보
+     * @param nameOrHexId 레이어를 조회할 이미지명 또는 ID
      */
-    List<DockerImageResponse> listImages(String name, boolean all, boolean quiet);
+    List<String> history(SimulationUserPrincipal principal, String nameOrHexId);
+
 
     /**
-     * 로컬에 저장된 이미지를 삭제하는 동작을 시뮬레이션합니다.
+     * Display detailed information on one or more images
      *
-     * @param imageName 삭제할 이미지 이름 또는 ID
-     * @return 삭제된 이미지의 ID
+     * @param principal   인증 정보
+     * @param nameOrHexId 레이어를 조회할 이미지명 또는 ID
      */
-    String removeImage(String imageName);
+    List<String> inspect(SimulationUserPrincipal principal, String nameOrHexId);
 
     /**
-     * 250812 검토 필요
-     * <p>
-     * <p>
-     * Dockerfile로부터 이미지를 빌드하는 동작을 시뮬레이션합니다.
+     * The default docker images will show all top level images, their repository and tags.
      *
-     * @param tag  생성할 이미지의 이름과 태그
-     * @param path Dockerfile이 위치한 경로
-     * @return 처리 결과 문자열
+     * @param principal 인증 정보
+     * @param all       댕글링 이미지 반환 여부
+     * @param quiet     이미지 ID만 반환 여부
      */
-    String buildImage(String tag, String path);
+    List<String> ls(SimulationUserPrincipal principal, boolean all, boolean quiet);
 
     /**
-     * 사용하지 않는 이미지를 정리하는 동작을 시뮬레이션합니다.
+     * Remove all dangling images. If '-a' is specified, also remove all images not referenced by
+     * any container.
      *
-     * @param all 모든 이미지를 대상으로 할지 여부
-     * @return 삭제된 이미지들의 ID
+     * @param principal 인증 정보
+     * @param all       컨테이너가 연결되지 않는 모든 이미지 삭제로 동작 변경
      */
-    List<String> pruneImages(boolean all);
+    List<DockerImageResponse> prune(SimulationUserPrincipal principal, boolean all);
 
     /**
-     * 250812 검토 필요
-     * <p>
-     * 이미지의 상세 정보를 보여주는 동작을 시뮬레이션합니다.
+     * 도커 이미지를 다운로드 받습니다. repo 필드에 '/'가 없으면 'library/' 를 붙인 후 공식저장소에서만 검색 '/'가 있다면 개인 허브에서만 검색
      *
-     * @param imageName 정보를 확인할 이미지 이름 또는 ID
-     * @return JSON 형태의 상세 정보 문자열
+     * @param principal 인증 정보
+     * @param name      업로드할 도커명
+     * @param all       동일한 이름을 가진 모든 이미지 반환 여부
      */
-    String inspectImage(String imageName);
+    List<DockerImageResponse> pull(SimulationUserPrincipal principal, String name, boolean all);
 
     /**
-     * 250812 검토 필요
-     * <p>
-     * 이미지의 생성 내역(히스토리)을 보여주는 동작을 시뮬레이션합니다.
+     * 도커 이미지를 개인 허브에 업로드 합니다. 허브에 동일한 ID의 이미지가 있다면, 덮어쓰지 않습니다.
      *
-     * @param imageName 히스토리를 확인할 이미지 이름 또는 ID
-     * @return 히스토리 목록 형태의 문자열
+     * @param principal 인증 정보
+     * @param name      업로드할 도커명
      */
-    String showImageHistory(String imageName);
+    DockerImageResponse push(SimulationUserPrincipal principal, String name);
+
+    /**
+     * 도커 이미지를 삭제합니다. 기본적으로, 삭제하려는 이미지를 기반으로 하는 컨테이너가 있다면 삭제에 실패합니다.
+     *
+     * @param principal   인증 정보
+     * @param nameOrHexId 삭제할 도커 이미지명 또는 ID
+     * @param force       해당 이미지를 기반으로 만들어진 컨테이너가 있어도 삭제 여부
+     */
+    DockerImageResponse rm(SimulationUserPrincipal principal, String nameOrHexId, boolean force);
 }

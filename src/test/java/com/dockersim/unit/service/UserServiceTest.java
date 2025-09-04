@@ -13,6 +13,7 @@ import com.dockersim.dto.response.UserResponse;
 import com.dockersim.exception.BusinessException;
 import com.dockersim.exception.code.UserErrorCode;
 import com.dockersim.repository.UserRepository;
+import com.dockersim.service.user.UserFinder;
 import com.dockersim.service.user.UserServiceImpl;
 import java.util.Optional;
 import java.util.UUID;
@@ -29,6 +30,9 @@ class UserServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock // FIX: UserFinder Mock 객체 추가
+    private UserFinder userFinder;
 
     @InjectMocks
     private UserServiceImpl userService;
@@ -100,7 +104,8 @@ class UserServiceTest {
             .name("Test User")
             .build();
 
-        given(userRepository.findByUserId(userId)).willReturn(Optional.of(user));
+        // FIX: userRepository 대신 userFinder를 사용하도록 수정
+        given(userFinder.findUserByUUID(userId)).willReturn(user);
 
         // when
         UserResponse response = userService.getUser(userId);
@@ -117,7 +122,8 @@ class UserServiceTest {
     void getUser_UserNotFound() {
         // given
         UUID userId = UUID.randomUUID();
-        given(userRepository.findByUserId(userId)).willReturn(Optional.empty());
+        // FIX: userRepository 대신 userFinder를 사용하도록 수정
+        given(userFinder.findUserByUUID(userId)).willThrow(new BusinessException(UserErrorCode.USER_NOT_FOUND, userId.toString()));
 
         // when & then
         assertThatThrownBy(() -> userService.getUser(userId))
@@ -136,7 +142,8 @@ class UserServiceTest {
             .name("Test User")
             .build();
 
-        given(userRepository.findByUserId(userId)).willReturn(Optional.of(user));
+        // FIX: userRepository 대신 userFinder를 사용하도록 수정
+        given(userFinder.findUserByUUID(userId)).willReturn(user);
 
         // when
         userService.deleteUser(userId);
@@ -150,7 +157,8 @@ class UserServiceTest {
     void deleteUser_UserNotFound() {
         // given
         UUID userId = UUID.randomUUID();
-        given(userRepository.findByUserId(userId)).willReturn(Optional.empty());
+        // FIX: userRepository 대신 userFinder를 사용하도록 수정
+        given(userFinder.findUserByUUID(userId)).willThrow(new BusinessException(UserErrorCode.USER_NOT_FOUND, userId.toString()));
 
         // when & then
         assertThatThrownBy(() -> userService.deleteUser(userId))
