@@ -2,28 +2,12 @@ package com.dockersim.domain;
 
 import com.dockersim.common.IdGenerator;
 import com.dockersim.dto.request.CreateContainerRequest;
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+import lombok.*;
+
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "docker_containers")
@@ -78,21 +62,20 @@ public class DockerContainer {
     public static DockerContainer from(CreateContainerRequest request) {
         String hexId = IdGenerator.generateHexFullId();
         return DockerContainer.builder()
-            .hexId(hexId)
-            .shortPublidId(IdGenerator.getShortId(hexId))
-
-            .baseImageId(request.getBaseImageId())
-            .name(request.getName())
-            .status(request.getStatus())
-            .ports(request.getPorts())
-            .bindVolumes(request.getBindVolumes())
-            .envs(request.getEnvs())
-            .build();
+                .hexId(hexId)
+                .hexShortId(IdGenerator.getShortId(hexId))
+//            .baseImage(request.getBaseImage())
+                .name(request.getName())
+                .status(request.getStatus())
+                .ports(request.getPorts())
+                .bindVolumes(request.getBindVolumes())
+                .envs(request.getEnvs())
+                .build();
     }
 
     public boolean start() {
         if (this.status == ContainerStatus.CREATED ||
-            this.status == ContainerStatus.EXITED) {
+                this.status == ContainerStatus.EXITED) {
             this.status = ContainerStatus.RUNNING;
             this.startedAt = LocalDateTime.now();
             return true;

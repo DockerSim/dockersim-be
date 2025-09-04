@@ -11,17 +11,17 @@ import com.dockersim.service.container.DockerContainerService;
 import lombok.RequiredArgsConstructor;
 import picocli.CommandLine;
 
-@CommandLine.Command(name = "inspect")
+@CommandLine.Command(name = "stop")
 @Component
 @RequiredArgsConstructor
-public class ContainerInspect implements Callable<CommandResult> {
-
+public class ContainerStop implements Callable<CommandResult> {
+	
 	private final DockerContainerService service;
 
 	@CommandLine.ParentCommand
 	private final ContainerCommand parent;
 
-	@CommandLine.Parameters(index = "0", description = "상세 정보를 출력할 Container의 이름 또는 ID")
+	@CommandLine.Parameters(index = "0", description = "중지할 Container의 이름 또는 Hex ID")
 	private String nameOrHexId;
 
 	@Override

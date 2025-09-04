@@ -11,17 +11,26 @@ import com.dockersim.service.container.DockerContainerService;
 import lombok.RequiredArgsConstructor;
 import picocli.CommandLine;
 
-@CommandLine.Command(name = "inspect")
+@CommandLine.Command(name = "run")
 @Component
 @RequiredArgsConstructor
-public class ContainerInspect implements Callable<CommandResult> {
-
+public class ContainerRun implements Callable<CommandResult> {
+	
 	private final DockerContainerService service;
 
 	@CommandLine.ParentCommand
 	private final ContainerCommand parent;
 
-	@CommandLine.Parameters(index = "0", description = "상세 정보를 출력할 Container의 이름 또는 ID")
+	@CommandLine.Option(names = {"-i", "--interactice"})
+	private boolean interactice;
+
+	@CommandLine.Option(names = {"-t", "--tty"})
+	private boolean tty;
+
+	@CommandLine.Option(names = "-d", description = "메인 터미널에서 나올 경우 메인 터미널을 종료하지 않고 나오는 옵션")
+	private boolean d;
+
+	@CommandLine.Parameters(index = "0", description = "만들고, 실행할 Container의 이름 또는 ID")
 	private String nameOrHexId;
 
 	@Override

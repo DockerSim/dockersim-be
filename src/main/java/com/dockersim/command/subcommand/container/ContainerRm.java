@@ -11,17 +11,20 @@ import com.dockersim.service.container.DockerContainerService;
 import lombok.RequiredArgsConstructor;
 import picocli.CommandLine;
 
-@CommandLine.Command(name = "inspect")
+@CommandLine.Command(name = "remove")
 @Component
 @RequiredArgsConstructor
-public class ContainerInspect implements Callable<CommandResult> {
-
+public class ContainerRm implements Callable<CommandResult> {
+	
 	private final DockerContainerService service;
 
 	@CommandLine.ParentCommand
 	private final ContainerCommand parent;
 
-	@CommandLine.Parameters(index = "0", description = "상세 정보를 출력할 Container의 이름 또는 ID")
+	@CommandLine.Option(names = {"-f", "--force"}, description = "Running 상태가 아닌 Container의 삭제 여부")
+	private boolean force;
+
+	@CommandLine.Parameters(index = "0", description = "삭제할 Container 이름 또는 ID")
 	private String nameOrHexId;
 
 	@Override

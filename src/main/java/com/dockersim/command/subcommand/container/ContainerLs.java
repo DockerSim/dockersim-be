@@ -11,21 +11,24 @@ import com.dockersim.service.container.DockerContainerService;
 import lombok.RequiredArgsConstructor;
 import picocli.CommandLine;
 
-@CommandLine.Command(name = "inspect")
+@CommandLine.Command(name = "ls", aliases = {"list", "ps"})
 @Component
 @RequiredArgsConstructor
-public class ContainerInspect implements Callable<CommandResult> {
+public class ContainerLs implements Callable<CommandResult> {
 
-	private final DockerContainerService service;
+	private final DockerContainerService dockerContainerService;
 
 	@CommandLine.ParentCommand
 	private final ContainerCommand parent;
 
-	@CommandLine.Parameters(index = "0", description = "상세 정보를 출력할 Container의 이름 또는 ID")
-	private String nameOrHexId;
+	@CommandLine.Option(names = {"-a", "--all"}, description = "Existed 상태의 Container 출력 여부")
+	private boolean all = false;
+
+	@CommandLine.Option(names = {"-q", "--quiet"}, description = "Container ID만 출력 여부")
+	private boolean quiet = false;
 
 	@Override
-	public CommandResult call() throws Exception {
+	public CommandResult call() {
 		return null;
 	}
 }

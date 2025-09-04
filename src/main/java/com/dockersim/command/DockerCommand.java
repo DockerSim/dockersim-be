@@ -1,69 +1,80 @@
 package com.dockersim.command;
 
-import com.dockersim.command.aliases.container.AttachCommand;
-import com.dockersim.command.aliases.container.CommitCommand;
-import com.dockersim.command.aliases.container.CpCommand;
-import com.dockersim.command.aliases.container.CreateCommand;
-import com.dockersim.command.aliases.container.DiffCommand;
-import com.dockersim.command.aliases.container.ExecCommand;
-import com.dockersim.command.aliases.container.ExportCommand;
-import com.dockersim.command.aliases.container.KillCommand;
-import com.dockersim.command.aliases.container.PauseCommand;
-import com.dockersim.command.aliases.container.PortCommand;
-import com.dockersim.command.aliases.container.PsCommand;
-import com.dockersim.command.aliases.container.RenameCommand;
-import com.dockersim.command.aliases.container.RestartCommand;
-import com.dockersim.command.aliases.container.RmCommand;
-import com.dockersim.command.aliases.container.RunCommand;
-import com.dockersim.command.aliases.container.StartCommand;
-import com.dockersim.command.aliases.container.StopCommand;
-import com.dockersim.command.aliases.container.UnpauseCommand;
-import com.dockersim.command.aliases.image.ImagesCommand;
+import org.springframework.stereotype.Component;
+
+import com.dockersim.command.aliases.container.Attach;
+import com.dockersim.command.aliases.container.Commit;
+import com.dockersim.command.aliases.container.Cp;
+import com.dockersim.command.aliases.container.Create;
+import com.dockersim.command.aliases.container.Exec;
+import com.dockersim.command.aliases.container.Kill;
+import com.dockersim.command.aliases.container.Pause;
+import com.dockersim.command.aliases.container.Port;
+import com.dockersim.command.aliases.container.Ps;
+import com.dockersim.command.aliases.container.Rename;
+import com.dockersim.command.aliases.container.Restart;
+import com.dockersim.command.aliases.container.Rm;
+import com.dockersim.command.aliases.container.Run;
+import com.dockersim.command.aliases.container.Start;
+import com.dockersim.command.aliases.container.Stop;
+import com.dockersim.command.aliases.container.Unpause;
+import com.dockersim.command.aliases.image.Build;
+import com.dockersim.command.aliases.image.History;
+import com.dockersim.command.aliases.image.Images;
+import com.dockersim.command.aliases.image.Pull;
+import com.dockersim.command.aliases.image.Push;
+import com.dockersim.command.aliases.image.Rmi;
 import com.dockersim.command.subcommand.ContainerCommand;
 import com.dockersim.command.subcommand.ImageCommand;
 import com.dockersim.command.subcommand.VolumeCommand;
 import com.dockersim.config.SimulationUserPrincipal;
+
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.stereotype.Component;
-import picocli.CommandLine.Command;
+import picocli.CommandLine;
 
-@Component
-@Command(name = "docker",
-    subcommands = {
-        // Docker Object
-        ImageCommand.class,
-        ContainerCommand.class,
-        VolumeCommand.class,
+@CommandLine.Command(name = "docker",
+	subcommands = {
+		// Docker Object
+		ImageCommand.class,
+		ContainerCommand.class,
+		VolumeCommand.class,
 
-        // Image Aliases
-        ImagesCommand.class,
+		// Image Aliases
+		Build.class,
+		History.class,
+		Images.class,
+		Pull.class,
+		Push.class,
+		Rmi.class,
 
-        // Container Aliases
-        AttachCommand.class,
-        CommitCommand.class,
-        CpCommand.class,
-        CreateCommand.class,
-        DiffCommand.class,
-        ExecCommand.class,
-        ExportCommand.class,
-        KillCommand.class,
-        PauseCommand.class,
-        PortCommand.class,
-        PsCommand.class,
-        RenameCommand.class,
-        RestartCommand.class,
-        RmCommand.class,
-        RunCommand.class,
-        StartCommand.class,
-        StopCommand.class,
-        UnpauseCommand.class
-    }
+		// Container Aliases
+		Attach.class,
+		Commit.class,
+		Cp.class,
+		Create.class,
+		Exec.class,
+		Kill.class,
+		Ps.class,
+		Pause.class,
+		Port.class,
+		Rename.class,
+		Restart.class,
+		Rm.class,
+		Run.class,
+		Start.class,
+		Stop.class,
+		Unpause.class
+
+		// Volume Aliases
+		// none
+
+		// Network Aliases
+	}
 )
-
+@Component
 @Getter
 @Setter
 public class DockerCommand {
-
-    private SimulationUserPrincipal principal;
+	private SimulationUserPrincipal principal;
 }

@@ -11,18 +11,21 @@ import com.dockersim.service.container.DockerContainerService;
 import lombok.RequiredArgsConstructor;
 import picocli.CommandLine;
 
-@CommandLine.Command(name = "inspect")
+@CommandLine.Command(name = "rename")
 @Component
 @RequiredArgsConstructor
-public class ContainerInspect implements Callable<CommandResult> {
-
+public class ContainerRename implements Callable<CommandResult> {
+	
 	private final DockerContainerService service;
 
 	@CommandLine.ParentCommand
 	private final ContainerCommand parent;
 
-	@CommandLine.Parameters(index = "0", description = "상세 정보를 출력할 Container의 이름 또는 ID")
+	@CommandLine.Parameters(index = "0", description = "이름을 변경할 Container의 이름 또는 Id")
 	private String nameOrHexId;
+
+	@CommandLine.Parameters(index = "1", description = "Container의 새로운 이름")
+	private String newName;
 
 	@Override
 	public CommandResult call() throws Exception {

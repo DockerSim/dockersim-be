@@ -11,18 +11,21 @@ import com.dockersim.service.container.DockerContainerService;
 import lombok.RequiredArgsConstructor;
 import picocli.CommandLine;
 
-@CommandLine.Command(name = "inspect")
+@CommandLine.Command
 @Component
 @RequiredArgsConstructor
-public class ContainerInspect implements Callable<CommandResult> {
+public class ContainerCommit implements Callable<CommandResult> {
 
 	private final DockerContainerService service;
 
 	@CommandLine.ParentCommand
 	private final ContainerCommand parent;
 
-	@CommandLine.Parameters(index = "0", description = "상세 정보를 출력할 Container의 이름 또는 ID")
+	@CommandLine.Parameters(index = "0", description = "Docker Image를 만들 기반이 되는 Docker Container 이름 또는 ID")
 	private String nameOrHexId;
+
+	@CommandLine.Parameters(index = "1", description = "새로 생성되는 Docker Image 이름")
+	private String newImageName;
 
 	@Override
 	public CommandResult call() throws Exception {

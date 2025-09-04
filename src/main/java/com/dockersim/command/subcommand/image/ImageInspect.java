@@ -1,13 +1,13 @@
-package com.dockersim.command.subcommand.volume;
+package com.dockersim.command.subcommand.image;
 
 import java.util.concurrent.Callable;
 
 import org.springframework.stereotype.Component;
 
-import com.dockersim.command.subcommand.VolumeCommand;
+import com.dockersim.command.subcommand.ImageCommand;
 import com.dockersim.dto.response.CommandResult;
 import com.dockersim.dto.response.CommandResultStatus;
-import com.dockersim.service.volume.DockerVolumeService;
+import com.dockersim.service.image.DockerImageService;
 
 import lombok.RequiredArgsConstructor;
 import picocli.CommandLine;
@@ -15,14 +15,14 @@ import picocli.CommandLine;
 @CommandLine.Command(name = "inspect")
 @Component
 @RequiredArgsConstructor
-public class VolumeInspectCommand implements Callable<CommandResult> {
+public class ImageInspect implements Callable<CommandResult> {
 
-	private final DockerVolumeService service;
+	private final DockerImageService service;
 
 	@CommandLine.ParentCommand
-	private final VolumeCommand parent;
+	private final ImageCommand parent;
 
-	@CommandLine.Parameters(index = "0", description = "조회할 Docker Volume 이름")
+	@CommandLine.Parameters(index = "0", description = "조회할 Docker Image 이름 또는 Hex ID")
 	private String nameOrHexId;
 
 	@Override
