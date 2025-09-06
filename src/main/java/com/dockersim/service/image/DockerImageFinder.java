@@ -42,6 +42,13 @@ public interface DockerImageFinder {
 	DockerImage findImageByNameOrId(Simulation simulation, Map<String, String> imageInfo, ImageLocation location,
 		String hexId);
 
+	/**
+	 * Loacl에서 Image를 조회합니다.
+	 *
+	 * @param simulation Image가 속한 simulation
+	 * */
+	List<DockerImage> findBySimulationInLocal(Simulation simulation, boolean all);
+
 	// ----
 
 	/**

@@ -9,7 +9,5 @@ public class ImageInspectData {
 	public String Id;
 	public List<String> RepoTags;
 	public String Created;
-	public RootFSData RootFS;
+	public ImageInspectRootFSData RootFS;
 }
-
-

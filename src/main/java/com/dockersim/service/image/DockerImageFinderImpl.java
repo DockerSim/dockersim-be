@@ -57,6 +57,14 @@ public class DockerImageFinderImpl implements DockerImageFinder {
 		return image;
 	}
 
+	@Override
+	public List<DockerImage> findBySimulationInLocal(Simulation simulation, boolean all) {
+		if (all) {
+			return repo.findBySimulation(simulation);
+		}
+		return repo.findNotDanglingImageBySimulation(simulation);
+	}
+
 	// ------------------
 	@Override
 	public List<DockerImage> findImages(String imageNameOrId, Simulation simulation) {

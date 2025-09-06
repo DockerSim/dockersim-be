@@ -5,7 +5,7 @@ import java.util.List;
 import lombok.Builder;
 
 @Builder
-public class RootFSData {
+public class ImageInspectRootFSData {
 	public String Type = "layers";
 	public List<String> Layers;
 }
