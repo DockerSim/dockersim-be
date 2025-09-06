@@ -11,11 +11,13 @@ import com.dockersim.domain.Simulation;
 
 public interface DockerImageRepository extends JpaRepository<DockerImage, Long> {
 
-	Optional<DockerImage> findByNamespaceAndNameAndTagAndLocation(String namespace, String name,
+	Optional<DockerImage> findBySimulationAndNamespaceAndNameAndTagAndLocation(Simulation simulation, String namespace,
+		String name,
 		String tag,
 		ImageLocation location);
 
-	Optional<DockerImage> findByHexIdStartsWithAndLocation(String hexId, ImageLocation location);
+	Optional<DockerImage> findBySimulationAndHexIdStartsWithAndLocation(Simulation simulation, String hexId,
+		ImageLocation location);
 
 	// ------------
 

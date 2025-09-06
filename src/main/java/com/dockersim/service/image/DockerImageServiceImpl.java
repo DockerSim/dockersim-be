@@ -1,5 +1,7 @@
 package com.dockersim.service.image;
 
+import java.time.format.DateTimeFormatter;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -14,12 +16,18 @@ import com.dockersim.domain.ImageLocation;
 import com.dockersim.domain.Simulation;
 import com.dockersim.domain.User;
 import com.dockersim.dto.response.DockerImageResponse;
+import com.dockersim.dto.response.ImageInspectData;
+import com.dockersim.dto.response.RootFSData;
+import com.dockersim.exception.BusinessException;
+import com.dockersim.exception.code.DockerImageErrorCode;
 import com.dockersim.repository.DockerImageRepository;
 import com.dockersim.service.container.ContainerFinder;
 import com.dockersim.service.dockerfile.DockerFileFinder;
 import com.dockersim.service.simulation.SimulationFinder;
 import com.dockersim.service.user.UserFinder;
 import com.dockersim.util.ImageUtil;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
 
@@ -326,6 +334,7 @@ public class DockerImageServiceImpl implements DockerImageService {
 		DockerImage image = DockerImage.from(simulation, dockerFile, imageInfo);
 
 		DockerImage prevImage = dockerImageFinder.findSameImage(
+			simulation,
 			image.getNamespace(),
 			image.getName(),
 			image.getTag(),
@@ -353,31 +362,48 @@ public class DockerImageServiceImpl implements DockerImageService {
 	}
 
 	@Override
+	@Transactional(readOnly = true)
 	public List<String> history(SimulationUserPrincipal principal, String nameOrHexId) {
 		Map<String, String> imageInfo = ImageUtil.parserFullName(nameOrHexId);
 
-		User user = userFinder.findUserById(principal.getUserId());
-		ImageUtil.checkInvalidImageInfo(imageInfo, user, false);
+		// User user = userFinder.findUserById(principal.getUserId());
+		// ImageUtil.checkInvalidImageInfo(imageInfo, user, false);
+		Simulation simulation = simulationFinder.findById(principal.getSimulationId());
 
-		DockerImage image = dockerImageFinder.findSameImage(
-			imageInfo.get("namespace"),
-			imageInfo.get("repository"),
-			imageInfo.get("tag"),
-			ImageLocation.LOCAL
-		);
-		if (image == null) {
-			//  repo[:tag]로 탐색 실패, Hex ID로 간주하고 재탐색
-			image = dockerImageFinder.findSameImage(nameOrHexId, ImageLocation.LOCAL);
-		}
+		DockerImage image = dockerImageFinder.findImageByNameOrId(simulation, imageInfo, ImageLocation.LOCAL,
+			nameOrHexId);
 		return image.getLayers();
 	}
 
 	@Override
-	public List<String> inspect(SimulationUserPrincipal principal, String nameOrId) {
-		return List.of();
+	@Transactional(readOnly = true)
+	public List<String> inspect(SimulationUserPrincipal principal, String nameOrHexId) {
+
+		Simulation simulation = simulationFinder.findById(principal.getSimulationId());
+		// User user = userFinder.findUserById(principal.getUserId());
+		// ImageUtil.checkInvalidImageInfo(imageInfo, user, false);
+
+		Map<String, String> imageInfo = ImageUtil.parserFullName(nameOrHexId);
+		DockerImage image = dockerImageFinder.findImageByNameOrId(simulation, imageInfo, ImageLocation.LOCAL,
+			nameOrHexId);
+
+		ImageInspectData inspectData = ImageInspectData.builder()
+			.Id(image.getHexId())
+			.RepoTags(List.of(image.getFullNameWithTag()))
+			.Created(image.getCreatedAt().format(DateTimeFormatter.ISO_DATE_TIME))
+			.RootFS(RootFSData.builder().Layers(image.getLayers()).build())
+			.build();
+
+		try {
+			return Collections.singletonList(
+				(new ObjectMapper()).writerWithDefaultPrettyPrinter().writeValueAsString(List.of(inspectData)));
+		} catch (JsonProcessingException e) {
+			throw new BusinessException(DockerImageErrorCode.FAIL_CONVERT_INSPECT);
+		}
 	}
 
 	@Override
+	@Transactional(readOnly = true)
 	public List<String> ls(SimulationUserPrincipal principal, boolean all, boolean quiet) {
 		return List.of();
 	}
