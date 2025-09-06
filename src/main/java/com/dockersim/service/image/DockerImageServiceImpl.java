@@ -321,7 +321,7 @@ public class DockerImageServiceImpl implements DockerImageService {
 		Simulation simulation = simulationFinder.findById(principal.getSimulationId());
 
 		Map<String, String> imageInfo = ImageUtil.parserFullName(tag);
-		ImageUtil.checkInvalidImageInfo(imageInfo, user);
+		ImageUtil.checkInvalidImageInfo(imageInfo, user, true);
 
 		DockerImage image = DockerImage.from(simulation, dockerFile, imageInfo);
 
@@ -354,11 +354,22 @@ public class DockerImageServiceImpl implements DockerImageService {
 
 	@Override
 	public List<String> history(SimulationUserPrincipal principal, String nameOrHexId) {
-		// 이름으로 먼저 검색
-		// 없으면 id로 검색
-		// layer를 반환
+		Map<String, String> imageInfo = ImageUtil.parserFullName(nameOrHexId);
 
-		return List.of();
+		User user = userFinder.findUserById(principal.getUserId());
+		ImageUtil.checkInvalidImageInfo(imageInfo, user, false);
+
+		DockerImage image = dockerImageFinder.findSameImage(
+			imageInfo.get("namespace"),
+			imageInfo.get("repository"),
+			imageInfo.get("tag"),
+			ImageLocation.LOCAL
+		);
+		if (image == null) {
+			//  repo[:tag]로 탐색 실패, Hex ID로 간주하고 재탐색
+			image = dockerImageFinder.findSameImage(nameOrHexId, ImageLocation.LOCAL);
+		}
+		return image.getLayers();
 	}
 
 	@Override

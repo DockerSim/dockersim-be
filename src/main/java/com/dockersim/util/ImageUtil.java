@@ -65,8 +65,8 @@ public class ImageUtil {
 		return components;
 	}
 
-	public static void checkInvalidImageInfo(Map<String, String> map, User user) {
-		if (ImageUtil.namespaceSameUserName(map.get("namespace"), user)) {
+	public static void checkInvalidImageInfo(Map<String, String> map, User user, boolean isOwner) {
+		if (isOwner && ImageUtil.namespaceSameUserName(map.get("namespace"), user)) {
 			throw new BusinessException(DockerImageErrorCode.INVALID_NAMESPACE, map.get("namespace"));
 		}
 	}
