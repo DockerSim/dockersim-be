@@ -1,5 +1,6 @@
 package com.dockersim.command.aliases.image;
 
+import java.util.List;
 import java.util.concurrent.Callable;
 
 import org.springframework.stereotype.Component;
@@ -23,16 +24,19 @@ public class Push implements Callable<CommandResult> {
 	@CommandLine.ParentCommand
 	private final DockerCommand parent;
 
-	@CommandLine.Parameters(index = "0", description = "Docker Image 이름")
+	@CommandLine.Option(names = {"-a", "--all-tags"}, description = "동일한 repo의 모든 Image를 업로드합니다.")
+	private boolean allTags;
+
+	@CommandLine.Parameters(index = "0", description = "namespace/repo[:tag]")
 	private String name;
 
 	@Override
 	public CommandResult call() throws Exception {
-		DockerImageResponse response = service.push(parent.getPrincipal(), name);
+		List<DockerImageResponse> response = service.push(parent.getPrincipal(), name, allTags);
 		return CommandResult.builder()
-			.console(response.getConsole())
+			.console(null)
 			.status(CommandResultStatus.CREATE)
-			.changedImage(response)
+			.changedImages(response)
 			.build();
 	}
 }

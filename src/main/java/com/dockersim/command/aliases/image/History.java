@@ -22,7 +22,7 @@ public class History implements Callable<CommandResult> {
 	@CommandLine.ParentCommand
 	private final DockerCommand parent;
 
-	@CommandLine.Parameters(index = "0", description = "Docker Image 이름 또는 Hex ID")
+	@CommandLine.Parameters(index = "0", description = "repo[:tag] | Hex ID")
 	private String nameOrHexId;
 
 	@Override

@@ -1,5 +1,12 @@
 package com.dockersim.service.image;
 
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Stream;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.dockersim.config.SimulationUserPrincipal;
 import com.dockersim.domain.DockerFile;
 import com.dockersim.domain.DockerImage;
@@ -7,33 +14,27 @@ import com.dockersim.domain.ImageLocation;
 import com.dockersim.domain.Simulation;
 import com.dockersim.domain.User;
 import com.dockersim.dto.response.DockerImageResponse;
-import com.dockersim.exception.BusinessException;
-import com.dockersim.exception.code.DockerImageErrorCode;
 import com.dockersim.repository.DockerImageRepository;
 import com.dockersim.service.container.ContainerFinder;
 import com.dockersim.service.dockerfile.DockerFileFinder;
 import com.dockersim.service.simulation.SimulationFinder;
 import com.dockersim.service.user.UserFinder;
 import com.dockersim.util.ImageUtil;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Stream;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class DockerImageServiceImpl implements DockerImageService {
 
-    private final DockerImageRepository dockerImageRepository;
+	private final DockerImageRepository dockerImageRepository;
 
-    private final SimulationFinder simulationFinder;
-    private final ContainerFinder containerFinder;
-    private final DockerImageFinder dockerImageFinder;
-    private final UserFinder userFinder;
-    private final DockerFileFinder dockerFileFinder;
+	private final SimulationFinder simulationFinder;
+	private final ContainerFinder containerFinder;
+	private final DockerImageFinder dockerImageFinder;
+	private final UserFinder userFinder;
+	private final DockerFileFinder dockerFileFinder;
 
     /*
     @Transactional
@@ -310,93 +311,85 @@ public class DockerImageServiceImpl implements DockerImageService {
     }
      */
 
-    // ----------------------------------------------
+	// ----------------------------------------------
 
-    @Override
-    @Transactional
-    public DockerImageResponse build(SimulationUserPrincipal principal, String dockerFilePath,
-        String name) {
-        User user = userFinder.findUserById(principal.getUserId());
-        DockerFile dockerFile = dockerFileFinder.findByPathAndUser(dockerFilePath, user);
-        Simulation simulation = simulationFinder.findById(principal.getUserId());
+	@Override
+	@Transactional
+	public DockerImageResponse build(SimulationUserPrincipal principal, String dockerFilePath, String tag) {
+		User user = userFinder.findUserById(principal.getUserId());
+		DockerFile dockerFile = dockerFileFinder.findByPathAndUser(dockerFilePath, user);
+		Simulation simulation = simulationFinder.findById(principal.getSimulationId());
 
-        Map<String, String> imageNameMap = ImageUtil.parserFullName(name);
-        String namespace = imageNameMap.get("namespace");
+		Map<String, String> imageInfo = ImageUtil.parserFullName(tag);
+		ImageUtil.checkInvalidImageInfo(imageInfo, user);
 
-        if (!namespace.isEmpty() && !namespace.equals(user.getName())) {
-            throw new BusinessException(DockerImageErrorCode.INVALID_NAMESPACE,
-                imageNameMap.get("namespace"));
-        }
+		DockerImage image = DockerImage.from(simulation, dockerFile, imageInfo);
 
-        DockerImage image = DockerImage.from(simulation, dockerFile, imageNameMap);
+		DockerImage prevImage = dockerImageFinder.findSameImage(
+			image.getNamespace(),
+			image.getName(),
+			image.getTag(),
+			ImageLocation.LOCAL
+		);
+		if (prevImage != null) {
+			prevImage.convertToDangling();
+			dockerImageRepository.save(prevImage);
+		}
 
-        DockerImage prevImage = dockerImageFinder.findSameImage(
-            namespace,
-            image.getName(),
-            image.getTag(),
-            ImageLocation.LOCAL
-        );
-        if (prevImage != null) {
-            prevImage.convertToDangling();
-            dockerImageRepository.save(prevImage);
-        }
-        Stream<String> headerStream = Stream.of(
-            String.format("'%s'에 위치한 Dockerfile로 Docker Image '%s'를 생성했습니다.",
-                dockerFilePath,
-                image.getName().isEmpty() ? image.getShortHexId() : image.getFullNameWithTag()
-            ));
-        Stream<String> bodyStream = Stream.empty();
+		Stream<String> headerStream = Stream.of(
+			dockerFilePath + "에 위치한 Dockerfile에 의해 Image" + image.getName() + "을 생성했습니다.");
+		Stream<String> bodyStream = Stream.empty();
 
-        if (prevImage != null) {
-            bodyStream = Stream.of(
-                "로컬에 존재하는 동일한 기존 Docker Image는 댕글링이미지로 변환됩니다:",
-                prevImage.getShortHexId()
-            );
-        }
+		if (prevImage != null) {
+			bodyStream = Stream.of(
+				"Local에 존재하는 기존의 Image는 댕글링이미지로 변환됩니다.:",
+				prevImage.getShortHexId()
+			);
+		}
 
-        return DockerImageResponse.from(dockerImageRepository.save(image),
-            Stream.concat(headerStream, bodyStream).toList()
-        );
-    }
+		return DockerImageResponse.from(dockerImageRepository.save(image),
+			Stream.concat(headerStream, bodyStream).toList()
+		);
+	}
 
-    @Override
-    public List<String> history(SimulationUserPrincipal principal, String nameOrHexId) {
-        // 이름으로 먼저 검색
-        // 없으면 id로 검색
-        // layer를 반환
+	@Override
+	public List<String> history(SimulationUserPrincipal principal, String nameOrHexId) {
+		// 이름으로 먼저 검색
+		// 없으면 id로 검색
+		// layer를 반환
 
-        return List.of();
-    }
+		return List.of();
+	}
 
-    @Override
-    public List<String> inspect(SimulationUserPrincipal principal, String nameOrId) {
-        return List.of();
-    }
+	@Override
+	public List<String> inspect(SimulationUserPrincipal principal, String nameOrId) {
+		return List.of();
+	}
 
-    @Override
-    public List<String> ls(SimulationUserPrincipal principal, boolean all, boolean quiet) {
-        return List.of();
-    }
+	@Override
+	public List<String> ls(SimulationUserPrincipal principal, boolean all, boolean quiet) {
+		return List.of();
+	}
 
-    @Override
-    public List<DockerImageResponse> prune(SimulationUserPrincipal principal, boolean all) {
-        return List.of();
-    }
+	@Override
+	public List<DockerImageResponse> prune(SimulationUserPrincipal principal, boolean all) {
+		return List.of();
+	}
 
-    @Override
-    public List<DockerImageResponse> pull(SimulationUserPrincipal principal, String name,
-        boolean all) {
-        return List.of();
-    }
+	@Override
+	public List<DockerImageResponse> pull(SimulationUserPrincipal principal, String name,
+		boolean all) {
+		return List.of();
+	}
 
-    @Override
-    public DockerImageResponse push(SimulationUserPrincipal principal, String name) {
-        return null;
-    }
+	@Override
+	public List<DockerImageResponse> push(SimulationUserPrincipal principal, String name, boolean allTags) {
+		return null;
+	}
 
-    @Override
-    public DockerImageResponse rm(SimulationUserPrincipal principal, String nameOrId,
-        boolean force) {
-        return null;
-    }
+	@Override
+	public DockerImageResponse rm(SimulationUserPrincipal principal, String nameOrId,
+		boolean force) {
+		return null;
+	}
 }

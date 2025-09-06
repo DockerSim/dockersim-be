@@ -22,7 +22,7 @@ public class Images implements Callable<CommandResult> {
 	@CommandLine.ParentCommand
 	private final DockerCommand parent;
 
-	@CommandLine.Option(names = {"-a", "--all"}, description = "댕글링 이미지를 포함합니다.")
+	@CommandLine.Option(names = {"-a", "--all"}, description = "댕글링 이미지도 조회합니다.")
 	private boolean all;
 
 	@CommandLine.Option(names = {"-q", "--quiet"}, description = "Hex ID만 출력합니다.")

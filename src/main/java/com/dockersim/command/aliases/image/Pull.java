@@ -24,10 +24,10 @@ public class Pull implements Callable<CommandResult> {
 	@CommandLine.ParentCommand
 	private final DockerCommand parent;
 
-	@CommandLine.Option(names = {"-a", "--all"}, description = "동일한 이름을 가진 모든 이미지를 반환")
+	@CommandLine.Option(names = {"-a", "--all"}, description = "동일한 repo의 모든 Image를 다운로드합니다.")
 	private boolean all;
 
-	@CommandLine.Parameters(index = "0", description = "Docker Image 이름")
+	@CommandLine.Parameters(index = "0", description = "repo[:tag]")
 	private String name;
 
 	@Override

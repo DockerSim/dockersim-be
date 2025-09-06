@@ -22,7 +22,7 @@ public class ImageInspect implements Callable<CommandResult> {
 	@CommandLine.ParentCommand
 	private final ImageCommand parent;
 
-	@CommandLine.Parameters(index = "0", description = "조회할 Docker Image 이름 또는 Hex ID")
+	@CommandLine.Parameters(index = "0", description = "repo[:tag] | Hex ID")
 	private String nameOrHexId;
 
 	@Override

@@ -24,7 +24,7 @@ public class ImagePrune implements Callable<CommandResult> {
 	@CommandLine.ParentCommand
 	private final ImageCommand parent;
 
-	@CommandLine.Option(names = {"-a", "--all"}, description = "기본 동작 변경: 컨테이너에 연결되지 않는 모든 이미지 삭제")
+	@CommandLine.Option(names = {"-a", "--all"}, description = "참조되지 않는 이미지도 삭제합니다.")
 	private boolean all;
 
 	@Override

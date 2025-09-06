@@ -1,80 +1,87 @@
 package com.dockersim.service.image;
 
+import java.util.List;
 
 import com.dockersim.config.SimulationUserPrincipal;
 import com.dockersim.dto.response.DockerImageResponse;
-import java.util.List;
 
 public interface DockerImageService {
 
-    /**
-     * Dockerfile을 통해 이미지를 생성합니다.
-     *
-     * @param principal      인증 정보
-     * @param dockerFilePath 도커 파일 경로
-     * @param name           생성할 이미지 이름(repo[:tag])
-     */
-    DockerImageResponse build(SimulationUserPrincipal principal, String dockerFilePath,
-        String name);
+	/**
+	 * Dockerfile을 기반으로 새로운 Image를 생성합니다.
+	 *
+	 * @param principal      인증 정보
+	 * @param dockerFilePath 도커 파일 경로
+	 * @param tag            생성되는 Image의 repo[:tag] 지정
+	 * @return 생성한 Image와 콘솔 결과를 밥환합니다.
+	 */
+	DockerImageResponse build(SimulationUserPrincipal principal, String dockerFilePath,
+		String tag);
 
-    /**
-     * Show the history of an image
-     *
-     * @param principal   인증 정보
-     * @param nameOrHexId 레이어를 조회할 이미지명 또는 ID
-     */
-    List<String> history(SimulationUserPrincipal principal, String nameOrHexId);
+	/**
+	 * Image의 Layer를 전부 출력합니다.
+	 *
+	 * @param principal   인증 정보
+	 * @param nameOrHexId Layer를 조회할 Image 이름 또는 Hex ID
+	 * @return 콘솔 결과를 반환합니다.
+	 */
+	List<String> history(SimulationUserPrincipal principal, String nameOrHexId);
 
+	/**
+	 * Image의 상세 정보를 전부 반환합니다.
+	 *
+	 * @param principal   인증 정보
+	 * @param nameOrHexId 상세 정보를 조회할 Image 이름 또는 Hex ID
+	 * @return 콘솔 결과를 반환합니다.
+	 */
+	List<String> inspect(SimulationUserPrincipal principal, String nameOrHexId);
 
-    /**
-     * Display detailed information on one or more images
-     *
-     * @param principal   인증 정보
-     * @param nameOrHexId 레이어를 조회할 이미지명 또는 ID
-     */
-    List<String> inspect(SimulationUserPrincipal principal, String nameOrHexId);
+	/**
+	 * Local에 저장된 Image를 조회합니다.
+	 *
+	 * @param principal 인증 정보
+	 * @param all       댕글링 이미지도 조회합니다.
+	 * @param quiet     Image Hex ID만 출력합니다.
+	 * @return 콘솔 결과를 반환합니다.
+	 */
+	List<String> ls(SimulationUserPrincipal principal, boolean all, boolean quiet);
 
-    /**
-     * The default docker images will show all top level images, their repository and tags.
-     *
-     * @param principal 인증 정보
-     * @param all       댕글링 이미지 반환 여부
-     * @param quiet     이미지 ID만 반환 여부
-     */
-    List<String> ls(SimulationUserPrincipal principal, boolean all, boolean quiet);
+	/**
+	 * Local의 모든 댕글링 이미지를 삭제합니다.
+	 *
+	 * @param principal 인증 정보
+	 * @param all       참조되지 않는 이미지도 삭제합니다.
+	 * @return 삭제할 Image와 콘솔 결과를 반환합니다.
+	 */
+	List<DockerImageResponse> prune(SimulationUserPrincipal principal, boolean all);
 
-    /**
-     * Remove all dangling images. If '-a' is specified, also remove all images not referenced by
-     * any container.
-     *
-     * @param principal 인증 정보
-     * @param all       컨테이너가 연결되지 않는 모든 이미지 삭제로 동작 변경
-     */
-    List<DockerImageResponse> prune(SimulationUserPrincipal principal, boolean all);
+	/**
+	 * Docker Hub 또는 원격 이미지 저장소에서 Local로 Image를 다운로드 합니다.
+	 *
+	 * @param principal 인증 정보
+	 * @param name      다운로드 받을 Image 이름
+	 * @param allTags   동일한 repo의 모든 Image를 다운로드합니다.
+	 * @return 다운로드 받은(새로 생성된) Image와 콘솔 결과를 반환합니다.
+	 */
+	List<DockerImageResponse> pull(SimulationUserPrincipal principal, String name, boolean allTags);
 
-    /**
-     * 도커 이미지를 다운로드 받습니다. repo 필드에 '/'가 없으면 'library/' 를 붙인 후 공식저장소에서만 검색 '/'가 있다면 개인 허브에서만 검색
-     *
-     * @param principal 인증 정보
-     * @param name      업로드할 도커명
-     * @param all       동일한 이름을 가진 모든 이미지 반환 여부
-     */
-    List<DockerImageResponse> pull(SimulationUserPrincipal principal, String name, boolean all);
+	/**
+	 * Local의 Image를 사용자 저장소로 업로드합니다.
+	 *
+	 * @param principal 인증 정보
+	 * @param name      업로드할 도커명
+	 * @param allTags   동일한 repo의 모든 Image를 업로드합니다..
+	 * @return 사용자 저장소에 업로드된(새로 생성된) Image와 콘솔 결과를 반환합니다.
+	 */
+	List<DockerImageResponse> push(SimulationUserPrincipal principal, String name, boolean allTags);
 
-    /**
-     * 도커 이미지를 개인 허브에 업로드 합니다. 허브에 동일한 ID의 이미지가 있다면, 덮어쓰지 않습니다.
-     *
-     * @param principal 인증 정보
-     * @param name      업로드할 도커명
-     */
-    DockerImageResponse push(SimulationUserPrincipal principal, String name);
-
-    /**
-     * 도커 이미지를 삭제합니다. 기본적으로, 삭제하려는 이미지를 기반으로 하는 컨테이너가 있다면 삭제에 실패합니다.
-     *
-     * @param principal   인증 정보
-     * @param nameOrHexId 삭제할 도커 이미지명 또는 ID
-     * @param force       해당 이미지를 기반으로 만들어진 컨테이너가 있어도 삭제 여부
-     */
-    DockerImageResponse rm(SimulationUserPrincipal principal, String nameOrHexId, boolean force);
+	/**
+	 * Local의 Image를 삭제합니다.
+	 *
+	 * @param principal   인증 정보
+	 * @param nameOrHexId 삭제할 Image 이름 또는 Hex ID
+	 * @param force       해당 Image가 다른 Container의 Base Image이여도 삭제합니다.
+	 * @return 삭제한 Image와 콘솔 결과를 반환합니다.
+	 */
+	DockerImageResponse rm(SimulationUserPrincipal principal, String nameOrHexId, boolean force);
 }

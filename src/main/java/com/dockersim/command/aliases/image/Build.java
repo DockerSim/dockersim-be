@@ -23,7 +23,7 @@ public class Build implements Callable<CommandResult> {
 	@CommandLine.ParentCommand
 	private final DockerCommand parent;
 
-	@CommandLine.Option(names = {"-t", "--tag"}, description = "새로 생성하는 Docker Image 이름")
+	@CommandLine.Option(names = {"-t", "--tag"}, description = "생성되는 Image의 repo[:tag] 지정")
 	private String name;
 
 	@CommandLine.Parameters(index = "0", description = "DockerFile 경로")

@@ -24,15 +24,15 @@ public class ImagePull implements Callable<CommandResult> {
 	@CommandLine.ParentCommand
 	private final ImageCommand parent;
 
-	@CommandLine.Option(names = {"-a", "--all"}, description = "동일한 이름을 가진 모든 이미지를 반환")
-	private boolean all;
+	@CommandLine.Option(names = {"-a", "--all-tags"}, description = "동일한 repo의 모든 Image를 다운로드합니다.")
+	private boolean allTags;
 
-	@CommandLine.Parameters(index = "0", description = "Docker Image 이름")
+	@CommandLine.Parameters(index = "0", description = "repo[:tag]")
 	private String name;
 
 	@Override
 	public CommandResult call() throws Exception {
-		List<DockerImageResponse> pull = service.pull(parent.getPrincipal(), name, all);
+		List<DockerImageResponse> pull = service.pull(parent.getPrincipal(), name, allTags);
 		return CommandResult.builder()
 			.console(pull.stream()
 				.flatMap(response -> response.getConsole().stream()).toList())

@@ -23,16 +23,15 @@ public class Rmi implements Callable<CommandResult> {
 	@CommandLine.ParentCommand
 	private final DockerCommand parent;
 
-	@CommandLine.Option(names = {"-f", "--force"},
-		description = "기본 동작 변경: 삭제하려는 Docker Image 를 기반으로 생성된 Docker Container 가 있어도 Docker Image 삭제")
-	private boolean all;
+	@CommandLine.Option(names = {"-f", "--force"}, description = "해당 Image가 다른 Container의 Base Image이여도 삭제합니다.")
+	private boolean force;
 
-	@CommandLine.Parameters(index = "0", description = "도커 이미지 이름 또는 Hex ID")
+	@CommandLine.Parameters(index = "0", description = "repo[:tag] | Hex ID")
 	private String nameOrHexId;
 
 	@Override
 	public CommandResult call() throws Exception {
-		DockerImageResponse response = service.rm(parent.getPrincipal(), nameOrHexId, all);
+		DockerImageResponse response = service.rm(parent.getPrincipal(), nameOrHexId, force);
 		return CommandResult.builder()
 			.console(response.getConsole())
 			.status(CommandResultStatus.DELETE)
