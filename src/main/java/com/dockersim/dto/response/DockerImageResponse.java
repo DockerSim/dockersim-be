@@ -39,6 +39,7 @@ public class DockerImageResponse {
 	/*
 	target:
 		build
+		prune
 
 	 */
 	public static DockerImageResponse from(DockerImage image, List<String> console) {

@@ -2,6 +2,7 @@ package com.dockersim.command.subcommand.image;
 
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.stream.Stream;
 
 import org.springframework.stereotype.Component;
 
@@ -24,15 +25,23 @@ public class ImagePrune implements Callable<CommandResult> {
 	@CommandLine.ParentCommand
 	private final ImageCommand parent;
 
-	@CommandLine.Option(names = {"-a", "--all"}, description = "참조되지 않는 이미지도 삭제합니다.")
+	@CommandLine.Option(names = {"-a", "--all"}, description = "댕글링 이미지/참조 여부에 관계없이 삭제합니다.")
 	private boolean all;
 
 	@Override
 	public CommandResult call() throws Exception {
 		List<DockerImageResponse> prune = service.prune(parent.getPrincipal(), all);
+		if (prune == null) {
+			return CommandResult.builder()
+				.console(List.of("삭제할 이미지가 없습니다."))
+				.status(CommandResultStatus.READ)
+				.build();
+		}
 		return CommandResult.builder()
-			.console(prune.stream()
-				.flatMap(response -> response.getConsole().stream()).toList())
+			.console(Stream.concat(Stream.of("Deleted Images:"),
+					prune.stream().flatMap(response -> response.getConsole().stream()))
+				.toList()
+			)
 			.status(CommandResultStatus.DELETE)
 			.changedImages(prune)
 			.build();

@@ -47,7 +47,7 @@ public interface DockerImageService {
 	List<String> ls(SimulationUserPrincipal principal, boolean all, boolean quiet);
 
 	/**
-	 * Local의 모든 댕글링 이미지를 삭제합니다.
+	 * Local의 참조되지 않은 댕글링 이미지를 삭제합니다.
 	 *
 	 * @param principal 인증 정보
 	 * @param all       참조되지 않는 이미지도 삭제합니다.

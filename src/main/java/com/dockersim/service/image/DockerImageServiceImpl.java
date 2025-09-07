@@ -44,23 +44,6 @@ public class DockerImageServiceImpl implements DockerImageService {
 	private final UserFinder userFinder;
 	private final DockerFileFinder dockerFileFinder;
 
-    /*
-
-
-    private boolean isPotentialHexId(String str) {
-        if (str == null || str.isEmpty() || str.contains("/") || str.contains(":")) {
-            return false;
-        }
-        return str.matches("^[0-9a-fA-F]+$");
-    }
-
-    private String getConsoleHeader() {
-        return
-    }
-     */
-
-	// ----------------------------------------------
-
 	@Override
 	@Transactional
 	public DockerImageResponse build(SimulationUserPrincipal principal, String dockerFilePath, String tag) {
@@ -106,8 +89,6 @@ public class DockerImageServiceImpl implements DockerImageService {
 	public List<String> history(SimulationUserPrincipal principal, String nameOrHexId) {
 		Map<String, String> imageInfo = ImageUtil.parserFullName(nameOrHexId);
 
-		// User user = userFinder.findUserById(principal.getUserId());
-		// ImageUtil.checkInvalidImageInfo(imageInfo, user, false);
 		Simulation simulation = simulationFinder.findById(principal.getSimulationId());
 
 		DockerImage image = dockerImageFinder.findImageByNameOrId(simulation, imageInfo, ImageLocation.LOCAL,
@@ -120,8 +101,6 @@ public class DockerImageServiceImpl implements DockerImageService {
 	public List<String> inspect(SimulationUserPrincipal principal, String nameOrHexId) {
 
 		Simulation simulation = simulationFinder.findById(principal.getSimulationId());
-		// User user = userFinder.findUserById(principal.getUserId());
-		// ImageUtil.checkInvalidImageInfo(imageInfo, user, false);
 
 		Map<String, String> imageInfo = ImageUtil.parserFullName(nameOrHexId);
 		DockerImage image = dockerImageFinder.findImageByNameOrId(simulation, imageInfo, ImageLocation.LOCAL,
@@ -188,7 +167,19 @@ public class DockerImageServiceImpl implements DockerImageService {
 
 	@Override
 	public List<DockerImageResponse> prune(SimulationUserPrincipal principal, boolean all) {
-		return List.of();
+		Simulation simulation = simulationFinder.findById(principal.getSimulationId());
+		List<DockerImage> images;
+
+		if (all) {
+			images = dockerImageFinder.findDanglingImageBySimulationInLocal(simulation)
+				.stream().filter(image -> image.getContainers().isEmpty()).toList();
+		} else {
+			images = dockerImageFinder.fundUnreferencedImageBySimulationInLocal(simulation);
+		}
+
+		return images.stream()
+			.map(image -> DockerImageResponse.from(image, List.of("deleted: " + image.getHexId())))
+			.toList();
 	}
 
 	@Override
@@ -203,8 +194,7 @@ public class DockerImageServiceImpl implements DockerImageService {
 	}
 
 	@Override
-	public DockerImageResponse rm(SimulationUserPrincipal principal, String nameOrId,
-		boolean force) {
+	public DockerImageResponse rm(SimulationUserPrincipal principal, String nameOrId, boolean force) {
 		return null;
 	}
 }

@@ -74,28 +74,6 @@ public class DockerImage {
 	@OneToMany(mappedBy = "baseImage", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<DockerContainer> containers = new ArrayList<>();
 
-	// public static DockerImage from(DockerOfficeImage officeImage, Simulation simulation) {
-	// 	return DockerImage.builder()
-	// 		.hexId(officeImage.getHexId())
-	// 		.hexId(officeImage.getShortHexId())
-	// 		.namespace(officeImage.getNamespace())
-	// 		.name(officeImage.getName())
-	// 		.tag(officeImage.getTag())
-	// 		.location(ImageLocation.LOCAL)
-	// 		.layers(null)
-	// 		.createdAt(officeImage.getLastUpdated())
-	// 		.simulation(simulation)
-	// 		.build();
-	// }
-	//
-	// public static DockerImage from(DockerImage pullImage, Simulation simulation,
-	// 	ImageLocation location) {
-	// 	return pullImage.toBuilder()
-	// 		.simulation(simulation)
-	// 		.location(location)
-	// 		.build();
-	// }
-
 	/*
 	target:
 		image build
