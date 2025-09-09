@@ -12,6 +12,8 @@ public class GithubUserResponse {
 
     private String name;
 
+    private String login;
+
     // 사용자 이메일 (비공개일 경우 null일 수 있음)
     private String email;
 

@@ -1,6 +1,7 @@
 package com.dockersim.controller;
 
 import com.dockersim.common.ApiResponse;
+import com.dockersim.dto.request.UserEmailUpdateRequest;
 import com.dockersim.dto.request.UserRequest;
 import com.dockersim.dto.response.UserResponse;
 import com.dockersim.service.user.UserService;
@@ -11,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -24,6 +26,20 @@ import java.util.UUID;
 public class UserController {
 
     private final UserService userService;
+
+    @PatchMapping("/me/email")
+    public ResponseEntity<Void> updateUserEmail(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestBody UserEmailUpdateRequest request) {
+
+        // 현재 로그인된 사용자의 ID를 가져옵니다.
+        UUID userId = UUID.fromString(userDetails.getUsername());
+
+        // 서비스 레이어에 이메일 업데이트를 위임합니다.
+        userService.updateEmail(userId, request.getEmail());
+
+        return ResponseEntity.ok().build();
+    }
 
     /**
      * 새로운 사용자 생성을 진행합니다.

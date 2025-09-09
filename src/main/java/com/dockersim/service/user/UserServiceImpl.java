@@ -6,12 +6,13 @@ import com.dockersim.dto.response.UserResponse;
 import com.dockersim.exception.BusinessException;
 import com.dockersim.exception.code.UserErrorCode;
 import com.dockersim.repository.UserRepository;
-import java.util.UUID;
-import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.UUID;
+import java.util.regex.Pattern;
 
 @Slf4j
 @Service
@@ -68,5 +69,24 @@ public class UserServiceImpl implements UserService {
     public User findUserByEmail(String email) {
         return repo.findByEmail(email)
             .orElseThrow(() -> new BusinessException(UserErrorCode.USER_EMAIL_NOT_FOUND, email));
+    }
+
+    @Override // 인터페이스의 메소드를 구현한다는 것을 명시 (가독성 및 안정성 증가)
+    public void updateEmail(UUID userId, String newEmail) {
+        // 1. DB에서 현재 사용자 정보를 가져옵니다.
+        User currentUser = repo.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다.")); // 실제로는 커스텀 예외 사용 권장
+
+        // 2. (중요) 새로 입력된 이메일이 다른 사용자에 의해 이미 사용 중인지 확인합니다.
+        repo.findByEmail(newEmail).ifPresent(user -> {
+            if (!user.getUserId().equals(userId)) {
+                throw new RuntimeException("이미 사용 중인 이메일입니다."); // 커스텀 예외 사용 권장
+            }
+        });
+
+        // 3. 사용자 엔티티의 이메일 정보를 업데이트합니다.
+        currentUser.updateEmail(newEmail);
+
+        // 4. @Transactional에 의해 메소드가 끝나면 자동으로 DB에 저장(update)됩니다.
     }
 }

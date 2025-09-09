@@ -32,7 +32,7 @@ public class User {
     @Column(nullable = false)
     private String name;
 
-    @Column(nullable = false, unique = true)
+    @Column(unique = true)
     private String email;
 
     @Column(name = "created_at", nullable = false)
@@ -53,13 +53,21 @@ public class User {
     }
 
     public static User fromGithub(GithubUserResponse githubDto) {
+
+        String displayName = githubDto.getName() != null ? githubDto.getName() : githubDto.getLogin();
+
+
         return User.builder()
                 .userId(UUID.randomUUID())
                 .githubId(String.valueOf(githubDto.getId()))
-                .name(githubDto.getName())
+                .name(displayName)
                 .email(githubDto.getEmail())
                 .roles(List.of("ROLE_USER"))
                 .createdAt(LocalDateTime.now())
                 .build();
+    }
+
+    public void updateEmail(String email) {
+        this.email = email;
     }
 }

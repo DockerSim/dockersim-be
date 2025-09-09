@@ -28,4 +28,12 @@ public interface UserService extends UserFinder {
      * @param id 삭제할 사용자 ID
      */
     void deleteUser(UUID id);
+
+    /**
+     * 사용자의 이메일 주소를 업데이트합니다.
+     * @param userId 업데이트할 사용자의 고유 ID
+     * @param newEmail 새로운 이메일 주소
+     */
+    void updateEmail(UUID userId, String newEmail);
+
 }
