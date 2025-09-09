@@ -18,6 +18,7 @@ import java.security.Key;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -27,6 +28,30 @@ public class JwtTokenProvider {
     private final Key key;
     private final long accessTokenExpirationMillis;
     private final long refreshTokenExpirationMillis;
+
+    public String createAccessToken(String userId, List<String> roles) {
+        long now = (new Date()).getTime();
+        Date accessTokenExpiresIn = new Date(now + accessTokenExpirationMillis);
+
+        return Jwts.builder()
+                .setSubject(userId) // 토큰의 주체로 userId(UUID)를 사용
+                .claim("auth", String.join(",", roles)) // 권한 정보 추가
+                .setExpiration(accessTokenExpiresIn)
+                .signWith(key, SignatureAlgorithm.HS256)
+                .compact();
+    }
+
+    // RefreshToken을 생성하는 메서드
+    public String createRefreshToken() {
+        long now = (new Date()).getTime();
+        Date refreshTokenExpiresIn = new Date(now + refreshTokenExpirationMillis);
+
+        return Jwts.builder()
+                .setExpiration(refreshTokenExpiresIn)
+                .signWith(key, SignatureAlgorithm.HS256)
+                .compact();
+    }
+
 
     // 1. application-secret.yml에서 설정 값을 주입받는 생성자
     public JwtTokenProvider(@Value("${jwt.secret}") String secretKey,
@@ -121,4 +146,5 @@ public class JwtTokenProvider {
             return e.getClaims();
         }
     }
+
 }

@@ -1,19 +1,14 @@
 package com.dockersim.domain;
 
 import com.dockersim.dto.request.UserRequest;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import com.dockersim.dto.response.GithubUserResponse;
+import jakarta.persistence.*;
+import lombok.*;
+
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
 
 @Entity
 @Table(name = "users")
@@ -31,6 +26,9 @@ public class User {
     @Column(name = "user_id", unique = true, nullable = false, updatable = false)
     private UUID userId;
 
+    @Column(name = "github_id", unique = true)
+    private String githubId;
+
     @Column(nullable = false)
     private String name;
 
@@ -40,6 +38,10 @@ public class User {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
+    @ElementCollection(fetch = FetchType.EAGER)
+    @Builder.Default
+    private List<String> roles = new ArrayList<>();
+
 
     public static User fromUserRequest(UserRequest request) {
         return User.builder()
@@ -48,5 +50,16 @@ public class User {
             .email(request.getEmail())
             .createdAt(LocalDateTime.now())
             .build();
+    }
+
+    public static User fromGithub(GithubUserResponse githubDto) {
+        return User.builder()
+                .userId(UUID.randomUUID())
+                .githubId(String.valueOf(githubDto.getId()))
+                .name(githubDto.getName())
+                .email(githubDto.getEmail())
+                .roles(List.of("ROLE_USER"))
+                .createdAt(LocalDateTime.now())
+                .build();
     }
 }
