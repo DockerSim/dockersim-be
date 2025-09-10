@@ -183,8 +183,17 @@ public class DockerImageServiceImpl implements DockerImageService {
 	}
 
 	@Override
-	public List<DockerImageResponse> pull(SimulationUserPrincipal principal, String name,
-		boolean all) {
+	public List<DockerImageResponse> pull(SimulationUserPrincipal principal, String name, boolean all) {
+        Map<String, String> imageInfo = ImageUtil.parserFullName(name);
+        String namespace = imageInfo.get("namespace");
+        if (namespace.equals("library")) {
+            // 공식 이미지에서만 조회
+
+        } else if (!namespace.isEmpty()) {
+            // 명시된 공식 이미지도 아니고, 네임스페이스가 비어있지도 않다면 사용자 허브에 저장된 이미지 중 조회
+        } else {
+
+        }
 		return List.of();
 	}
 
