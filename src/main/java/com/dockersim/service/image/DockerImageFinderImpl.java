@@ -2,6 +2,7 @@ package com.dockersim.service.image;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -67,7 +68,20 @@ public class DockerImageFinderImpl implements DockerImageFinder {
 	}
 
 	@Override
-	public List<DockerImage> fundUnreferencedImageBySimulationInLocal(Simulation simulation) {
-		return repo.fundUnreferencedImageBySimulationInLocal(simulation);
+	public List<DockerImage> findUnreferencedImageBySimulationInLocal(Simulation simulation) {
+		return repo.findUnreferencedImageBySimulationInLocal(simulation);
+	}
+
+	@Override
+	public List<DockerImage> findPullImageByInfo(Simulation simulation, Map<String, String> info, boolean all) {
+		if (all) {
+			return repo.findAllBySimulationAndNamespaceAndNameInHub(simulation, info.get("namespace"),
+				info.get("repository"));
+		}
+		return List.of(
+			Objects.requireNonNull(
+				repo.findBySimulationAndNamespaceAndNameAndTagInHub(simulation, info.get("namespace"),
+					info.get("repository"), info.get("tag")).orElse(null))
+		);
 	}
 }

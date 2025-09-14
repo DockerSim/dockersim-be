@@ -43,7 +43,24 @@ public interface DockerImageRepository extends JpaRepository<DockerImage, Long> 
 	@Query("SELECT d FROM DockerImage d "
 		+ "WHERE d.simulation = :simulation "
 		+ "AND d.containers IS EMPTY")
-	List<DockerImage> fundUnreferencedImageBySimulationInLocal(@Param("simulation") Simulation simulation);
+	List<DockerImage> findUnreferencedImageBySimulationInLocal(@Param("simulation") Simulation simulation);
+
+	@Query("SELECT d FROM DockerImage  d "
+		+ "WHERE d.simulation = :simulation "
+		+ "AND d.namespace = :namespace "
+		+ "AND d.name = :name "
+		+ "AND d.location = 'HUB'")
+	List<DockerImage> findAllBySimulationAndNamespaceAndNameInHub(@Param("simulation") Simulation simulation,
+		@Param("namespace") String namespace, @Param("name") String name);
+
+	@Query("SELECT d FROM DockerImage  d "
+		+ "WHERE d.simulation = :simulation "
+		+ "AND d.namespace = :namespace "
+		+ "AND d.name = :name "
+		+ "AND d.tag = :tag "
+		+ "AND d.location = 'HUB'")
+	Optional<DockerImage> findBySimulationAndNamespaceAndNameAndTagInHub(@Param("simulation") Simulation simulation,
+		@Param("namespace") String namespace, @Param("name") String name, @Param("tag") String tag);
 
 	// ---------------------------------------------------------------------------------------------------------
 

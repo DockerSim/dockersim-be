@@ -174,7 +174,7 @@ public class DockerImageServiceImpl implements DockerImageService {
 			images = dockerImageFinder.findDanglingImageBySimulationInLocal(simulation)
 				.stream().filter(image -> image.getContainers().isEmpty()).toList();
 		} else {
-			images = dockerImageFinder.fundUnreferencedImageBySimulationInLocal(simulation);
+			images = dockerImageFinder.findUnreferencedImageBySimulationInLocal(simulation);
 		}
 
 		return images.stream()
@@ -184,17 +184,23 @@ public class DockerImageServiceImpl implements DockerImageService {
 
 	@Override
 	public List<DockerImageResponse> pull(SimulationUserPrincipal principal, String name, boolean all) {
-        Map<String, String> imageInfo = ImageUtil.parserFullName(name);
-        String namespace = imageInfo.get("namespace");
-        if (namespace.equals("library")) {
-            // 공식 이미지에서만 조회
+		Map<String, String> imageInfo = ImageUtil.parserFullName(name);
+		String namespace = imageInfo.get("namespace");
 
-        } else if (!namespace.isEmpty()) {
-            // 명시된 공식 이미지도 아니고, 네임스페이스가 비어있지도 않다면 사용자 허브에 저장된 이미지 중 조회
-        } else {
+		if (!namespace.isEmpty() && !namespace.equals("library")) {
+			// 명시된 공식 이미지도 아니고, 네임스페이스가 비어있지도 않다면 사용자 허브에 저장된 이미지 중 조회
+			// 네임스페이스에 사용자 이름 등록 필요
+			User user = userFinder.findUserById(principal.getUserId());
+			imageInfo.put("namespace", user.getName());
+		}
 
-        }
-		return List.of();
+		List<DockerImage> images = dockerImageFinder.findPullImageByInfo(
+			simulationFinder.findById(principal.getSimulationId()),
+			imageInfo, all);
+
+		return images.stream()
+			.map(image -> DockerImageResponse.from(image, List.of("pulled: " + image.getShortHexId())))
+			.toList();
 	}
 
 	@Override

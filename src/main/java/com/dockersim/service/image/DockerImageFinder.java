@@ -61,6 +61,13 @@ public interface DockerImageFinder {
 	 * Local에서 참조되지 않는 Image를 조회합니다.
 	 * @param simulation Image가 속한 simulation
 	 */
-	List<DockerImage> fundUnreferencedImageBySimulationInLocal(Simulation simulation);
+	List<DockerImage> findUnreferencedImageBySimulationInLocal(Simulation simulation);
 
+	/**
+	 * Hub에서 Namespace, Name과 Tag로 Image를 조회합니다.
+	 * @param simulation Image가 속한 simulation
+	 * @param info Image의 namespace, name, tag가 들어있는 DTO
+	 * @param all  namespace, name이 같은 Image를 전부 가져올지 여부
+	 */
+	List<DockerImage> findPullImageByInfo(Simulation simulation, Map<String, String> info, boolean all);
 }
