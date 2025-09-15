@@ -73,18 +73,19 @@ public class DockerOfficeImageServiceImpl implements DockerOfficeImageService {
 
     @Override
     @Transactional(readOnly = true)
-    public DockerOfficeImage findByNameAndTag(String repositoryName, String tag) {
-        return repo.findByNameAndTag(repositoryName, tag).orElse(null);
+    public DockerOfficeImageResponse findByNameAndTag(String name, String tag) {
+        return DockerOfficeImageResponse.from(repo.findByNameAndTag(name, tag).orElseThrow(
+                ()->new BusinessException(DockerImageErrorCode.OFFICE_IMAGE_NOT_FOUND, name + ":" + tag)
+        ));
     }
 
     @Transactional(readOnly = true)
-    public List<DockerOfficeImageResponse> findAllByName(String repositoryName) {
+    public List<DockerOfficeImageResponse> findAllByName(String name) {
 
-        List<DockerOfficeImage> images = repo.findAllByName(repositoryName);
+        List<DockerOfficeImage> images = repo.findAllByName(name);
 
         if (images.isEmpty()) {
-            throw new BusinessException(DockerImageErrorCode.OFFICE_IMAGE_NOT_FOUND,
-                repositoryName);
+            throw new BusinessException(DockerImageErrorCode.OFFICE_IMAGE_NOT_FOUND, name);
         }
         return images.stream()
             .map(DockerOfficeImageResponse::from)
