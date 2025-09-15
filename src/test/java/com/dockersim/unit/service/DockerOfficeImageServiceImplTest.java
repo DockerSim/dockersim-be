@@ -78,33 +78,33 @@ public class DockerOfficeImageServiceImplTest {
             .isEqualTo(DockerImageErrorCode.OFFICE_IMAGE_NOT_FOUND);
     }
 
-    @Test
-    @DisplayName("getAllImages - offset,limit 적용: 부분 리스트 반환")
-    void getAllImages_paging() {
-        // repo.findAll 목업
-        DockerOfficeImage img1 = sampleImage;
-        DockerOfficeImage img2 = DockerOfficeImage.from(
-            new DockerImageJson("n2", "ns", "d", 0, 0, "2020-01-01", "2020-01-01", "u",
-                List.of("x")), "x");
-        DockerOfficeImage img3 = DockerOfficeImage.from(
-            new DockerImageJson("n3", "ns", "d", 0, 0, "2020-01-01", "2020-01-01", "u",
-                List.of("y")), "y");
-        given(repo.findAll()).willReturn(List.of(img1, img2, img3));
+//    @Test
+//    @DisplayName("getAllImages - offset,limit 적용: 부분 리스트 반환")
+//    void getAllImages_paging() {
+//        // repo.findAll 목업
+//        DockerOfficeImage img1 = sampleImage;
+//        DockerOfficeImage img2 = DockerOfficeImage.from(
+//            new DockerImageJson("n2", "ns", "d", 0, 0, "2020-01-01", "2020-01-01", "u",
+//                List.of("x")), "x");
+//        DockerOfficeImage img3 = DockerOfficeImage.from(
+//            new DockerImageJson("n3", "ns", "d", 0, 0, "2020-01-01", "2020-01-01", "u",
+//                List.of("y")), "y");
+//        given(repo.findAll()).willReturn(List.of(img1, img2, img3));
+//
+//        List<DockerOfficeImageResponse> page = service.getAllImages(1, 2);
+//
+//        assertThat(page).hasSize(2)
+//            .extracting(DockerOfficeImageResponse::getName)
+//            .containsExactly("n2", "n3");
+//    }
 
-        List<DockerOfficeImageResponse> page = service.getAllImages(1, 2);
-
-        assertThat(page).hasSize(2)
-            .extracting(DockerOfficeImageResponse::getName)
-            .containsExactly("n2", "n3");
-    }
-
-    @Test
-    @DisplayName("getAllImages - offset 범위 밖이면 빈 리스트 반환")
-    void getAllImages_outOfBounds() {
-        given(repo.findAll()).willReturn(List.of(sampleImage));
-
-        List<DockerOfficeImageResponse> page = service.getAllImages(1000, 10);
-
-        assertThat(page).isEmpty();
-    }
+//    @Test
+//    @DisplayName("getAllImages - offset 범위 밖이면 빈 리스트 반환")
+//    void getAllImages_outOfBounds() {
+//        given(repo.findAll()).willReturn(List.of(sampleImage));
+//
+//        List<DockerOfficeImageResponse> page = service.getAllImages(1000, 10);
+//
+//        assertThat(page).isEmpty();
+//    }
 }

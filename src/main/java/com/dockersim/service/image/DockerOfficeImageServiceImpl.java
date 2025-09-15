@@ -94,16 +94,9 @@ public class DockerOfficeImageServiceImpl implements DockerOfficeImageService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<DockerOfficeImageResponse> getAllImages(int offset, int limit) {
-        List<DockerOfficeImageResponse> all = repo.findAll().stream()
+    public List<DockerOfficeImageResponse> getAllImages() {
+        return repo.findAll().stream()
             .map(DockerOfficeImageResponse::from)
             .collect(Collectors.toList());
-
-        int start = Math.max(0, offset);
-        int end = Math.min(all.size(), offset + limit);
-        if (start >= all.size()) {
-            return Collections.emptyList();
-        }
-        return all.subList(start, end);
     }
 }

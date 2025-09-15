@@ -27,7 +27,7 @@ class DockerOfficeImageServiceIntegrationTest extends IntegrationTestSupport {
     @Test
     @DisplayName("1) JSON 파일을 읽어 DB에 저장한다.")
     void loadAndSave() {
-        List<DockerOfficeImageResponse> images = dockerOfficeImageService.getAllImages(0, 100);
+        List<DockerOfficeImageResponse> images = dockerOfficeImageService.getAllImages();
         assertThat(images).isNotEmpty();
     }
 
@@ -46,19 +46,19 @@ class DockerOfficeImageServiceIntegrationTest extends IntegrationTestSupport {
             .isInstanceOf(BusinessException.class);
     }
 
-    @Test
-    @DisplayName("3-1) 전체 조회 - 기본 페이징(offset=0, limit=20)")
-    void getAllImages_defaultPaging() {
-        List<DockerOfficeImageResponse> images = dockerOfficeImageService.getAllImages(0, 20);
-        assertThat(images).hasSize(20);
-    }
+//    @Test
+//    @DisplayName("3-1) 전체 조회 - 기본 페이징(offset=0, limit=20)")
+//    void getAllImages_defaultPaging() {
+//        List<DockerOfficeImageResponse> images = dockerOfficeImageService.getAllImages(0, 20);
+//        assertThat(images).hasSize(20);
+//    }
 
-    @Test
-    @DisplayName("3-2) 전체 조회 - offset 범위 벗어나면 빈 리스트")
-    void getAllImages_offsetOutOfBounds() {
-        long totalImages = dockerOfficeImageService.getAllImages(0, Integer.MAX_VALUE).size();
-        List<DockerOfficeImageResponse> images = dockerOfficeImageService.getAllImages(
-            (int) totalImages, 10);
-        assertThat(images).isEmpty();
-    }
+//    @Test
+//    @DisplayName("3-2) 전체 조회 - offset 범위 벗어나면 빈 리스트")
+//    void getAllImages_offsetOutOfBounds() {
+//        long totalImages = dockerOfficeImageService.getAllImages(0, Integer.MAX_VALUE).size();
+//        List<DockerOfficeImageResponse> images = dockerOfficeImageService.getAllImages(
+//            (int) totalImages, 10);
+//        assertThat(images).isEmpty();
+//    }
 }
