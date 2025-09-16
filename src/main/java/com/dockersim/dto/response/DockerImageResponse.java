@@ -30,12 +30,6 @@ public class DockerImageResponse {
 	private List<String> layer;
 	private LocalDateTime createdAt;
 
-	// only office image
-	private String description;
-	private int starCount;
-	private long pullCount;
-	private String logoUrl;
-
 	/*
 	target:
 		build
@@ -67,16 +61,12 @@ public class DockerImageResponse {
 			.console(console)
 			.hexId(officeImage.getHexId())
 			.shortHexId(officeImage.getShortHexId())
-			.namespace(officeImage.getNamespace())
+			.namespace("library")
 			.name(officeImage.getName())
 			.tag(officeImage.getTag())
-			.layer(officeImage.getName())
+			.layer(List.of(officeImage.getName()))
 			.location(ImageLocation.HUB)
 			.createdAt(officeImage.getLastUpdated())
-			.description(officeImage.getDescription())
-			.starCount(officeImage.getStarCount())
-			.pullCount(officeImage.getPullCount())
-			.logoUrl(officeImage.getLogoUrl())
 			.build();
 	}
 }

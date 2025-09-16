@@ -15,7 +15,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class DockerContainerServiceImpl implements DockerContainerService {
 
-	private final ContainerFinder containerFinder;
 	private final SimulationFinder simulationFinder;
 	private final DockerContainerRepository repo;
 

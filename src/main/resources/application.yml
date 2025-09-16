@@ -12,6 +12,7 @@ server:
   env: blue
 
 # Swagger/OpenAPI 설정
+# http://localhost:8080/swagger-ui/index.html
 springdoc:
   api-docs:
     enabled: true
