@@ -100,6 +100,17 @@ public class DockerImage {
 			.build();
 	}
 
+	/*
+	target:
+		image push
+	 */
+	public static DockerImage from(DockerImage oldImage, ImageLocation location) {
+		return oldImage.toBuilder()
+			.location(location)
+			.createdAt(LocalDateTime.now())
+			.build();
+	}
+
 	public String getFullNameWithTag() {
 		if ("<none>".equals(name)) {
 			return "<none>:<none>";

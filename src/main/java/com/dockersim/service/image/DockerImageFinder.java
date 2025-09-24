@@ -6,20 +6,87 @@ import java.util.Map;
 import com.dockersim.domain.DockerImage;
 import com.dockersim.domain.ImageLocation;
 import com.dockersim.domain.Simulation;
+import com.dockersim.dto.util.ImageMeta;
 
 public interface DockerImageFinder {
 
 	/**
-	 * location에 조건에 맞는 이미지를 찾습니다.
+	 * namespace, name, tag, location이 동일한 Image를 조회합니다.
 	 *
 	 * @param simulation Image가 속한 simulation
-	 * @param namespace 이미지 네임스페이스
-	 * @param name      이미지 레포명
-	 * @param tag       이미지 태그
-	 * @param location  이미지가 저장된 위치
-	 * @return 결과가 없을 경우 예외가 아닌, null 을 반환합니다.
+	 * @param meta       Image의 메타 정보
+	 * @param location   Image가 저장된 위치(LOCAL, HUB)
 	 */
-	DockerImage findSameImage(Simulation simulation, String namespace, String name, String tag, ImageLocation location);
+	DockerImage findImageOrNull(
+		Simulation simulation,
+		ImageMeta meta,
+		ImageLocation location
+	);
+
+	/**
+	 * namespace, name, location이 동일한 Image들을 조회합니다.
+	 *
+	 * @param simulation Image가 속한 simulation
+	 * @param meta       Image의 메타 정보
+	 * @param location   Image가 저장된 위치(LOCAL, HUB)
+	 */
+	List<DockerImage> findImages(
+		Simulation simulation,
+		ImageMeta meta,
+		ImageLocation location
+	);
+
+	/**
+	 * Hub에서 PUll할 Image를 조회합니다.
+	 *
+	 * @param simulation Image가 속한 simulation
+	 * @param meta       Image의 메타 정보
+	 * @param allTags    tag에 관계없이, namespace/name이 동일한 Image를 전부 조회합니다.
+	 */
+	List<DockerImage> findPullImageByInfo(Simulation simulation, ImageMeta meta, boolean allTags);
+
+	/**
+	 * Local에서 Push할 Image들을 조회합니다.
+	 *
+	 * @param simulation Image가 속한 simulation
+	 * @param meta       Image의 메타 정보
+	 * @param allTags    tag에 관계없이, namespace/name이 동일한 Image를 전부 조회합니다.
+	 */
+	List<DockerImage> findPushImageInLocal(
+		Simulation simulation,
+		ImageMeta meta,
+		boolean allTags
+	);
+
+	/**
+	 * Hub에서 Push할 Image와 동일한 name:tag를 가진 Image를 조회합니다.
+	 *
+	 * @param simulation  Image가 속한 simulation
+	 * @param localImages Push할 Image 목록
+	 * @param meta        Image의 메타 정보
+	 * @param allTags     tag에 관계없이, namespace/name이 동일한 Image를 전부 조회합니다.
+	 */
+	List<DockerImage> findOldPushImageInHub(
+		Simulation simulation,
+		List<DockerImage> localImages,
+		ImageMeta meta,
+		boolean allTags
+	);
+
+	// -----------------------------------------------------------------
+	DockerImage findBySimulationAndNamespaceAndNameAndLocationOrNull(
+		Simulation simulation,
+		String namespace,
+		String name,
+		ImageLocation location
+	);
+
+	DockerImage findImageOrNull(Simulation simulation, Map<String, String> imageInfo,
+		ImageLocation location);
+
+	DockerImage findImageInLocalOrNull(Simulation simulation, Map<String, String> imageInfo);
+
+	DockerImage findImageInHubOrNull(Simulation simulation, Map<String, String> imageInfo);
 
 	/**
 	 * location에서 Hex ID로 Image를 찾습니다.
@@ -39,7 +106,7 @@ public interface DockerImageFinder {
 	 * @param location   Image가 저장된 위치
 	 * @param hexId      Image의 Hex ID
 	 */
-	DockerImage findImageByNameOrId(Simulation simulation, Map<String, String> imageInfo, ImageLocation location,
+	DockerImage findImageByNameOrId(Simulation simulation, ImageMeta imageInfo, ImageLocation location,
 		String hexId);
 
 	/**
@@ -63,11 +130,4 @@ public interface DockerImageFinder {
 	 */
 	List<DockerImage> findUnreferencedImageBySimulationInLocal(Simulation simulation);
 
-	/**
-	 * Hub에서 Namespace, Name과 Tag로 Image를 조회합니다.
-	 * @param simulation Image가 속한 simulation
-	 * @param info Image의 namespace, name, tag가 들어있는 DTO
-	 * @param all  namespace, name이 같은 Image를 전부 가져올지 여부
-	 */
-	List<DockerImage> findPullImageByInfo(Simulation simulation, Map<String, String> info, boolean all);
 }

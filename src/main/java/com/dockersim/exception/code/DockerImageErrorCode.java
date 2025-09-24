@@ -22,7 +22,7 @@ public enum DockerImageErrorCode implements ResponseCode {
 	OFFICE_IMAGE_CRITICAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "D014", "공식 이미지 데이터 처리 실패"),
 
 	// 공통 (D02x)
-	IMAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "D021", "로컬에서 이미지 '%s'를 찾을 수 없습니다."),
+	IMAGE_NOT_FOUND_IN_LOCAL(HttpStatus.NOT_FOUND, "D021", "로컬에서 이미지 '%s'를 찾을 수 없습니다."),
 	IMAGE_NOT_FOUND_IN_HUB(HttpStatus.NOT_FOUND, "D022", "원격 저장소(HUB)에서 이미지 '%s'를 찾을 수 없습니다."),
 	IMAGE_AMBIGUOUS(HttpStatus.BAD_REQUEST, "D023", "이미지 '%s'가 모호하여 여러 이미지를 지칭합니다."),
 	PULL_BY_ID_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "D024",

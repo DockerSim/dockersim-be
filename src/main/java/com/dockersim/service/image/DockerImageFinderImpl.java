@@ -3,6 +3,7 @@ package com.dockersim.service.image;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -10,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.dockersim.domain.DockerImage;
 import com.dockersim.domain.ImageLocation;
 import com.dockersim.domain.Simulation;
+import com.dockersim.dto.util.ImageMeta;
 import com.dockersim.exception.BusinessException;
 import com.dockersim.exception.code.DockerImageErrorCode;
 import com.dockersim.repository.DockerImageRepository;
@@ -23,28 +25,101 @@ public class DockerImageFinderImpl implements DockerImageFinder {
 
 	private final DockerImageRepository repo;
 
+	/*
+	common
+	 */
 	@Override
-	public DockerImage findSameImage(Simulation simulation, String namespace, String name, String tag,
-		ImageLocation location) {
-		return repo.findBySimulationAndNamespaceAndNameAndTagAndLocation(simulation, namespace, name, tag, location)
-			.orElse(null);
+	public DockerImage findImageOrNull(
+		Simulation simulation,
+		ImageMeta info,
+		ImageLocation location
+	) {
+		return repo.findBySimulationAndNamespaceAndNameAndTagAndLocation(
+			simulation, info.getNamespace(), info.getName(), info.getTag(), location
+		).orElse(null);
+	}
+
+	@Override
+	public List<DockerImage> findImages(
+		Simulation simulation,
+		ImageMeta info,
+		ImageLocation location
+	) {
+		return repo.findBySimulationAndNamespaceAndNameAndLocation(
+			simulation, info.getNamespace(), info.getName(), location
+		);
+	}
+
+	/*
+	image push
+	 */
+	@Override
+	public List<DockerImage> findPushImageInLocal(
+		Simulation simulation,
+		ImageMeta meta,
+		boolean allTags
+	) {
+		List<DockerImage> images;
+		if (allTags) {
+			images = this.findImages(simulation, meta, ImageLocation.LOCAL);
+		} else {
+			images = Optional.ofNullable(
+				this.findImageOrNull(simulation, meta, ImageLocation.LOCAL)
+			).stream().toList();
+		}
+		if (images.isEmpty()) {
+			throw new BusinessException(DockerImageErrorCode.IMAGE_NOT_FOUND_IN_LOCAL, meta.getFullName());
+		}
+		return images;
+	}
+
+	@Override
+	public List<DockerImage> findOldPushImageInHub(
+		Simulation simulation,
+		List<DockerImage> localImages,
+		ImageMeta meta,
+		boolean allTags
+	) {
+		List<DockerImage> images;
+		if (allTags) {
+			images = localImages.stream().map(
+				image -> {
+					meta.updateTag(image.getTag());
+					return this.findImageOrNull(simulation, meta, ImageLocation.HUB);
+				}
+
+			).toList();
+		} else {
+			images = Optional.ofNullable(
+				this.findImageOrNull(simulation, meta, ImageLocation.HUB)
+			).stream().toList();
+		}
+		return images;
+	}
+
+	// -----------------------------------------------------------------
+
+	public DockerImage findImageInLocalOrNull(Simulation simulation, Map<String, String> info) {
+		return this.findImageOrNull(simulation, info, ImageLocation.LOCAL);
+	}
+
+	public DockerImage findImageInHubOrNull(Simulation simulation, Map<String, String> info) {
+		return this.findImageOrNull(simulation, info, ImageLocation.HUB);
 	}
 
 	@Override
 	public DockerImage findSameImage(Simulation simulation, String hexId, ImageLocation location) {
 		return repo.findBySimulationAndHexIdStartsWithAndLocation(simulation, hexId, location).orElseThrow(
-			() -> new BusinessException(DockerImageErrorCode.IMAGE_NOT_FOUND, hexId)
+			() -> new BusinessException(DockerImageErrorCode.IMAGE_NOT_FOUND_IN_LOCAL, hexId)
 		);
 	}
 
 	@Override
-	public DockerImage findImageByNameOrId(Simulation simulation, Map<String, String> imageInfo, ImageLocation location,
+	public DockerImage findImageByNameOrId(Simulation simulation, ImageMeta meta, ImageLocation location,
 		String hexId) {
-		DockerImage image = findSameImage(
+		DockerImage image = findImageOrNull(
 			simulation,
-			imageInfo.get("namespace"),
-			imageInfo.get("repository"),
-			imageInfo.get("tag"),
+			meta,
 			location
 		);
 		if (image == null) {
@@ -84,4 +159,5 @@ public class DockerImageFinderImpl implements DockerImageFinder {
 					info.get("repository"), info.get("tag")).orElse(null))
 		);
 	}
+
 }

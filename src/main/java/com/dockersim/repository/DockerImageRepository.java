@@ -13,10 +13,22 @@ import com.dockersim.domain.Simulation;
 
 public interface DockerImageRepository extends JpaRepository<DockerImage, Long> {
 
-	Optional<DockerImage> findBySimulationAndNamespaceAndNameAndTagAndLocation(Simulation simulation, String namespace,
+	Optional<DockerImage> findBySimulationAndNamespaceAndNameAndTagAndLocation(
+		Simulation simulation,
+		String namespace,
 		String name,
 		String tag,
-		ImageLocation location);
+		ImageLocation location
+	);
+
+	List<DockerImage> findBySimulationAndNamespaceAndNameAndLocation(
+		Simulation simulation,
+		String namespace,
+		String name,
+		ImageLocation location
+	);
+
+	// -----------------------------------------------------------------
 
 	Optional<DockerImage> findBySimulationAndHexIdStartsWithAndLocation(Simulation simulation, String hexId,
 		ImageLocation location);
@@ -72,4 +84,17 @@ public interface DockerImageRepository extends JpaRepository<DockerImage, Long> 
 
 	List<DockerImage> findAllBySimulationAndLocation(Simulation simulation, ImageLocation location);
 
+	/*
+	image push -a
+	 */
+	@Query("SELECT d FROM DockerImage  d "
+		+ "WHERE d.simulation = :simulation "
+		+ "AND d.namespace = :namespace "
+		+ "AND d.name = :name "
+		+ "AND d.location = 'LOCAL'")
+	List<DockerImage> findAllBySimulationAndNamespaceAndName(
+		@Param("simulation") Simulation simulation,
+		@Param("namespace") String namespace,
+		@Param("name") String name
+	);
 }
