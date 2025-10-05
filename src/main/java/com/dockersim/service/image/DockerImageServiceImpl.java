@@ -10,7 +10,6 @@ import java.util.stream.Stream;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.dockersim.command.aliases.image.Images;
 import com.dockersim.config.SimulationUserPrincipal;
 import com.dockersim.domain.DockerFile;
 import com.dockersim.domain.DockerImage;
@@ -44,7 +43,6 @@ public class DockerImageServiceImpl implements DockerImageService {
 	private final DockerImageFinder dockerImageFinder;
 	private final UserFinder userFinder;
 	private final DockerFileFinder dockerFileFinder;
-	private final Images images;
 
 	@Override
 	@Transactional
@@ -87,8 +85,7 @@ public class DockerImageServiceImpl implements DockerImageService {
 
 		Simulation simulation = simulationFinder.findById(principal.getSimulationId());
 
-		DockerImage image = dockerImageFinder.findImageByNameOrId(simulation, imageInfo, ImageLocation.LOCAL,
-			nameOrHexId);
+		DockerImage image = dockerImageFinder.findImage(simulation, imageInfo, ImageLocation.LOCAL);
 		return image.getLayers();
 	}
 
@@ -99,8 +96,7 @@ public class DockerImageServiceImpl implements DockerImageService {
 		Simulation simulation = simulationFinder.findById(principal.getSimulationId());
 
 		ImageMeta imageInfo = ImageUtil.parserFullName(nameOrHexId);
-		DockerImage image = dockerImageFinder.findImageByNameOrId(simulation, imageInfo, ImageLocation.LOCAL,
-			nameOrHexId);
+		DockerImage image = dockerImageFinder.findImageOrNull(simulation, imageInfo, ImageLocation.LOCAL);
 
 		ImageInspectData inspectData = ImageInspectData.builder()
 			.Id(image.getHexId())
@@ -260,6 +256,16 @@ public class DockerImageServiceImpl implements DockerImageService {
 
 	@Override
 	public DockerImageResponse rm(SimulationUserPrincipal principal, String nameOrId, boolean force) {
-		return null;
+		Simulation simulation = simulationFinder.findById(principal.getSimulationId());
+		ImageMeta imageMeta = ImageUtil.parserFullName(nameOrId);
+
+		DockerImage image = dockerImageFinder.findImageByNameBeforeShortHexId(simulation, imageMeta,
+			ImageLocation.LOCAL);
+		if (force || image.getContainers().isEmpty()) {
+			dockerImageRepository.delete(image);
+			return DockerImageResponse.from(image, List.of("deleted: " + image.getHexId()));
+		} else {
+			throw new BusinessException(DockerImageErrorCode.FAIL_REMOVE_BASE_IMAGE, nameOrId);
+		}
 	}
 }

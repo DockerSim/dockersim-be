@@ -21,12 +21,22 @@ public interface DockerImageRepository extends JpaRepository<DockerImage, Long> 
 		ImageLocation location
 	);
 
+	Optional<DockerImage> findBySimulationAndNameAndTagAndLocation(
+		Simulation simulation,
+		String name,
+		String tag,
+		ImageLocation location
+	);
+
 	List<DockerImage> findBySimulationAndNamespaceAndNameAndLocation(
 		Simulation simulation,
 		String namespace,
 		String name,
 		ImageLocation location
 	);
+
+	Optional<DockerImage> findBySimulationAndShortHexIdAndLocation(Simulation simulation, String shortHexId,
+		ImageLocation location);
 
 	// -----------------------------------------------------------------
 

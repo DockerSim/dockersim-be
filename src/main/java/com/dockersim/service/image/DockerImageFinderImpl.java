@@ -1,7 +1,6 @@
 package com.dockersim.service.image;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -25,9 +24,6 @@ public class DockerImageFinderImpl implements DockerImageFinder {
 
 	private final DockerImageRepository repo;
 
-	/*
-	common
-	 */
 	@Override
 	public DockerImage findImageOrNull(
 		Simulation simulation,
@@ -40,6 +36,28 @@ public class DockerImageFinderImpl implements DockerImageFinder {
 	}
 
 	@Override
+	public DockerImage findImageByNameBeforeShortHexId(Simulation simulation, ImageMeta meta, ImageLocation location) {
+		return repo.findBySimulationAndShortHexIdAndLocation(simulation, meta.getFullName(), location).orElseGet(
+			() -> repo.findBySimulationAndNameAndTagAndLocation(
+					simulation,
+					meta.getName(),
+					meta.getTag(),
+					location
+				)
+				.orElseThrow(
+					() -> new BusinessException(DockerImageErrorCode.IMAGE_NOT_FOUND, location, meta.getFullName()))
+		);
+	}
+
+	@Override
+	public DockerImage findImage(Simulation simulation, ImageMeta meta, ImageLocation location) {
+		return repo.findBySimulationAndNameAndTagAndLocation(simulation, meta.getName(), meta.getTag(), location)
+			.orElseThrow(
+				() -> new BusinessException(DockerImageErrorCode.IMAGE_NOT_FOUND, location, meta.getFullName())
+			);
+	}
+
+	@Override
 	public List<DockerImage> findImages(
 		Simulation simulation,
 		ImageMeta info,
@@ -47,6 +65,44 @@ public class DockerImageFinderImpl implements DockerImageFinder {
 	) {
 		return repo.findBySimulationAndNamespaceAndNameAndLocation(
 			simulation, info.getNamespace(), info.getName(), location
+		);
+	}
+
+	/*
+	image build
+	 */
+
+	@Override
+	public DockerImage findImageInLocalOrNull(Simulation simulation, ImageMeta meta) {
+		return repo.findBySimulationAndNameAndTagAndLocation(simulation, meta.getName(), meta.getTag(),
+			ImageLocation.LOCAL).orElse(null);
+	}
+
+	/*
+	image ls
+	 */
+	@Override
+	public List<DockerImage> findBySimulationInLocal(Simulation simulation, boolean all) {
+		if (all) {
+			return repo.findBySimulation(simulation);
+		}
+		return repo.findNotDanglingImageBySimulation(simulation);
+	}
+
+
+	/*
+	image pull
+	 */
+
+	@Override
+	public List<DockerImage> findPullImageByInfo(Simulation simulation, ImageMeta meta, boolean all) {
+		if (all) {
+			return repo.findAllBySimulationAndNamespaceAndNameInHub(simulation, meta.getNamespace(), meta.getName());
+		}
+		return List.of(
+			Objects.requireNonNull(
+				repo.findBySimulationAndNamespaceAndNameAndTagInHub(simulation, meta.getNamespace(), meta.getName(),
+					meta.getTag()).orElse(null))
 		);
 	}
 
@@ -99,44 +155,6 @@ public class DockerImageFinderImpl implements DockerImageFinder {
 
 	// -----------------------------------------------------------------
 
-	public DockerImage findImageInLocalOrNull(Simulation simulation, Map<String, String> info) {
-		return this.findImageOrNull(simulation, info, ImageLocation.LOCAL);
-	}
-
-	public DockerImage findImageInHubOrNull(Simulation simulation, Map<String, String> info) {
-		return this.findImageOrNull(simulation, info, ImageLocation.HUB);
-	}
-
-	@Override
-	public DockerImage findSameImage(Simulation simulation, String hexId, ImageLocation location) {
-		return repo.findBySimulationAndHexIdStartsWithAndLocation(simulation, hexId, location).orElseThrow(
-			() -> new BusinessException(DockerImageErrorCode.IMAGE_NOT_FOUND_IN_LOCAL, hexId)
-		);
-	}
-
-	@Override
-	public DockerImage findImageByNameOrId(Simulation simulation, ImageMeta meta, ImageLocation location,
-		String hexId) {
-		DockerImage image = findImageOrNull(
-			simulation,
-			meta,
-			location
-		);
-		if (image == null) {
-			//  repo[:tag]로 탐색 실패, Hex ID로 간주하고 재탐색
-			image = findSameImage(simulation, hexId, ImageLocation.LOCAL);
-		}
-		return image;
-	}
-
-	@Override
-	public List<DockerImage> findBySimulationInLocal(Simulation simulation, boolean all) {
-		if (all) {
-			return repo.findBySimulation(simulation);
-		}
-		return repo.findNotDanglingImageBySimulation(simulation);
-	}
-
 	@Override
 	public List<DockerImage> findDanglingImageBySimulationInLocal(Simulation simulation) {
 		return repo.findDanglingImageBySimulationInLocal(simulation);
@@ -146,18 +164,4 @@ public class DockerImageFinderImpl implements DockerImageFinder {
 	public List<DockerImage> findUnreferencedImageBySimulationInLocal(Simulation simulation) {
 		return repo.findUnreferencedImageBySimulationInLocal(simulation);
 	}
-
-	@Override
-	public List<DockerImage> findPullImageByInfo(Simulation simulation, Map<String, String> info, boolean all) {
-		if (all) {
-			return repo.findAllBySimulationAndNamespaceAndNameInHub(simulation, info.get("namespace"),
-				info.get("repository"));
-		}
-		return List.of(
-			Objects.requireNonNull(
-				repo.findBySimulationAndNamespaceAndNameAndTagInHub(simulation, info.get("namespace"),
-					info.get("repository"), info.get("tag")).orElse(null))
-		);
-	}
-
 }

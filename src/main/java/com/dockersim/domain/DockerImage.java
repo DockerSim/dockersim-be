@@ -3,9 +3,9 @@ package com.dockersim.domain;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import com.dockersim.common.IdGenerator;
+import com.dockersim.dto.util.ImageMeta;
 import com.dockersim.util.StringListConverter;
 
 import jakarta.persistence.CascadeType;
@@ -79,20 +79,20 @@ public class DockerImage {
 		image build
 	 */
 	public static DockerImage from(Simulation simulation, DockerFile dockerFile,
-		Map<String, String> imageNameMap) {
+		ImageMeta meta) {
 
 		String hexId = IdGenerator.generateHexFullId();
 		String shortHexId = IdGenerator.getShortId(hexId);
-		String name = imageNameMap.get("repository").isEmpty() ? shortHexId : imageNameMap.get("repository");
+		String name = meta.getName().isEmpty() ? shortHexId : meta.getName();
 		List<String> layers = new ArrayList<>(List.of(dockerFile.getContent().split("\n")));
 		layers.add("0B");
 
 		return DockerImage.builder()
 			.hexId(hexId)
 			.shortHexId(shortHexId)
-			.namespace(imageNameMap.get("namespace"))
+			.namespace(meta.getNamespace())
 			.name(name)
-			.tag(imageNameMap.get("tag"))
+			.tag(meta.getTag())
 			.location(ImageLocation.LOCAL)
 			.layers(layers)
 			.createdAt(LocalDateTime.now())
