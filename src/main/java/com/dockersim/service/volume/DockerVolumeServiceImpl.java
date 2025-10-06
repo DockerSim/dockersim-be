@@ -1,5 +1,11 @@
 package com.dockersim.service.volume;
 
+import java.util.List;
+import java.util.stream.Stream;
+
+import org.springframework.stereotype.Service;
+
+import com.dockersim.common.IdGenerator;
 import com.dockersim.config.SimulationUserPrincipal;
 import com.dockersim.domain.DockerVolume;
 import com.dockersim.domain.Simulation;
@@ -8,95 +14,93 @@ import com.dockersim.exception.BusinessException;
 import com.dockersim.exception.code.DockerVolumeErrorCode;
 import com.dockersim.repository.DockerVolumeRepository;
 import com.dockersim.service.simulation.SimulationFinder;
-import java.util.List;
-import java.util.stream.Stream;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
 public class DockerVolumeServiceImpl implements DockerVolumeService {
 
-    private final SimulationFinder simulationFinder;
-    private final DockerVolumeFinder dockerVolumeFinder;
+	private final SimulationFinder simulationFinder;
+	private final DockerVolumeFinder dockerVolumeFinder;
 
-    private final DockerVolumeRepository repo;
+	private final DockerVolumeRepository repo;
 
-    @Override
-    public DockerVolumeResponse create(SimulationUserPrincipal principal, String name,
-        boolean anonymous) {
-        Simulation simulation = simulationFinder.findById(principal.getSimulationId());
+	@Override
+	public DockerVolumeResponse create(SimulationUserPrincipal principal, String name, boolean anonymous) {
+		Simulation simulation = simulationFinder.findById(principal.getSimulationId());
 
-        if (!dockerVolumeFinder.existsByNameAndSimulationId(name, principal.getSimulationId())) {
-            throw new BusinessException(DockerVolumeErrorCode.VOLUME_NAME_DUPLICATED, name);
-        }
+		/*
+		name이 존재하지 않는다면 임의의 Hex ID를 이름(name)으로 가집니다.
+		 */
+		if (name.isEmpty()) {
+			name = IdGenerator.generateHexFullId();
+		}
 
-        DockerVolume newVolume = DockerVolume.from(name, anonymous, simulation);
-        return DockerVolumeResponse.from(repo.save(newVolume), List.of(
-            String.format("CREATE: '%s'", newVolume.getName())
-        ));
-    }
+		/*
+		동일한 이름의 불륨이 이미 있는 경우, 불륨 생성에 실패합니다.
+		익명 볼륨의 이름은 새로 생성되는 Hex ID이므로, name은 항상 null이 아닙니다.
+		 */
+		if (!dockerVolumeFinder.existsBySimulationAndName(simulation, name)) {
+			throw new BusinessException(DockerVolumeErrorCode.VOLUME_NAME_DUPLICATED, name);
+		}
 
-    @Override
-    public List<String> inspect(SimulationUserPrincipal principal, String nameOrHexId) {
-        DockerVolume volume = dockerVolumeFinder.findByNameAndSimulationId(nameOrHexId,
-            principal.getSimulationId());
+		DockerVolume newVolume = DockerVolume.from(name, anonymous, simulation);
+		return DockerVolumeResponse.from(
+			repo.save(newVolume),
+			List.of("CREATE: '" + newVolume.getName() + "'")
+		);
+	}
 
-        return List.of(
-            "[\n",
-            "  {\n",
-            "    \"CreatedAt\": \"" + volume.getCreateAt() + "\",\n",
-            "    \"Driver\": \"local\",\n",
-//                "    \"Labels\": {},\n",
-            "    \"Mountpoint\": \"/var/lib/docker/volumes/" + volume.getName() + "/_data\",\n",
-            "    \"Name\": \"" + volume.getName() + "\",\n",
-//                "    \"Options\": {},\n",
-//                "    \"Scope\": \"local\"\n",
-            "    \"RefCount\": " + volume.getContainerVolumes().size(),
-            "  }\n",
-            "]\n"
-        );
-    }
+	@Override
+	public List<String> inspect(SimulationUserPrincipal principal, String name) {
+		Simulation simulation = simulationFinder.findById(principal.getSimulationId());
+		DockerVolume volume = dockerVolumeFinder.findBySimulationAndName(simulation, name);
 
-    @Override
-    public List<String> ls(SimulationUserPrincipal principal, boolean quiet) {
-        List<DockerVolume> volumes = dockerVolumeFinder.findBySimulationId(
-            principal.getSimulationId());
+		return List.of(
+			"[\n",
+			"  {\n",
+			"    \"CreatedAt\": \"" + volume.getCreateAt() + "\",\n",
+			"    \"Driver\": \"local\",\n",
+			"    \"Mountpoint\": \"" + volume.getMountPoint() + "\",\n",
+			"    \"Name\": \"" + volume.getName() + "\",\n",
+			"    \"RefCount\": " + volume.getContainerVolumes().size(),
+			"  }\n",
+			"]\n"
+		);
+	}
 
-        Stream<String> headerStream = Stream.of(
-            quiet ? "VOLUME NAME" : String.format("%-20s %s", "DRIVER", "VOLUME NAME"));
+	@Override
+	public List<String> ls(SimulationUserPrincipal principal, boolean quiet) {
+		Simulation simulation = simulationFinder.findById(principal.getSimulationId());
+		List<DockerVolume> volumes = dockerVolumeFinder.findBySimulation(simulation);
 
-        Stream<String> bodyStream = volumes.stream()
-            .map(volume -> quiet ? volume.getName()
-                : String.format("%-20s %s", "local", volume.getName()));
+		Stream<String> headerStream = Stream.of(
+			quiet ? "VOLUME NAME" : String.format("%-20s %s", "DRIVER", "VOLUME NAME"));
 
-        return Stream.concat(headerStream, bodyStream).toList();
-    }
+		Stream<String> bodyStream = volumes.stream()
+			.map(volume -> quiet ? volume.getName()
+				: String.format("%-20s %s", "local", volume.getName()));
 
-    @Override
-    public List<DockerVolumeResponse> prune(SimulationUserPrincipal principal, boolean all) {
-        List<DockerVolume> volumes;
+		return Stream.concat(headerStream, bodyStream).toList();
+	}
 
-        if (all) {
-            volumes = dockerVolumeFinder.findAllUnusedVolumes(principal.getSimulationId());
-        } else {
-            volumes = dockerVolumeFinder.findUnusedAnonymousVolumes(principal.getSimulationId());
-        }
+	@Override
+	public List<DockerVolumeResponse> prune(SimulationUserPrincipal principal, boolean all) {
+		Simulation simulation = simulationFinder.findById(principal.getSimulationId());
+		List<DockerVolume> volumes = dockerVolumeFinder.findUnusedVolumes(simulation, all);
+		repo.deleteAll(volumes);
+		return volumes.stream()
+			.map(volume ->
+				DockerVolumeResponse.from(volume, List.of("DELETE: " + volume.getName())))
+			.toList();
+	}
 
-        List<DockerVolumeResponse> responses = volumes.stream()
-            .map(volume ->
-                DockerVolumeResponse.from(volume, List.of("DELETE: " + volume.getName())))
-            .toList();
-        repo.deleteAll(volumes);
-        return responses;
-    }
-
-    @Override
-    public DockerVolumeResponse rm(SimulationUserPrincipal principal, String nameOrHexId) {
-        DockerVolume volume = dockerVolumeFinder.findUnusedVolumeByNameAndSimulationId(
-            nameOrHexId, principal.getSimulationId());
-        repo.delete(volume);
-        return DockerVolumeResponse.from(volume, List.of("DELETE: " + volume.getName()));
-    }
+	@Override
+	public DockerVolumeResponse rm(SimulationUserPrincipal principal, String name) {
+		Simulation simulation = simulationFinder.findById(principal.getSimulationId());
+		DockerVolume volume = dockerVolumeFinder.findUnusedVolumeBySimulationAndName(simulation, name);
+		repo.delete(volume);
+		return DockerVolumeResponse.from(volume, List.of("DELETE: " + volume.getName()));
+	}
 }

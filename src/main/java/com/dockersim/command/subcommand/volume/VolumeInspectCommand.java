@@ -23,12 +23,12 @@ public class VolumeInspectCommand implements Callable<CommandResult> {
 	private final VolumeCommand parent;
 
 	@CommandLine.Parameters(index = "0", description = "조회할 Docker Volume 이름")
-	private String nameOrHexId;
+	private String name;
 
 	@Override
 	public CommandResult call() throws Exception {
 		return CommandResult.builder()
-			.console(service.inspect(parent.getPrincipal(), nameOrHexId))
+			.console(service.inspect(parent.getPrincipal(), name))
 			.status(CommandResultStatus.READ)
 			.build();
 	}
