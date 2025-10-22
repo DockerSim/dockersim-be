@@ -12,7 +12,6 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.ParentCommand;
 
 
-@Component
 @Command(
     name = "volume",
     description = "volume command",

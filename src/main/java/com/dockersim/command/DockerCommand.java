@@ -1,6 +1,5 @@
 package com.dockersim.command;
 
-import org.springframework.stereotype.Component;
 
 import com.dockersim.command.aliases.container.Attach;
 import com.dockersim.command.aliases.container.Commit;
@@ -72,7 +71,6 @@ import picocli.CommandLine;
 		// Network Aliases
 	}
 )
-@Component
 @Getter
 @Setter
 public class DockerCommand {

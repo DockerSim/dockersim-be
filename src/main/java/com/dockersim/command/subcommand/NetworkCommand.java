@@ -15,7 +15,6 @@ import com.dockersim.config.SimulationUserPrincipal;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.ParentCommand;
 
-@Component
 @Command(
 	name = "network",
 	description = "network command",

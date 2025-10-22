@@ -3,8 +3,6 @@ package com.dockersim.command.aliases.image;
 import java.util.List;
 import java.util.concurrent.Callable;
 
-import org.springframework.stereotype.Component;
-
 import com.dockersim.command.DockerCommand;
 import com.dockersim.dto.response.CommandResult;
 import com.dockersim.dto.response.CommandResultStatus;
@@ -15,14 +13,13 @@ import lombok.RequiredArgsConstructor;
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "push")
-@Component
 @RequiredArgsConstructor
 public class Push implements Callable<CommandResult> {
 
 	private final DockerImageService service;
 
 	@CommandLine.ParentCommand
-	private final DockerCommand parent;
+	private DockerCommand parent;
 
 	@CommandLine.Option(names = {"-a", "--all-tags"}, description = "동일한 repo의 모든 Image를 업로드합니다.")
 	private boolean allTags;

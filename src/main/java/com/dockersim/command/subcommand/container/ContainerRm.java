@@ -2,8 +2,6 @@ package com.dockersim.command.subcommand.container;
 
 import java.util.concurrent.Callable;
 
-import org.springframework.stereotype.Component;
-
 import com.dockersim.command.subcommand.ContainerCommand;
 import com.dockersim.dto.response.CommandResult;
 import com.dockersim.service.container.DockerContainerService;
@@ -12,14 +10,13 @@ import lombok.RequiredArgsConstructor;
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "remove")
-@Component
 @RequiredArgsConstructor
 public class ContainerRm implements Callable<CommandResult> {
-	
+
 	private final DockerContainerService service;
 
 	@CommandLine.ParentCommand
-	private final ContainerCommand parent;
+	private ContainerCommand parent;
 
 	@CommandLine.Option(names = {"-f", "--force"}, description = "Running 상태가 아닌 Container의 삭제 여부")
 	private boolean force;

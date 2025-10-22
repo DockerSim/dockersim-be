@@ -49,7 +49,6 @@ import picocli.CommandLine;
 		ContainerUnpause.class,
 	}
 )
-@Component
 @RequiredArgsConstructor
 public class ContainerCommand {
 

@@ -2,8 +2,6 @@ package com.dockersim.command.aliases.image;
 
 import java.util.concurrent.Callable;
 
-import org.springframework.stereotype.Component;
-
 import com.dockersim.command.DockerCommand;
 import com.dockersim.dto.response.CommandResult;
 import com.dockersim.dto.response.CommandResultStatus;
@@ -13,14 +11,13 @@ import lombok.RequiredArgsConstructor;
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "history")
-@Component
 @RequiredArgsConstructor
 public class History implements Callable<CommandResult> {
 
 	private final DockerImageService service;
 
 	@CommandLine.ParentCommand
-	private final DockerCommand parent;
+	private DockerCommand parent;
 
 	@CommandLine.Parameters(index = "0", description = "repo[:tag] | Hex ID")
 	private String nameOrHexId;

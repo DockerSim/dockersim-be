@@ -2,8 +2,6 @@ package com.dockersim.command.aliases.image;
 
 import java.util.concurrent.Callable;
 
-import org.springframework.stereotype.Component;
-
 import com.dockersim.command.DockerCommand;
 import com.dockersim.dto.response.CommandResult;
 import com.dockersim.dto.response.CommandResultStatus;
@@ -14,14 +12,13 @@ import lombok.RequiredArgsConstructor;
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "rmi")
-@Component
 @RequiredArgsConstructor
 public class Rmi implements Callable<CommandResult> {
 
 	private final DockerImageService service;
 
 	@CommandLine.ParentCommand
-	private final DockerCommand parent;
+	private DockerCommand parent;
 
 	@CommandLine.Option(names = {"-f", "--force"}, description = "해당 Image가 다른 Container의 Base Image이여도 삭제합니다.")
 	private boolean force;

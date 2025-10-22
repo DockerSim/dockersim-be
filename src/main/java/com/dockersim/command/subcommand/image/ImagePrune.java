@@ -4,8 +4,6 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.stream.Stream;
 
-import org.springframework.stereotype.Component;
-
 import com.dockersim.command.subcommand.ImageCommand;
 import com.dockersim.dto.response.CommandResult;
 import com.dockersim.dto.response.CommandResultStatus;
@@ -16,14 +14,13 @@ import lombok.RequiredArgsConstructor;
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "prune")
-@Component
 @RequiredArgsConstructor
 public class ImagePrune implements Callable<CommandResult> {
 
 	private final DockerImageService service;
 
 	@CommandLine.ParentCommand
-	private final ImageCommand parent;
+	private ImageCommand parent;
 
 	@CommandLine.Option(names = {"-a", "--all"}, description = "댕글링 이미지/참조 여부에 관계없이 삭제합니다.")
 	private boolean all;

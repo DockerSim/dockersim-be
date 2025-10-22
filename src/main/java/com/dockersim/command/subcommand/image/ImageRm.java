@@ -2,8 +2,6 @@ package com.dockersim.command.subcommand.image;
 
 import java.util.concurrent.Callable;
 
-import org.springframework.stereotype.Component;
-
 import com.dockersim.command.subcommand.ImageCommand;
 import com.dockersim.dto.response.CommandResult;
 import com.dockersim.dto.response.CommandResultStatus;
@@ -14,14 +12,13 @@ import lombok.RequiredArgsConstructor;
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "rm", aliases = "remove")
-@Component
 @RequiredArgsConstructor
 public class ImageRm implements Callable<CommandResult> {
 
 	private final DockerImageService service;
 
 	@CommandLine.ParentCommand
-	private final ImageCommand parent;
+	private ImageCommand parent;
 
 	@CommandLine.Option(names = {"-f", "--force"}, description = "해당 Image가 다른 Container의 Base Image이여도 삭제합니다.")
 	private boolean force;

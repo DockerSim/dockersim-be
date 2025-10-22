@@ -2,8 +2,6 @@ package com.dockersim.command.subcommand.volume;
 
 import java.util.concurrent.Callable;
 
-import org.springframework.stereotype.Component;
-
 import com.dockersim.command.subcommand.VolumeCommand;
 import com.dockersim.dto.response.CommandResult;
 import com.dockersim.dto.response.CommandResultStatus;
@@ -13,14 +11,13 @@ import lombok.RequiredArgsConstructor;
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "ls", aliases = "list")
-@Component
 @RequiredArgsConstructor
 public class VolumeLsCommand implements Callable<CommandResult> {
 
 	private final DockerVolumeService service;
 
 	@CommandLine.ParentCommand
-	private final VolumeCommand parent;
+	private VolumeCommand parent;
 
 	@CommandLine.Option(names = {"-q", "--quiet"}, description = "Docker Volume 이름만 출력")
 	private boolean quiet;

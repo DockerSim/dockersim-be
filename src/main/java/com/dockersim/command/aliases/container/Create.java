@@ -3,8 +3,6 @@ package com.dockersim.command.aliases.container;
 import java.util.List;
 import java.util.concurrent.Callable;
 
-import org.springframework.stereotype.Component;
-
 import com.dockersim.command.DockerCommand;
 import com.dockersim.dto.response.CommandResult;
 import com.dockersim.service.container.DockerContainerService;
@@ -13,14 +11,13 @@ import lombok.RequiredArgsConstructor;
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "create")
-@Component
 @RequiredArgsConstructor
 public class Create implements Callable<CommandResult> {
-	
+
 	private final DockerContainerService service;
 
 	@CommandLine.ParentCommand
-	private final DockerCommand parent;
+	private DockerCommand parent;
 
 	@CommandLine.Option(names = "--name", description = "새로 생성할 Docker Container 이름")
 	private String name;

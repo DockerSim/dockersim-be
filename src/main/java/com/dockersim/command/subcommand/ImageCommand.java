@@ -1,6 +1,5 @@
 package com.dockersim.command.subcommand;
 
-import org.springframework.stereotype.Component;
 
 import com.dockersim.command.DockerCommand;
 import com.dockersim.command.subcommand.image.ImageBuild;
@@ -17,7 +16,6 @@ import lombok.RequiredArgsConstructor;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.ParentCommand;
 
-@Component
 @Command(
 	name = "image",
 	description = "image command",

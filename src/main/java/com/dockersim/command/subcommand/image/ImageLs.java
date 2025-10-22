@@ -2,8 +2,6 @@ package com.dockersim.command.subcommand.image;
 
 import java.util.concurrent.Callable;
 
-import org.springframework.stereotype.Component;
-
 import com.dockersim.command.subcommand.ImageCommand;
 import com.dockersim.dto.response.CommandResult;
 import com.dockersim.dto.response.CommandResultStatus;
@@ -13,14 +11,13 @@ import lombok.RequiredArgsConstructor;
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "ls", aliases = "list")
-@Component
 @RequiredArgsConstructor
 public class ImageLs implements Callable<CommandResult> {
 
 	private final DockerImageService service;
 
 	@CommandLine.ParentCommand
-	private final ImageCommand parent;
+	private ImageCommand parent;
 
 	@CommandLine.Option(names = {"-a", "--all"}, description = "댕글링 이미지도 조회합니다.")
 	private boolean all;

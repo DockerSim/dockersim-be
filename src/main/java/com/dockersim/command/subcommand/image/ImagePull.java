@@ -3,8 +3,6 @@ package com.dockersim.command.subcommand.image;
 import java.util.List;
 import java.util.concurrent.Callable;
 
-import org.springframework.stereotype.Component;
-
 import com.dockersim.command.subcommand.ImageCommand;
 import com.dockersim.dto.response.CommandResult;
 import com.dockersim.dto.response.CommandResultStatus;
@@ -15,14 +13,13 @@ import lombok.RequiredArgsConstructor;
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "pull")
-@Component
 @RequiredArgsConstructor
 public class ImagePull implements Callable<CommandResult> {
 
 	private final DockerImageService service;
 
 	@CommandLine.ParentCommand
-	private final ImageCommand parent;
+	private ImageCommand parent;
 
 	@CommandLine.Option(names = {"-a", "--all-tags"}, description = "동일한 repo의 모든 Image를 다운로드합니다.")
 	private boolean allTags;
