@@ -20,17 +20,20 @@ public class NetworkConnectCommand implements Callable<CommandResult> {
 	@CommandLine.ParentCommand
 	private NetworkCommand parent;
 
-	@CommandLine.Parameters(index = "0", description = "새로 생성하는 Docker Volume 이름")
-	private String name;
+	@CommandLine.Parameters(index = "0", description = "연결할 네트워크 이름 또는 Hex ID")
+	private String networkNameOrHexId;
+
+	@CommandLine.Parameters(index = "1", description = "연결할 컨테이너 이름 또는 Hex ID")
+	private String containerNameOrHexId;
 
 	@Override
 	public CommandResult call() throws Exception {
-		DockerNetworkResponse volume = service.connect(parent.getPrincipal());
+		DockerNetworkResponse network = service.connect(parent.getPrincipal(),
+			networkNameOrHexId, containerNameOrHexId);
 		return CommandResult.builder()
-			.console(volume.getConsole())
+			.console(network.getConsole())
 			.status(CommandResultStatus.UPDATE)
-			.changedContainer(container)
-			.changedNetworks(network)
+			.changedNetwork(network)
 			.build();
 	}
 }

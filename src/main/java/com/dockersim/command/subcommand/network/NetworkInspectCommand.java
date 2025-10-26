@@ -19,13 +19,13 @@ public class NetworkInspectCommand implements Callable<CommandResult> {
 	@CommandLine.ParentCommand
 	private NetworkCommand parent;
 
-	@CommandLine.Parameters(index = "0", description = "조회할 Docker Volume 이름")
-	private String name;
+	@CommandLine.Parameters(index = "0", description = "상제 조회할 네트워크 이름 또는 Hex ID")
+	private String networkNameOrHexId;
 
 	@Override
 	public CommandResult call() throws Exception {
 		return CommandResult.builder()
-			.console(service.inspect(parent.getPrincipal(), name))
+			.console(service.inspect(parent.getPrincipal(), networkNameOrHexId))
 			.status(CommandResultStatus.READ)
 			.build();
 	}

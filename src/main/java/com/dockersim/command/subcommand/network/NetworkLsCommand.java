@@ -18,8 +18,8 @@ public class NetworkLsCommand implements Callable<CommandResult> {
 
 	@CommandLine.ParentCommand
 	private NetworkCommand parent;
-
-	@CommandLine.Option(names = {"-q", "--quiet"}, description = "Docker Volume 이름만 출력")
+	
+	@CommandLine.Option(names = {"-q", "--quiet"}, description = "네트워크 이름만 출력")
 	private boolean quiet;
 
 	@Override

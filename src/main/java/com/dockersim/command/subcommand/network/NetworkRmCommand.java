@@ -5,7 +5,7 @@ import java.util.concurrent.Callable;
 import com.dockersim.command.subcommand.NetworkCommand;
 import com.dockersim.dto.response.CommandResult;
 import com.dockersim.dto.response.CommandResultStatus;
-import com.dockersim.dto.response.DockerVolumeResponse;
+import com.dockersim.dto.response.DockerNetworkResponse;
 import com.dockersim.service.network.DockerNetworkService;
 
 import lombok.RequiredArgsConstructor;
@@ -20,16 +20,16 @@ public class NetworkRmCommand implements Callable<CommandResult> {
 	@CommandLine.ParentCommand
 	private NetworkCommand parent;
 
-	@CommandLine.Parameters(index = "0", description = "삭제할 Docker Volume 이름 또는 Hex ID")
-	private String nameOrHexId;
+	@CommandLine.Parameters(index = "0", description = "상제 조회할 네트워크 이름 또는 Hex ID")
+	private String networkNameOrHexId;
 
 	@Override
 	public CommandResult call() throws Exception {
-		DockerVolumeResponse response = service.rm(parent.getPrincipal(), nameOrHexId);
+		DockerNetworkResponse response = service.rm(parent.getPrincipal(), networkNameOrHexId);
 		return CommandResult.builder()
 			.console(response.getConsole())
 			.status(CommandResultStatus.DELETE)
-			.changedVolume(response)
+			.changedNetwork(response)
 			.build();
 	}
 }

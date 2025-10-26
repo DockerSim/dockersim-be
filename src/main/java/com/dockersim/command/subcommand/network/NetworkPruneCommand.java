@@ -2,11 +2,12 @@ package com.dockersim.command.subcommand.network;
 
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.stream.Stream;
 
 import com.dockersim.command.subcommand.NetworkCommand;
 import com.dockersim.dto.response.CommandResult;
 import com.dockersim.dto.response.CommandResultStatus;
-import com.dockersim.dto.response.DockerVolumeResponse;
+import com.dockersim.dto.response.DockerNetworkResponse;
 import com.dockersim.service.network.DockerNetworkService;
 
 import lombok.RequiredArgsConstructor;
@@ -21,17 +22,21 @@ public class NetworkPruneCommand implements Callable<CommandResult> {
 	@CommandLine.ParentCommand
 	private NetworkCommand parent;
 
-	@CommandLine.Option(names = {"-a", "--all"}, description = "기본 동작 변경: 참조되지 않은 익명/명명 볼륨 삭제")
-	private boolean all;
-
 	@Override
 	public CommandResult call() throws Exception {
-		List<DockerVolumeResponse> prune = service.prune(parent.getPrincipal(), all);
+		List<DockerNetworkResponse> networks = service.prune(parent.getPrincipal());
 		return CommandResult.builder()
-			.console(prune.stream()
-				.flatMap(response -> response.getConsole().stream()).toList())
+			.console(
+				Stream.concat(
+					Stream.of(networks.isEmpty()
+						? "[사용되지 않는 네트워크가 없습니다.]"
+						: "Deleted Networks:"),
+					networks.stream()
+						.flatMap(response -> response.getConsole().stream())
+				).toList()
+			)
 			.status(CommandResultStatus.DELETE)
-			.changedVolumes(prune)
+			.changedNetworks(networks)
 			.build();
 	}
 }

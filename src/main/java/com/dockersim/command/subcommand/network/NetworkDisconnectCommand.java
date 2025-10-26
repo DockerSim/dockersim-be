@@ -5,7 +5,7 @@ import java.util.concurrent.Callable;
 import com.dockersim.command.subcommand.NetworkCommand;
 import com.dockersim.dto.response.CommandResult;
 import com.dockersim.dto.response.CommandResultStatus;
-import com.dockersim.dto.response.DockerVolumeResponse;
+import com.dockersim.dto.response.DockerNetworkResponse;
 import com.dockersim.service.network.DockerNetworkService;
 
 import lombok.RequiredArgsConstructor;
@@ -20,16 +20,23 @@ public class NetworkDisconnectCommand implements Callable<CommandResult> {
 	@CommandLine.ParentCommand
 	private NetworkCommand parent;
 
-	@CommandLine.Parameters(index = "0", description = "새로 생성하는 Docker Volume 이름")
-	private String name;
+	@CommandLine.Parameters(index = "0", description = "연결 해제 할 네트워크 이름 또는 Hex ID")
+	private String networkNameOrHexId;
+
+	@CommandLine.Parameters(index = "1", description = "연결 해제 할 컨테이너 이름 또는 Hex ID")
+	private String containerNameOrHexId;
+
+	@CommandLine.Option(names = {"-f", "--force"}, description = "컨테이너를 강제로 연결 해제합니다.")
+	private boolean force;
 
 	@Override
 	public CommandResult call() throws Exception {
-		DockerVolumeResponse volume = service.create(parent.getPrincipal(), name, false);
+		DockerNetworkResponse network = service.disconnect(parent.getPrincipal(),
+			networkNameOrHexId, containerNameOrHexId, force);
 		return CommandResult.builder()
-			.console(volume.getConsole())
-			.status(CommandResultStatus.CREATE)
-			.changedVolume(volume)
+			.console(network.getConsole())
+			.status(CommandResultStatus.UPDATE)
+			.changedNetwork(network)
 			.build();
 	}
 }
