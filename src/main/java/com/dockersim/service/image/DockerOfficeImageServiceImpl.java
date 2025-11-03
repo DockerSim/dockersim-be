@@ -11,7 +11,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.InputStream;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -74,20 +73,21 @@ public class DockerOfficeImageServiceImpl implements DockerOfficeImageService {
 
     @Override
     @Transactional(readOnly = true)
-    public DockerOfficeImage findByNameAndTag(String repositoryName, String tag) {
-        return repo.findByNameAndTag(repositoryName, tag).orElse(null);
+    public DockerOfficeImageResponse findByNameAndTag(String name, String tag) {
+        return DockerOfficeImageResponse.from(repo.findByNameAndTag(name, tag).orElseThrow(
+                ()->new BusinessException(DockerImageErrorCode.OFFICE_IMAGE_NOT_FOUND, name + ":" + tag)
+        ));
     }
 
     @Transactional(readOnly = true)
-    public List<DockerOfficeImageResponse> findAllByName(String repositoryName) {
+    public List<DockerOfficeImageResponse> findAllByName(String name) {
 
-        Optional<List<DockerOfficeImage>> optionalImages = repo.findAllByName(repositoryName);
+        List<DockerOfficeImage> images = repo.findAllByName(name);
 
-        if (optionalImages.isEmpty() || optionalImages.get().isEmpty()) {
-            throw new BusinessException(DockerImageErrorCode.OFFICE_IMAGE_NOT_FOUND,
-                repositoryName);
+        if (images.isEmpty()) {
+            throw new BusinessException(DockerImageErrorCode.OFFICE_IMAGE_NOT_FOUND, name);
         }
-        return optionalImages.get().stream()
+        return images.stream()
             .map(DockerOfficeImageResponse::from)
             .collect(Collectors.toList());
     }
@@ -95,16 +95,9 @@ public class DockerOfficeImageServiceImpl implements DockerOfficeImageService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<DockerOfficeImageResponse> getAllImages(int offset, int limit) {
-        List<DockerOfficeImageResponse> all = repo.findAll().stream()
+    public List<DockerOfficeImageResponse> getAllImages() {
+        return repo.findAll().stream()
             .map(DockerOfficeImageResponse::from)
             .collect(Collectors.toList());
-
-        int start = Math.max(0, offset);
-        int end = Math.min(all.size(), offset + limit);
-        if (start >= all.size()) {
-            return Collections.emptyList();
-        }
-        return all.subList(start, end);
     }
 }

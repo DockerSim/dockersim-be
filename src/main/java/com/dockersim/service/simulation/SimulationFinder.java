@@ -1,11 +1,14 @@
 package com.dockersim.service.simulation;
 
 import com.dockersim.domain.Simulation;
-import java.util.UUID;
 
 public interface SimulationFinder {
 
-    Simulation findSimulationByUUID(UUID simulationId);
+    boolean existsByPublicId(String publicId);
 
-    Simulation findSimulationWithCollaborators(UUID simulationId);
+    Simulation findById(Long id);
+
+    Simulation findByPublicId(String publicId);
+
+    Simulation findSimulationWithCollaborators(String simulationId);
 }

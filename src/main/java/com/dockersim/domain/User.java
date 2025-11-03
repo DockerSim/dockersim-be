@@ -1,14 +1,18 @@
 package com.dockersim.domain;
 
+import com.dockersim.common.IdGenerator;
 import com.dockersim.dto.request.UserRequest;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
-import java.util.UUID;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -28,8 +32,8 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "user_id", unique = true, nullable = false, updatable = false)
-    private UUID userId;
+    @Column(name = "public_id", unique = true, nullable = false, updatable = false)
+    private String publicId;
 
     @Column(nullable = false)
     private String name;
@@ -40,10 +44,15 @@ public class User {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<DockerFile> dockerfiles = new ArrayList<>();
+
+    @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Simulation> simulations = new ArrayList<>();
 
     public static User fromUserRequest(UserRequest request) {
         return User.builder()
-            .userId(UUID.randomUUID())
+            .publicId(IdGenerator.generatePublicId())
             .name(request.getName())
             .email(request.getEmail())
             .createdAt(LocalDateTime.now())

@@ -31,12 +31,22 @@ public class DockerOfficeImage {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "image_id")
-    private String imageId;
+    @Column(name = "hex_id", unique = true, nullable = false)
+    private String hexId;
 
+    @Column(name = "short_hex_id", unique = true, nullable = false)
+    private String shortHexId;
+
+    @Column(nullable = false)
+    private String tag;
+
+    @Column(nullable = false)
     private String name;
-    private String namespace;
+
     private String description;
+
+    @Column(nullable = false)
+    private String layer;
 
     @Column(name = "star_count")
     private int starCount;
@@ -44,28 +54,30 @@ public class DockerOfficeImage {
     @Column(name = "pull_count")
     private long pullCount;
 
-    @Column(name = "last_updated")
+    @Column(name = "last_updated", nullable = false)
     private LocalDateTime lastUpdated;
 
-    @Column(name = "date_registered")
+    @Column(name = "date_registered", nullable = false)
     private LocalDateTime dateRegistered;
     private String logoUrl;
 
-    private String tag;
 
     public static DockerOfficeImage from(DockerImageJson image, String tag) {
+        String hexId = IdGenerator.generateHexFullId();
+        
         return DockerOfficeImage.builder()
-            .name(image.getName())
-            .imageId(IdGenerator.generateFullId())
-            .namespace(image.getNamespace())
-            .description(image.getDescription())
-            .starCount(image.getStarCount())
-            .pullCount(image.getPullCount())
-            .lastUpdated(LocalDate.parse(image.getLastUpdated(), DATE_FORMATTER).atStartOfDay())
-            .dateRegistered(
-                LocalDate.parse(image.getDateRegistered(), DATE_FORMATTER).atStartOfDay())
-            .logoUrl(image.getLogoUrl())
-            .tag(tag)
-            .build();
+                .hexId(hexId)
+                .shortHexId(IdGenerator.getShortId(hexId))
+                .tag(tag)
+                .name(image.getName())
+                .description(image.getDescription())
+                .layer(image.getName() + ":" + tag)
+                .starCount(image.getStarCount())
+                .pullCount(image.getPullCount())
+                .lastUpdated(LocalDate.parse(image.getLastUpdated(), DATE_FORMATTER).atStartOfDay())
+                .dateRegistered(
+                    LocalDate.parse(image.getDateRegistered(), DATE_FORMATTER).atStartOfDay())
+                .logoUrl(image.getLogoUrl())
+                .build();
     }
 }
