@@ -1,125 +1,175 @@
 package com.dockersim.service.container;
 
-import java.util.List;
-
+import com.dockersim.config.SimulationUserPrincipal;
+import com.dockersim.domain.*;
+import com.dockersim.dto.response.ContainerInspectData;
+import com.dockersim.dto.response.DockerContainerResponse;
+import com.dockersim.exception.BusinessException;
+import com.dockersim.exception.code.DockerImageErrorCode;
+import com.dockersim.repository.DockerContainerRepository;
+import com.dockersim.service.image.DockerImageFinder;
+import com.dockersim.service.simulation.SimulationFinder;
+import com.dockersim.service.user.UserFinder;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import com.dockersim.dto.request.CreateContainerRequest;
-import com.dockersim.dto.response.DockerContainerResponse;
-import com.dockersim.repository.DockerContainerRepository;
-import com.dockersim.service.simulation.SimulationFinder;
+import java.util.List;
+import java.util.stream.Stream;
 
-import lombok.RequiredArgsConstructor;
-
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class DockerContainerServiceImpl implements DockerContainerService {
 
-	private final SimulationFinder simulationFinder;
-	private final DockerContainerRepository repo;
+    private final SimulationFinder simulationFinder;
+    private final DockerImageFinder dockerImageFinder;
+    private final DockerContainerFinder dockerContainerFinder;
+    private final UserFinder userFinder;
 
-	@Override
-	public List<String> commitContainer(String containerIdOrName, String newImageName) {
-		return List.of();
-	}
+    private final DockerContainerRepository repo;
 
-	@Override
-	public List<String> attach(String nameOrId) {
-		// String simulationId = SimulationContextHolder.getSimulationId();
-		// containerFinder.findByNameOrIdAndStatusAndSimulationId(nameOrId, ContainerStatus.RUNNING,
-		//     simulationId);
+    @Override
+    public DockerContainerResponse create(SimulationUserPrincipal principal, String baseImageNameOrHexId, String name) {
+        log.debug("컨테이너 생성 전 검증");
+        Simulation simulation = simulationFinder.findById(principal.getSimulationId());
+        User user = userFinder.findUserById(principal.getUserId());
 
-		return List.of(
-			"실행 중인 컨테이너(+" + nameOrId + "의 메인 터미널에 연결되었습니다.",
-			"'Ctrl + P/Q'으로 터미널을 종료하지 않고 컨테이너의 메인 터미널을 나오거나,",
-			"'Ctrl + C' 또는 exit 입력으로 메인 터미널을 종료합니다.",
-			"메인 터미널이 종료되면 컨테이너에서 실행할 명령어가 없으므로 컨테이너도 종료됩니다."
-		);
-	}
+        log.debug("로컬에서 base image 탐색");
+        DockerImage image = dockerImageFinder.findByIdentifierAndLocation(simulation,
+                baseImageNameOrHexId, ImageLocation.LOCAL);
 
-	@Override
-	public DockerContainerResponse create(CreateContainerRequest request) {
-		return null;
-	}
+        log.debug("컨테이너 생성");
+        DockerContainer container = DockerContainer.from(name, image, simulation);
 
-	@Override
-	public List<String> copyToFromContainer(String source, String destination) {
-		return List.of();
-	}
+        return DockerContainerResponse.from(
+                List.of("[Create Container]: " + container.getHexId()),
+                repo.save(container)
+        );
+    }
 
-	@Override
-	public List<String> diffContainer(String containerIdOrName) {
-		return List.of();
-	}
+    @Override
+    public List<String> inspect(SimulationUserPrincipal principal, String containerNameOrHexId) {
+        log.debug("컨테이너 상세 조회 전 검증");
+        Simulation simulation = simulationFinder.findByPublicId(principal.getSimulationPublicId());
 
-	@Override
-	public List<String> exportContainer(String containerIdOrName) {
-		return List.of();
-	}
+        log.debug("컨테이너 조회");
+        DockerContainer container = dockerContainerFinder.findByIdentifier(simulation, containerNameOrHexId);
 
-	@Override
-	public List<String> executeInContainer(String containerIdOrName, String command,
-		boolean interactive, boolean tty) {
-		return List.of();
-	}
+        log.debug("컨테이너 상세 정보 재가공");
+        ContainerInspectData inspectData = ContainerInspectData.from(container);
+        try {
+            String json = new ObjectMapper()
+                    .writerWithDefaultPrettyPrinter()
+                    .writeValueAsString(List.of(inspectData));
+            return List.of(json);
+        } catch (JsonProcessingException e) {
+            log.error(e.getMessage());
+            throw new BusinessException(DockerImageErrorCode.FAIL_CONVERT_INSPECT);
+        }
+    }
 
-	@Override
-	public List<String> listContainers(boolean all, boolean quiet) {
-		return List.of();
-	}
+    @Override
+    public List<String> ps(SimulationUserPrincipal principal, boolean all, boolean quiet) {
+        Simulation simulation = simulationFinder.findById(principal.getSimulationId());
+        List<DockerContainer> containers = dockerContainerFinder.findBySimulation(simulation, all);
 
-	@Override
-	public List<String> getContainerPorts(String containerIdOrName) {
-		return List.of();
-	}
+        Stream<String> headerStream, bodyStream;
+        if (quiet) {
+            headerStream = Stream.of("CONTAINER ID");
+            bodyStream = containers.stream().map(DockerContainer::getHexId);
+        } else {
+            headerStream = String.format("%-25s %-20s %-20s %-15s", "CONTAINER ID", "IMAGE", "CREATED", "STATUS").lines();
+            bodyStream = containers.stream().map(
+                    container ->
+                            String.format(
+                                    "%-25s %-20s %-20s %-15s",
+                                    container.getShortHexId(),
+                                    container.getBaseImage().getName(),
+                                    container.getCreatedAt(),
+                                    container.getStatus()
+                            )
+            );
+        }
+        return Stream.concat(headerStream, bodyStream).toList();
+    }
 
-	@Override
-	public List<String> pruneContainers() {
-		return List.of();
-	}
+    @Override
+    public DockerContainerResponse pause(SimulationUserPrincipal principal, String containerNameOrHexId) {
+        log.debug("컨테이너 일시 중지 전 검증");
+        Simulation simulation = simulationFinder.findById(principal.getSimulationId());
 
-	@Override
-	public void renameContainer(String oldNameOrId, String newName) {
+        DockerContainer container = dockerContainerFinder.findBySimulationAndIdentifierAndStatus(simulation, containerNameOrHexId, ContainerStatus.RUNNING);
+        container.pause();
 
-	}
 
-	@Override
-	public List<String> restartContainers(List<String> containerIdsOrNames) {
-		return List.of();
-	}
+        return DockerContainerResponse.from(
+                List.of("[Pause Container]: " + container.getShortHexId()),
+                repo.save(container)
+        );
+    }
 
-	@Override
-	public List<String> removeContainers(List<String> containerIdsOrNames, boolean force) {
-		return List.of();
-	}
+    @Override
+    public List<DockerContainerResponse> restart(SimulationUserPrincipal principal, String containerNameOrHexId) {
+        return List.of(stop(principal, containerNameOrHexId), start(principal, containerNameOrHexId));
+    }
 
-	@Override
-	public List<String> startContainers(List<String> containerIdsOrNames) {
-		return List.of();
-	}
+    @Override
+    public DockerContainerResponse rm(SimulationUserPrincipal principal, String containerNameOrHexId) {
 
-	@Override
-	public List<String> stopContainers(List<String> containerIdsOrNames) {
-		return List.of();
-	}
+        Simulation simulation = simulationFinder.findById(principal.getSimulationId());
 
-	@Override
-	public List<String> killContainers(List<String> containerIdsOrNames) {
-		return List.of();
-	}
+        DockerContainer container = dockerContainerFinder.findBySimulationAndIdentifierAndStatus(simulation, containerNameOrHexId, ContainerStatus.EXITED);
 
-	@Override
-	public List<String> pauseContainers(List<String> containerIdsOrNames) {
-		return List.of();
-	}
+        repo.delete(container);
+        return DockerContainerResponse.from(
+                List.of("[Remove Container]: " + container.getShortHexId()),
+                container
+        );
+    }
 
-	@Override
-	public List<String> unpauseContainers(List<String> containerIdsOrNames) {
-		return List.of();
-	}
+    @Override
+    public DockerContainerResponse start(SimulationUserPrincipal principal, String containerNameOrHexId) {
+        log.debug("컨테이너 시작 전 검증");
+        Simulation simulation = simulationFinder.findById(principal.getSimulationId());
 
-	@Override
-	public String inspectContainer(String containerIdOrName) {
-		return "";
-	}
+        DockerContainer container = dockerContainerFinder.findBySimulationAndIdentifierAndStatus(simulation, containerNameOrHexId, ContainerStatus.EXITED);
+        container.start();
+
+        return DockerContainerResponse.from(
+                List.of("[Pause Container]: " + container.getShortHexId()),
+                repo.save(container)
+        );
+    }
+
+    @Override
+    public DockerContainerResponse stop(SimulationUserPrincipal principal, String containerNameOrHexId) {
+        log.debug("컨테이너 중지 전 검증");
+        Simulation simulation = simulationFinder.findById(principal.getSimulationId());
+
+        DockerContainer container = dockerContainerFinder.findBySimulationAndIdentifierAndStatus(simulation, containerNameOrHexId, ContainerStatus.RUNNING);
+        container.stop();
+
+        return DockerContainerResponse.from(
+                List.of("[Stop Container]: " + container.getShortHexId()),
+                repo.save(container)
+        );
+    }
+
+    @Override
+    public DockerContainerResponse unpause(SimulationUserPrincipal principal, String containerNameOrHexId) {
+
+        log.debug("컨테이너 일시 중지 해제 전 검증");
+        Simulation simulation = simulationFinder.findById(principal.getSimulationId());
+
+        DockerContainer container = dockerContainerFinder.findBySimulationAndIdentifierAndStatus(simulation, containerNameOrHexId, ContainerStatus.PAUSED);
+        container.unpause();
+
+        return DockerContainerResponse.from(
+                List.of("[Unpause Container]: " + container.getShortHexId()),
+                repo.save(container)
+        );
+    }
 }

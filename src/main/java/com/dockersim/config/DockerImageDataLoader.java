@@ -8,9 +8,9 @@ import org.springframework.stereotype.Component;
 
 @Component
 @ConditionalOnProperty(
-    name = "spring.jpa.hibernate.ddl-auto",
-    havingValue = "create",
-    matchIfMissing = false
+        name = "spring.jpa.hibernate.ddl-auto",
+        havingValue = "create",
+        matchIfMissing = false
 )
 @RequiredArgsConstructor
 public class DockerImageDataLoader implements CommandLineRunner {

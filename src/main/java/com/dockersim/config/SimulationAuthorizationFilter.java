@@ -11,8 +11,6 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.nio.file.AccessDeniedException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.core.Authentication;
@@ -20,6 +18,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+
+import java.io.IOException;
+import java.nio.file.AccessDeniedException;
 
 
 @Component
@@ -30,15 +31,16 @@ public class SimulationAuthorizationFilter extends OncePerRequestFilter {
     private final SimulationFinder simulationFinder;
     private final SimulationCollaboratorRepository collaboratorRepository;
     private final AntPathRequestMatcher requestMatcher = new AntPathRequestMatcher(
-        "/api/simulations/{simulationPublicId}/**");
+            "/api/simulations/{simulationPublicId}/**");
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
-        FilterChain filterChain) throws ServletException, IOException {
+                                    FilterChain filterChain) throws ServletException, IOException {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         // 사용자 정보만 담긴 인증정보가 있어야함.
         if (authentication == null || !requestMatcher.matches(request)) {
+            System.out.println("사용자 정보가 없거나, 시뮬레이션 ID인증이 불필요");
             filterChain.doFilter(request, response);
             return;
         }
@@ -52,7 +54,9 @@ public class SimulationAuthorizationFilter extends OncePerRequestFilter {
         // 유효한 사용자, 시뮬레이션인지 검증해야함.
         String userPublicId = authentication.getName();
         String simulationPublicId = requestMatcher.matcher(request).getVariables()
-            .get("simulationPublicId");
+                .get("simulationPublicId");
+
+        System.out.println(userPublicId);
 
         User user = userFinder.findUserByPublicId(userPublicId);
         Simulation simulation = simulationFinder.findByPublicId(simulationPublicId);
@@ -63,7 +67,7 @@ public class SimulationAuthorizationFilter extends OncePerRequestFilter {
 
         // 시뮬레이션 정보가 담긴 새로운 인증정보를 컨택스트에 저장해야함
         SecurityContextHolder.getContext().setAuthentication(
-            new SimulationAuthenticationToken(new SimulationUserPrincipal(user, simulation))
+                new SimulationAuthenticationToken(new SimulationUserPrincipal(user, simulation))
         );
 
         filterChain.doFilter(request, response);

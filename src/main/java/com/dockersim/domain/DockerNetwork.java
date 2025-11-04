@@ -6,7 +6,6 @@ import java.util.List;
 
 import com.dockersim.common.IdGenerator;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -43,19 +42,24 @@ public class DockerNetwork {
 	@JoinColumn(name = "simulation_id", nullable = false)
 	private Simulation simulation;
 
-	@OneToMany(mappedBy = "network", cascade = CascadeType.ALL, orphanRemoval = true)
+	@OneToMany(mappedBy = "network")
 	private List<ContainerNetwork> containerNetworks = new ArrayList<>();
 
 	public static DockerNetwork from(Simulation simulation, String name) {
 		String hexId = IdGenerator.generateHexFullId();
 		String shortHexId = IdGenerator.getShortId(hexId);
-		return DockerNetwork.builder()
+
+		DockerNetwork dockerNetwork = DockerNetwork.builder()
 			.hexId(hexId)
 			.shortHexId(shortHexId)
 			.name(name)
 			.simulation(simulation)
 			.createdAt(LocalDateTime.now())
 			.build();
+
+		dockerNetwork.simulation.getDockerNetworks().add(dockerNetwork);
+
+		return dockerNetwork;
 	}
 
 	public void connect(DockerContainer container) {
@@ -65,8 +69,8 @@ public class DockerNetwork {
 	}
 
 	public void disconnect(DockerContainer container) {
-		containerNetworks.removeIf(cn -> cn.getContainer().equals(container));
 		container.getContainerNetworks().removeIf(cn -> cn.getNetwork().equals(this));
+		containerNetworks.removeIf(cn -> cn.getContainer().equals(container));
 	}
 
 	public String getHeader() {

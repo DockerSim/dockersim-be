@@ -23,22 +23,22 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class ContainerVolume {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "container_pk", nullable = false)
-    private DockerContainer container;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "container_pk")
+	private DockerContainer container;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "volume_pk")
-    private DockerVolume volume;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "volume_pk")
+	private DockerVolume volume;
 
-    @Column(name = "container_path", nullable = false)
-    private String containerPath;
+	@Column(name = "container_path")
+	private String containerPath;
 
-    @Column(nullable = false)
-    private boolean isReadOnly;
+	@Column(nullable = false)
+	private boolean isReadOnly;
 
 }
