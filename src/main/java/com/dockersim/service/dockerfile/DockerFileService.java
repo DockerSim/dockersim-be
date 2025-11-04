@@ -1,21 +1,22 @@
 package com.dockersim.service.dockerfile;
 
+import java.util.List;
+
 import com.dockersim.config.SimulationUserPrincipal;
 import com.dockersim.dto.request.DockerFileRequest;
 import com.dockersim.dto.response.DockerFileResponse;
-import java.util.List;
 
 public interface DockerFileService {
 
-    DockerFileResponse create(SimulationUserPrincipal principal,
-        DockerFileRequest request);
+	DockerFileResponse createDockerFile(SimulationUserPrincipal principal,
+		DockerFileRequest request);
 
-    DockerFileResponse get(SimulationUserPrincipal principal, Long id);
+	DockerFileResponse getDockerFileInfo(SimulationUserPrincipal principal, Long id);
 
-    List<DockerFileResponse> getAll(SimulationUserPrincipal principal);
+	List<DockerFileResponse> getDockerFileSummary(SimulationUserPrincipal principal);
 
-    DockerFileResponse update(SimulationUserPrincipal principal, Long id,
-        DockerFileRequest request);
+	DockerFileResponse updateDockerFile(SimulationUserPrincipal principal, Long id,
+		DockerFileRequest request);
 
-    void delete(SimulationUserPrincipal principal, Long id);
+	void deleteDockerfile(SimulationUserPrincipal principal, Long id);
 }

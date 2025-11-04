@@ -2,20 +2,12 @@ package com.dockersim.domain;
 
 import com.dockersim.common.IdGenerator;
 import com.dockersim.dto.DockerImageJson;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+import lombok.*;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "docker_office_images")
@@ -31,10 +23,10 @@ public class DockerOfficeImage {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "hex_id", unique = true, nullable = false)
+    @Column(name = "hex_id", nullable = false)
     private String hexId;
 
-    @Column(name = "short_hex_id", unique = true, nullable = false)
+    @Column(name = "short_hex_id", nullable = false)
     private String shortHexId;
 
     @Column(nullable = false)
@@ -64,7 +56,7 @@ public class DockerOfficeImage {
 
     public static DockerOfficeImage from(DockerImageJson image, String tag) {
         String hexId = IdGenerator.generateHexFullId();
-        
+
         return DockerOfficeImage.builder()
                 .hexId(hexId)
                 .shortHexId(IdGenerator.getShortId(hexId))
@@ -76,7 +68,7 @@ public class DockerOfficeImage {
                 .pullCount(image.getPullCount())
                 .lastUpdated(LocalDate.parse(image.getLastUpdated(), DATE_FORMATTER).atStartOfDay())
                 .dateRegistered(
-                    LocalDate.parse(image.getDateRegistered(), DATE_FORMATTER).atStartOfDay())
+                        LocalDate.parse(image.getDateRegistered(), DATE_FORMATTER).atStartOfDay())
                 .logoUrl(image.getLogoUrl())
                 .build();
     }
