@@ -1,7 +1,9 @@
 package com.dockersim.common;
 
 import com.dockersim.exception.BusinessException;
+import com.dockersim.exception.GeminiApiException;
 import com.dockersim.exception.code.CommonErrorCode;
+import com.dockersim.exception.code.ComposeErrorCode;
 import com.dockersim.exception.code.ResponseCode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +18,15 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleBusiness(BusinessException ex) {
         ResponseCode ec = ex.getErrorCode();
         log.warn("BusinessException - code: {}, status: {}, message: {}", ec.getCode(), ec.getStatus(), ex.getMessage());
+        return ResponseEntity
+            .status(ec.getStatus())
+            .body(ApiResponse.error(ec, ex.getMessage()));
+    }
+
+    @ExceptionHandler(GeminiApiException.class)
+    public ResponseEntity<ApiResponse<Void>> handleGeminiApi(GeminiApiException ex) {
+        ResponseCode ec = ComposeErrorCode.GEMINI_API_CONNECTION_ERROR;
+        log.error("GeminiApiException - message: {}", ex.getMessage(), ex);
         return ResponseEntity
             .status(ec.getStatus())
             .body(ApiResponse.error(ec, ex.getMessage()));

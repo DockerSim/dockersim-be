@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum SimulationShareState {
 
+
     /**
      * 비공개 - 소유자만 접근 가능
      */
