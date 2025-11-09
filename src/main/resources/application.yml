@@ -13,6 +13,7 @@ spring:
         registration:
           github:
             client-id: Iv23li5fn6eYT9mK0YiG
+            client-secret: ${GITHUB_CLIENT_SECRET:506cab3793c71a668c7a9c0b66aeed2b6a585748}
             redirect-uri: http://localhost:8000/login/github
 
 server:
@@ -33,7 +34,41 @@ springdoc:
     display-request-duration: true
   show-actuator: false
 
+
+# Gemini API 설정
+gemini:
+  api:
+    key: ${GEMINI_API_KEY:AIzaSyB34xHwl1tLNoGRAnkay2iIlTxF5iGIm78}
+    url: https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent
+    timeout: 30
+
 logging:
   level:
     com:
       dockersim: DEBUG
+
+# JWT 설정 추가
+jwt:
+  secret: ${JWT_SECRET:32e41b78dc05f7cdf49911534849904864720b5999c9ab77bf9db3d3f1e6a7d2} # 256비트 (32바이트) 이상의 Base64 인코딩된 키
+  access-token-expiration-millis: 3600000 # 1시간 (1000 * 60 * 60)
+  refresh-token-expiration-millis: 604800000 # 7일 (1000 * 60 * 60 * 24 * 7)
+
+---
+# Local 환경 설정
+spring:
+  config:
+    activate:
+      on-profile: local
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/dockersim?serverTimezone=UTC&characterEncoding=UTF-8}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:12345678}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: ${DDL_AUTO:update}
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true

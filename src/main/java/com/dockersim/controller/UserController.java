@@ -32,11 +32,11 @@ public class UserController {
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestBody UserEmailUpdateRequest request) {
 
-        // 현재 로그인된 사용자의 ID를 가져옵니다.
-        UUID userId = UUID.fromString(userDetails.getUsername());
+        // 현재 로그인된 사용자의 publicId를 가져옵니다.
+        String publicId = userDetails.getUsername();
 
         // 서비스 레이어에 이메일 업데이트를 위임합니다.
-        userService.updateEmail(userId, request.getEmail());
+        userService.updateEmail(publicId, request.getEmail());
 
         return ResponseEntity.ok().build();
     }
@@ -59,29 +59,29 @@ public class UserController {
     /**
      * 사용자 정보를 조회합니다.
      *
-     * @param userId 조회할 사용자 UUID
+     * @param publicId 조회할 사용자 public ID
      * @return 조회된 사용자 정보
      */
     @Operation(summary = "사용자 정보 조회", description = "사용자 정보를 조회합니다.")
     @GetMapping
     public ResponseEntity<ApiResponse<UserResponse>> getUser(
-        @Parameter(hidden = true, description = "조회할 사용자 UUID") @AuthenticationPrincipal String userId
+        @Parameter(hidden = true, description = "조회할 사용자 public ID") @AuthenticationPrincipal String publicId
     ) {
-        return ResponseEntity.ok(ApiResponse.success(userService.getUser(userId)));
+        return ResponseEntity.ok(ApiResponse.success(userService.getUser(publicId)));
     }
 
 
     /**
      * 사용자를 삭제합니다.
      *
-     * @param userId 삭제할 사용자 UUID
+     * @param publicId 삭제할 사용자 public ID
      */
     @Operation(summary = "사용자 삭제", description = "사용자를 삭제합니다.")
     @DeleteMapping
     public ResponseEntity<ApiResponse<Void>> deleteUser(
-        @Parameter(hidden = true, description = "삭제할 사용자 UUID") @AuthenticationPrincipal String userId
+        @Parameter(hidden = true, description = "삭제할 사용자 public ID") @AuthenticationPrincipal String publicId
     ) {
-        userService.deleteUser(userId);
+        userService.deleteUser(publicId);
         return ResponseEntity.ok(ApiResponse.success());
     }
 }

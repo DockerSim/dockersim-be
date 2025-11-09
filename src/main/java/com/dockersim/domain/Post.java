@@ -28,9 +28,9 @@ public class Post {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
 
-    // 임시로 author를 Spring으로 저장. 깃허브 연동 후 변경 예정
-    @Column(nullable = false)
-    private String author;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "author_id", nullable = false)
+    private User author;
 
     // PostType Enum을 데이터베이스에 String으로 저장
     @Enumerated(EnumType.STRING)
@@ -57,7 +57,7 @@ public class Post {
     /**
      * 게시글 생성 시 사용할 생성자
      */
-    public Post(String title, String content, String author, PostType type, String tags) {
+    public Post(String title, String content, User author, PostType type, String tags) {
         this.title = title;
         this.content = content;
         this.author = author;

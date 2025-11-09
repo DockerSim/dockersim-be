@@ -60,9 +60,9 @@ public class LoginService {
                 roles = List.of("ROLE_USER");
             }
 
-            String serviceAccessToken = jwtTokenProvider.createAccessToken(user.getUserId().toString(), roles);
+            String serviceAccessToken = jwtTokenProvider.createAccessToken(user.getPublicId(), roles);
             String serviceRefreshToken = jwtTokenProvider.createRefreshToken();
-            log.info("Successfully created service JWT for user ID: {}", user.getUserId());
+            log.info("Successfully created service JWT for user ID: {}", user.getPublicId());
 
             // 5. 이메일 정보가 없는 신규 사용자인지 확인
             boolean isAdditionalInfoRequired = (user.getEmail() == null);

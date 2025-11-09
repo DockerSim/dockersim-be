@@ -27,10 +27,10 @@ public class CommentController {
     @PostMapping
     public ResponseEntity<ApiResponse<PostCommentResponse>> createComment(
             @Parameter(description = "게시글 ID") @PathVariable Long postId,
-            @RequestBody PostCommentRequest requestDto) { // UserDetails 파라미터 제거
+            @RequestBody PostCommentRequest requestDto,
+            @AuthenticationPrincipal UserDetails userDetails) {
         requestDto.setPostId(postId);
-        // 임시 작성자 이름으로 "dev_user"를 사용
-        PostCommentResponse response = commentService.createComment(requestDto, "dev_user");
+        PostCommentResponse response = commentService.createComment(requestDto, userDetails.getUsername());
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
@@ -47,9 +47,9 @@ public class CommentController {
     public ResponseEntity<ApiResponse<PostCommentResponse>> updateComment(
             @Parameter(description = "게시글 ID") @PathVariable Long postId, // postId는 경로에 있지만 직접 사용되지는 않음
             @Parameter(description = "댓글 ID") @PathVariable Long commentId,
-            @RequestBody PostCommentRequest requestDto) { // UserDetails 파라미터 제거
-        // 임시 작성자 이름으로 "dev_user"를 사용
-        PostCommentResponse updatedComment = commentService.updateComment(commentId, requestDto, "dev_user");
+            @RequestBody PostCommentRequest requestDto,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        PostCommentResponse updatedComment = commentService.updateComment(commentId, requestDto, userDetails.getUsername());
         return ResponseEntity.ok(ApiResponse.success(updatedComment));
     }
 
@@ -57,9 +57,9 @@ public class CommentController {
     @DeleteMapping("/{commentId}")
     public ResponseEntity<ApiResponse<Void>> deleteComment(
             @Parameter(description = "게시글 ID") @PathVariable Long postId, // postId는 경로에 있지만 직접 사용되지는 않음
-            @Parameter(description = "댓글 ID") @PathVariable Long commentId) { // UserDetails 파라미터 제거
-        // 임시 작성자 이름으로 "dev_user"를 사용
-        commentService.deleteComment(commentId, "dev_user");
+            @Parameter(description = "댓글 ID") @PathVariable Long commentId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        commentService.deleteComment(commentId, userDetails.getUsername());
         return ResponseEntity.ok(ApiResponse.success());
     }
 }

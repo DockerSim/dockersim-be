@@ -2,10 +2,12 @@ package com.dockersim.service;
 
 import com.dockersim.domain.Comments;
 import com.dockersim.domain.Post;
+import com.dockersim.domain.User;
 import com.dockersim.dto.request.PostCommentRequest;
 import com.dockersim.dto.response.PostCommentResponse;
 import com.dockersim.repository.PostCommentRepository;
 import com.dockersim.repository.PostRepository;
+import com.dockersim.repository.UserRepository; // UserRepository 추가
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,16 +22,19 @@ public class CommentService {
 
     private final PostCommentRepository commentRepository;
     private final PostRepository postRepository;
+    private final UserRepository userRepository; // UserFinder 대신 UserRepository 주입
     
     // 댓글 작성
     @Transactional
-    public PostCommentResponse createComment(PostCommentRequest requestDto, String author) {
+    public PostCommentResponse createComment(PostCommentRequest requestDto, String userPublicId) {
+        User user = userRepository.findByPublicId(userPublicId) // UserFinder 대신 UserRepository 사용
+            .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
         Post post = postRepository.findById(requestDto.getPostId())
             .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
             
         Comments comment = new Comments(
             requestDto.getContent(),
-            author,
+            user,
             post
         );
         commentRepository.save(comment);
@@ -46,11 +51,13 @@ public class CommentService {
     
     // 댓글 수정
     @Transactional
-    public PostCommentResponse updateComment(Long commentId, PostCommentRequest requestDto, String author) {
+    public PostCommentResponse updateComment(Long commentId, PostCommentRequest requestDto, String userPublicId) {
+        User user = userRepository.findByPublicId(userPublicId) // UserFinder 대신 UserRepository 사용
+            .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
         Comments comment = commentRepository.findById(commentId)
             .orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
             
-        if (!comment.getAuthor().equals(author)) {
+        if (!comment.getAuthor().getPublicId().equals(user.getPublicId())) {
             throw new IllegalArgumentException("댓글 수정 권한이 없습니다.");
         }
         
@@ -60,11 +67,13 @@ public class CommentService {
 
     // 댓글 삭제
     @Transactional
-    public void deleteComment(Long commentId, String author) {
+    public void deleteComment(Long commentId, String userPublicId) {
+        User user = userRepository.findByPublicId(userPublicId) // UserFinder 대신 UserRepository 사용
+            .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
         Comments comment = commentRepository.findById(commentId)
             .orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
 
-        if (!comment.getAuthor().equals(author)) {
+        if (!comment.getAuthor().getPublicId().equals(user.getPublicId())) {
             throw new IllegalArgumentException("댓글 삭제 권한이 없습니다.");
         }
 
@@ -72,8 +81,10 @@ public class CommentService {
     }
     
     // 내가 작성한 댓글 목록 조회
-    public List<PostCommentResponse> getCommentsByAuthor(String author) {
-        List<Comments> comments = commentRepository.findByAuthorOrderByCreatedAtDesc(author);
+    public List<PostCommentResponse> getCommentsByAuthor(String userPublicId) {
+        User user = userRepository.findByPublicId(userPublicId) // UserFinder 대신 UserRepository 사용
+            .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+        List<Comments> comments = commentRepository.findByAuthorOrderByCreatedAtDesc(user);
         return comments.stream()
             .map(PostCommentResponse::new)
             .collect(Collectors.toList());

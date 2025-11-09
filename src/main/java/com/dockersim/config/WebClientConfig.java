@@ -6,8 +6,9 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 @Configuration
 public class WebClientConfig {
+
     @Bean
     public WebClient webClient() {
-        return WebClient.builder().build(); // 기본 설정으로 생성
+        return WebClient.builder().build();
     }
 }

@@ -24,7 +24,7 @@ public class UserServiceImpl implements UserService {
 	private static final Pattern EMAIL_PATTERN = Pattern.compile(
 		"^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
 	private final UserRepository userRepository;
-	private final UserFinder userFinder;
+	// private final UserFinder userFinder; // UserFinder 제거
 
 	@Override
 	public UserResponse createUser(UserRequest request) {
@@ -37,15 +37,29 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	@Transactional(readOnly = true)
-	public UserResponse getUser(String id) {
-		// 주입된 userFinder 사용
-		return UserResponse.from(userFinder.findUserByPublicId(id));
+	public UserResponse getUser(String publicId) { // 파라미터 이름 변경
+		// userFinder 대신 userRepository 사용
+		return UserResponse.from(userRepository.findByPublicId(publicId)
+			.orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND, publicId)));
 	}
 
 	@Override
-	public void deleteUser(String id) {
-		// 주입된 userFinder 사용
-		userRepository.delete(userFinder.findUserByPublicId(id));
+	public void deleteUser(String publicId) { // 파라미터 이름 변경
+		// userFinder 대신 userRepository 사용
+		userRepository.delete(userRepository.findByPublicId(publicId)
+			.orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND, publicId)));
+	}
+
+	@Override
+	public void updateEmail(String publicId, String email) {
+		validateEmailFormat(email);
+		validateEmailDuplication(email); // 새 이메일 중복 확인
+
+		User user = userRepository.findByPublicId(publicId)
+			.orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND, publicId));
+
+		user.setEmail(email); // User 엔티티에 setEmail 메서드가 필요합니다.
+		userRepository.save(user); // 변경된 이메일 저장
 	}
 
 	private void validateEmailFormat(String email) {

@@ -27,9 +27,9 @@ public class PostController {
     @Operation(summary = "게시글 생성", description = "새로운 게시글을 작성합니다.")
     @PostMapping
     public ResponseEntity<ApiResponse<PostResponse>> createPost(
-            @RequestBody PostRequest requestDto) { // UserDetails 파라미터 제거
-        // 임시 작성자 이름으로 "dev_user"를 사용
-        PostResponse response = postService.createPost(requestDto, "dev_user");
+            @RequestBody PostRequest requestDto,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        PostResponse response = postService.createPost(requestDto, userDetails.getUsername());
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
@@ -53,27 +53,27 @@ public class PostController {
     @PutMapping("/{postId}")
     public ResponseEntity<ApiResponse<PostResponse>> updatePost(
             @PathVariable Long postId,
-            @RequestBody PostRequest requestDto) { // UserDetails 파라미터 제거
-        // 임시 사용자로 수정 로직 처리
-        PostResponse response = postService.updatePost(postId, requestDto, "dev_user");
+            @RequestBody PostRequest requestDto,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        PostResponse response = postService.updatePost(postId, requestDto, userDetails.getUsername());
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     @Operation(summary = "게시글 삭제", description = "게시글 ID로 특정 게시글을 삭제합니다.")
     @DeleteMapping("/{postId}")
     public ResponseEntity<ApiResponse<Void>> deletePost(
-            @PathVariable Long postId) { // UserDetails 파라미터 제거
-        // 임시 사용자로 삭제 로직 처리
-        postService.deletePost(postId, "dev_user");
+            @PathVariable Long postId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        postService.deletePost(postId, userDetails.getUsername());
         return ResponseEntity.ok(ApiResponse.success());
     }
 
     @Operation(summary = "게시글 좋아요 토글", description = "게시글에 좋아요를 누르거나 취소합니다.")
     @PostMapping("/{postId}/like")
     public ResponseEntity<ApiResponse<Void>> toggleLike(
-            @PathVariable Long postId) { // UserDetails 파라미터 제거
-        // 임시 사용자로 좋아요 로직 처리
-        postService.toggleLike(postId, "dev_user");
+            @PathVariable Long postId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        postService.toggleLike(postId, userDetails.getUsername());
         return ResponseEntity.ok(ApiResponse.success());
     }
 
