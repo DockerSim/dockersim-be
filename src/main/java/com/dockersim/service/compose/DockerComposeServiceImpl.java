@@ -16,8 +16,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.UUID;
-
 /**
  * Docker Compose 생성 서비스 구현체
  */
@@ -34,21 +32,21 @@ public class DockerComposeServiceImpl implements DockerComposeService {
     private final SimulationStateExtractor stateExtractor;
 
     @Override
-    public ComposeGenerationResponse generateCompose(UUID userId, UUID simulationId) {
+    public ComposeGenerationResponse generateCompose(String userPublicId, String simulationPublicId) {
         long startTime = System.currentTimeMillis();
-        
-        log.info("Docker-compose 생성 시작 (자동 모드): userId={}, simulationId={}", userId, simulationId);
+
+        log.info("Docker-compose 생성 시작 (자동 모드): userPublicId={}, simulationPublicId={}", userPublicId, simulationPublicId);
 
         try {
             // 사용자 및 시뮬레이션 검증
-            User user = userFinder.findUserByUUID(userId);
-            Simulation simulation = simulationFinder.findSimulationByUUID(simulationId);
+            User user = userFinder.findUserByPublicId(userPublicId);
+            Simulation simulation = simulationFinder.findByPublicId(simulationPublicId);
 
             // 권한 확인 (읽기 권한만 있어도 compose 생성 가능)
             validateReadAccess(user, simulation);
 
             // 시뮬레이션의 현재 Docker 상태 추출
-            InfrastructureData infraData = stateExtractor.extractInfrastructureData(simulationId);
+            InfrastructureData infraData = stateExtractor.extractInfrastructureData(simulationPublicId);
             log.debug("추출된 인프라 데이터: containers={}, images={}, networks={}, volumes={}",
                 infraData.getContainers() != null ? infraData.getContainers().size() : 0,
                 infraData.getImages() != null ? infraData.getImages().size() : 0,
@@ -63,8 +61,8 @@ public class DockerComposeServiceImpl implements DockerComposeService {
             String composeContent = geminiClient.generateCompose(prompt);
 
             long processingTime = System.currentTimeMillis() - startTime;
-            log.info("Docker-compose 생성 완료 (자동 모드): userId={}, simulationId={}, processingTime={}ms", 
-                userId, simulationId, processingTime);
+            log.info("Docker-compose 생성 완료 (자동 모드): userPublicId={}, simulationPublicId={}, processingTime={}ms",
+                userPublicId, simulationPublicId, processingTime);
 
             return ComposeGenerationResponse.builder()
                 .composeContent(composeContent)
@@ -74,8 +72,8 @@ public class DockerComposeServiceImpl implements DockerComposeService {
 
         } catch (Exception e) {
             long processingTime = System.currentTimeMillis() - startTime;
-            log.error("Docker-compose 생성 실패 (자동 모드): userId={}, simulationId={}, error={}", 
-                userId, simulationId, e.getMessage(), e);
+            log.error("Docker-compose 생성 실패 (자동 모드): userPublicId={}, simulationPublicId={}, error={}",
+                userPublicId, simulationPublicId, e.getMessage(), e);
 
             return ComposeGenerationResponse.builder()
                 .generationMethod("AI_AUTO")
@@ -86,14 +84,14 @@ public class DockerComposeServiceImpl implements DockerComposeService {
     }
 
     @Override
-    public ComposeGenerationResponse generateComposeFromRequest(UUID userId, UUID simulationId, ComposeGenerationRequest request) {
+    public ComposeGenerationResponse generateComposeFromRequest(String userPublicId, String simulationPublicId, ComposeGenerationRequest request) {
         long startTime = System.currentTimeMillis();
-        
-        log.info("Docker-compose 생성 시작 (수동 모드): userId={}, simulationId={}", userId, simulationId);
+
+        log.info("Docker-compose 생성 시작 (수동 모드): userPublicId={}, simulationPublicId={}", userPublicId, simulationPublicId);
 
         try {
             // 수동 모드에서는 검증을 모두 우회 (테스트 목적)
-            log.debug("수동 모드 - 사용자 및 시뮬레이션 검증 우회: userId={}", userId);
+            log.debug("수동 모드 - 사용자 및 시뮬레이션 검증 우회: userPublicId={}", userPublicId);
 
             // 프롬프트 생성
             String prompt = promptBuilder.build(request.getInfrastructureData());
@@ -103,8 +101,8 @@ public class DockerComposeServiceImpl implements DockerComposeService {
             String composeContent = geminiClient.generateCompose(prompt);
 
             long processingTime = System.currentTimeMillis() - startTime;
-            log.info("Docker-compose 생성 완료 (수동 모드): userId={}, simulationId={}, processingTime={}ms", 
-                userId, simulationId, processingTime);
+            log.info("Docker-compose 생성 완료 (수동 모드): userPublicId={}, simulationPublicId={}, processingTime={}ms",
+                userPublicId, simulationPublicId, processingTime);
 
             return ComposeGenerationResponse.builder()
                 .composeContent(composeContent)
@@ -114,8 +112,8 @@ public class DockerComposeServiceImpl implements DockerComposeService {
 
         } catch (Exception e) {
             long processingTime = System.currentTimeMillis() - startTime;
-            log.error("Docker-compose 생성 실패 (수동 모드): userId={}, simulationId={}, error={}", 
-                userId, simulationId, e.getMessage(), e);
+            log.error("Docker-compose 생성 실패 (수동 모드): userPublicId={}, simulationPublicId={}, error={}",
+                userPublicId, simulationPublicId, e.getMessage(), e);
 
             return ComposeGenerationResponse.builder()
                 .generationMethod("AI_MANUAL")
@@ -133,8 +131,8 @@ public class DockerComposeServiceImpl implements DockerComposeService {
 
         // PRIVATE나 WRITE 상태인 경우 소유자이거나 협업자여야 함
         if (!simulation.isOwner(user) && !simulation.isCollaborator(user)) {
-            throw new BusinessException(SimulationErrorCode.SIMULATION_ACCESS_DENIED, 
-                user.getUserId(), simulation.getSimulationId());
+            throw new BusinessException(SimulationErrorCode.SIMULATION_ACCESS_DENIED,
+                user.getPublicId(), simulation.getPublicId());
         }
     }
 }

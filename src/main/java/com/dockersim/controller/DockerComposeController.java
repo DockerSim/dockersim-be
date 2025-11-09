@@ -17,8 +17,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.UUID;
-
 /**
  * Docker Compose 생성 컨트롤러
  */
@@ -34,11 +32,11 @@ public class DockerComposeController {
         summary = "Docker-compose 파일 생성 (자동 모드)",
         description = """
             시뮬레이션의 현재 Docker 상태를 바탕으로 최적화된 docker-compose.yml 파일을 자동 생성합니다.
-            
+
             ### 권한:
             - READ 상태: 모든 사용자 접근 가능
             - PRIVATE/WRITE 상태: 소유자 및 협업자만 접근 가능
-            
+
             ### 생성 과정:
             1. 시뮬레이션의 현재 Docker 상태 자동 추출 (컨테이너, 이미지, 네트워크, 볼륨)
             2. 추출된 정보를 분석하여 프롬프트 생성
@@ -46,13 +44,13 @@ public class DockerComposeController {
             4. 프로덕션 환경에 적합한 설정 포함 (보안, 리소스 제한, 헬스체크 등)
             """
     )
-    @PostMapping("/{simulationId}/compose")
+    @PostMapping("/{simulationPublicId}/compose")
     public ResponseEntity<ApiResponse<ComposeGenerationResponse>> generateCompose(
-        @Parameter(hidden = true) @AuthenticationPrincipal UUID userId,
-        @Parameter(description = "시뮬레이션 ID", example = "123e4567-e89b-12d3-a456-426614174000") 
-        @PathVariable UUID simulationId
+        @Parameter(hidden = true) @AuthenticationPrincipal String userPublicId,
+        @Parameter(description = "시뮬레이션 Public ID", example = "abc123def456")
+        @PathVariable String simulationPublicId
     ) {
-        ComposeGenerationResponse response = dockerComposeService.generateCompose(userId, simulationId);
+        ComposeGenerationResponse response = dockerComposeService.generateCompose(userPublicId, simulationPublicId);
         
         if (response.getErrorMessage() == null) {
             return ResponseEntity.ok(ApiResponse.success(response));
@@ -68,11 +66,11 @@ public class DockerComposeController {
         summary = "Docker-compose 파일 생성 (수동 모드)",
         description = """
             제공된 인프라 정보를 바탕으로 최적화된 docker-compose.yml 파일을 생성합니다.
-            
+
             ### 특징:
             - 시뮬레이션에 독립적으로 작동
             - 사용자가 제공한 인프라 정보만 사용
-            
+
             ### 생성 과정:
             1. 제공된 인프라 정보를 분석하여 프롬프트 생성
             2. Gemini AI를 통해 최적화된 docker-compose.yml 생성
@@ -81,11 +79,11 @@ public class DockerComposeController {
     )
     @PostMapping("/compose/manual")
     public ResponseEntity<ApiResponse<ComposeGenerationResponse>> generateComposeManual(
-        @Parameter(hidden = true) @AuthenticationPrincipal UUID userId,
+        @Parameter(hidden = true) @AuthenticationPrincipal String userPublicId,
         @Parameter(description = "Docker-compose 생성 요청 정보")
         @Valid @RequestBody ComposeGenerationRequest request
     ) {
-        ComposeGenerationResponse response = dockerComposeService.generateComposeFromRequest(userId, null, request);
+        ComposeGenerationResponse response = dockerComposeService.generateComposeFromRequest(userPublicId, null, request);
         
         if (response.getErrorMessage() == null) {
             return ResponseEntity.ok(ApiResponse.success(response));

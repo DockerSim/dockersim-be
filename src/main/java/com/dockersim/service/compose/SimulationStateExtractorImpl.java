@@ -15,7 +15,6 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -29,11 +28,11 @@ public class SimulationStateExtractorImpl implements SimulationStateExtractor {
     private final CommandExecutorService commandExecutorService;
 
     @Override
-    public InfrastructureData extractInfrastructureData(UUID simulationId) {
-        log.info("시뮬레이션 상태 추출 시작: simulationId={}", simulationId);
-        
+    public InfrastructureData extractInfrastructureData(String simulationPublicId) {
+        log.info("시뮬레이션 상태 추출 시작: simulationPublicId={}", simulationPublicId);
+
         // 시뮬레이션 컨텍스트 설정
-        SimulationContextHolder.setSimulationId(simulationId);
+        SimulationContextHolder.setSimulationId(simulationPublicId);
         
         try {
             // 현재 시뮬레이션의 Docker 상태 정보 수집
