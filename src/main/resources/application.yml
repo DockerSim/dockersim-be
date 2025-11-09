@@ -7,6 +7,13 @@ spring:
       local: local, secret
       blue: blue, secret
       green: green, secret
+  security:
+    oauth2:
+      client:
+        registration:
+          github:
+            client-id: Iv23li5fn6eYT9mK0YiG
+            redirect-uri: http://localhost:8000/login/github
 
 server:
   env: blue
