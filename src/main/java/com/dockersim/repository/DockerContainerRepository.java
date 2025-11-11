@@ -3,6 +3,7 @@ package com.dockersim.repository;
 import com.dockersim.domain.ContainerStatus;
 import com.dockersim.domain.DockerContainer;
 import com.dockersim.domain.Simulation;
+import org.springframework.data.jpa.repository.EntityGraph; // 추가
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -14,6 +15,7 @@ public interface DockerContainerRepository extends JpaRepository<DockerContainer
 
     boolean existsByNameAndSimulation(String name, Simulation simulation);
 
+    @EntityGraph(attributePaths = "containerNetworks") // 추가
     @Query("""
             SELECT c FROM DockerContainer c
             WHERE c.simulation = :simulation

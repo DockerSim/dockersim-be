@@ -3,11 +3,13 @@ package com.dockersim.service.network;
 import java.util.List;
 
 import com.dockersim.config.SimulationUserPrincipal;
+import com.dockersim.dto.response.DockerContainerResponse; // 추가
 import com.dockersim.dto.response.DockerNetworkResponse;
+import org.springframework.data.util.Pair; // 추가
 
 public interface DockerNetworkService {
 
-	DockerNetworkResponse connect(
+	Pair<DockerNetworkResponse, DockerContainerResponse> connect( // 반환 타입 변경
 		SimulationUserPrincipal principal,
 		String networkNameOrHexId, String containerNameOrHexId
 	);

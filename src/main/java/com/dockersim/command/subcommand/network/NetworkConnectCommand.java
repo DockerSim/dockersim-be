@@ -5,10 +5,12 @@ import java.util.concurrent.Callable;
 import com.dockersim.command.subcommand.NetworkCommand;
 import com.dockersim.dto.response.CommandResult;
 import com.dockersim.dto.response.CommandResultStatus;
+import com.dockersim.dto.response.DockerContainerResponse; // 추가
 import com.dockersim.dto.response.DockerNetworkResponse;
 import com.dockersim.service.network.DockerNetworkService;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.util.Pair; // 추가
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "connect")
@@ -28,12 +30,14 @@ public class NetworkConnectCommand implements Callable<CommandResult> {
 
 	@Override
 	public CommandResult call() throws Exception {
-		DockerNetworkResponse network = service.connect(parent.getPrincipal(),
+		Pair<DockerNetworkResponse, DockerContainerResponse> result = service.connect(parent.getPrincipal(),
 			networkNameOrHexId, containerNameOrHexId);
+
 		return CommandResult.builder()
-			.console(network.getConsole())
+			.console(result.getFirst().getConsole())
 			.status(CommandResultStatus.UPDATE)
-			.changedNetwork(network)
+			.changedNetwork(result.getFirst())
+			.changedContainer(result.getSecond()) // changedContainer 추가
 			.build();
 	}
 }
