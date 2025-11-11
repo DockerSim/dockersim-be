@@ -5,12 +5,14 @@ import com.dockersim.exception.BusinessException;
 import com.dockersim.exception.code.SimulationErrorCode;
 import com.dockersim.repository.SimulationRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j; // Slf4j 임포트
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@Slf4j // Slf4j 어노테이션 추가
 public class SimulationFinderImpl implements SimulationFinder {
 
     private final SimulationRepository repo;
@@ -28,8 +30,12 @@ public class SimulationFinderImpl implements SimulationFinder {
 
     @Override
     public Simulation findByPublicId(String publicId) {
+        log.info("SimulationFinderImpl: Attempting to find simulation by publicId: {}", publicId); // 로그 추가
         return repo.findByPublicId(publicId).orElseThrow(
-            () -> new BusinessException(SimulationErrorCode.SIMULATION_NOT_FOUND, publicId));
+            () -> {
+                log.error("SimulationFinderImpl: Simulation not found for publicId: {}", publicId); // 에러 로그 추가
+                return new BusinessException(SimulationErrorCode.SIMULATION_NOT_FOUND, publicId);
+            });
     }
 
     @Override

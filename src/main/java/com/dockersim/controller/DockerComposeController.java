@@ -1,20 +1,26 @@
 package com.dockersim.controller;
 
 import com.dockersim.common.ApiResponse;
+import com.dockersim.config.SimulationUserPrincipal; // SimulationUserPrincipal 임포트
 import com.dockersim.dto.request.ComposeGenerationRequest;
 import com.dockersim.dto.response.ComposeGenerationResponse;
+import com.dockersim.exception.BusinessException; // BusinessException 임포트
+import com.dockersim.exception.code.AuthErrorCode; // AuthErrorCode 임포트
 import com.dockersim.service.compose.DockerComposeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j; // Slf4j 임포트
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.CrossOrigin; // CrossOrigin 임포트
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod; // RequestMethod 임포트
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -24,6 +30,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/simulations")
 @RequiredArgsConstructor
+@Slf4j // Slf4j 어노테이션 추가
+@CrossOrigin(origins = "http://localhost:3000", methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE, RequestMethod.OPTIONS}) // CORS 설정 추가
 public class DockerComposeController {
 
     private final DockerComposeService dockerComposeService;
@@ -46,10 +54,15 @@ public class DockerComposeController {
     )
     @PostMapping("/{simulationPublicId}/compose")
     public ResponseEntity<ApiResponse<ComposeGenerationResponse>> generateCompose(
-        @Parameter(hidden = true) @AuthenticationPrincipal String userPublicId,
+        @Parameter(hidden = true) @AuthenticationPrincipal SimulationUserPrincipal principal, // String -> SimulationUserPrincipal 변경
         @Parameter(description = "시뮬레이션 Public ID", example = "abc123def456")
         @PathVariable String simulationPublicId
     ) {
+        if (principal == null || principal.getUserPublicId() == null) {
+            log.error("Authentication principal is null or userPublicId is null. Cannot generate compose file.");
+            throw new BusinessException(AuthErrorCode.UNAUTHORIZED_ACCESS);
+        }
+        String userPublicId = principal.getUserPublicId();
         ComposeGenerationResponse response = dockerComposeService.generateCompose(userPublicId, simulationPublicId);
         
         if (response.getErrorMessage() == null) {
@@ -79,10 +92,15 @@ public class DockerComposeController {
     )
     @PostMapping("/compose/manual")
     public ResponseEntity<ApiResponse<ComposeGenerationResponse>> generateComposeManual(
-        @Parameter(hidden = true) @AuthenticationPrincipal String userPublicId,
+        @Parameter(hidden = true) @AuthenticationPrincipal SimulationUserPrincipal principal, // String -> SimulationUserPrincipal 변경
         @Parameter(description = "Docker-compose 생성 요청 정보")
         @Valid @RequestBody ComposeGenerationRequest request
     ) {
+        if (principal == null || principal.getUserPublicId() == null) {
+            log.error("Authentication principal is null or userPublicId is null. Cannot generate compose file manually.");
+            throw new BusinessException(AuthErrorCode.UNAUTHORIZED_ACCESS);
+        }
+        String userPublicId = principal.getUserPublicId();
         ComposeGenerationResponse response = dockerComposeService.generateComposeFromRequest(userPublicId, null, request);
         
         if (response.getErrorMessage() == null) {

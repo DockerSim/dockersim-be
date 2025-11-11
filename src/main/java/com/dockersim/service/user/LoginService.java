@@ -4,6 +4,7 @@ import com.dockersim.domain.User;
 import com.dockersim.dto.response.AccessTokenResponse;
 import com.dockersim.dto.response.GithubUserResponse;
 import com.dockersim.dto.response.LoginResponse;
+import com.dockersim.dto.response.UserResponse;
 import com.dockersim.jwt.provider.JwtTokenProvider;
 import com.dockersim.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -36,25 +37,32 @@ public class LoginService {
 
     public LoginResponse githubLogin(String code) {
         try {
-            // 1. 코드를 이용해 GitHub AccessToken 받기
             log.info("Attempting to get GitHub access token with code: {}", code);
             AccessTokenResponse tokenResponse = getAccessToken(code);
             log.info("Successfully received GitHub access token.");
 
-            // 2. AccessToken을 이용해 GitHub 사용자 정보 받기
             log.info("Attempting to get user info from GitHub.");
             GithubUserResponse userInfo = getUserInfo(tokenResponse.getAccessToken());
             log.info("Successfully received user info for GitHub ID: {}", userInfo.getId());
 
-            // 3. GitHub ID로 우리 DB에서 회원 조회, 없으면 자동 회원가입
             User user = userRepository.findByGithubId(String.valueOf(userInfo.getId()))
                     .orElseGet(() -> {
                         log.info("User not found in DB. Creating new user for GitHub ID: {}", userInfo.getId());
                         User newUser = User.fromGithub(userInfo);
-                        return userRepository.save(newUser);
+                        log.info("New User publicId BEFORE save: {}", newUser.getPublicId());
+                        log.info("New User roles BEFORE save: {}", newUser.getRoles()); // 로그 추가
+                        User savedUser = userRepository.save(newUser);
+                        log.info("New User publicId AFTER save: {}", savedUser.getPublicId());
+                        log.info("New User roles AFTER save: {}", savedUser.getRoles()); // 로그 추가
+                        return savedUser;
                     });
+            
+            if (user.getId() != null) { // 이미 존재하는 사용자라면
+                log.info("Existing user found with publicId: {}", user.getPublicId());
+                log.info("Existing user roles: {}", user.getRoles()); // 로그 추가
+            }
 
-            // 4. 우리 서비스의 JWT 토큰 생성
+
             List<String> roles = user.getRoles();
             if (roles == null || roles.isEmpty()) {
                 roles = List.of("ROLE_USER");
@@ -64,19 +72,18 @@ public class LoginService {
             String serviceRefreshToken = jwtTokenProvider.createRefreshToken();
             log.info("Successfully created service JWT for user ID: {}", user.getPublicId());
 
-            // 5. 이메일 정보가 없는 신규 사용자인지 확인
             boolean isAdditionalInfoRequired = (user.getEmail() == null);
 
-            // 6. 최종 응답 DTO에 두 토큰을 모두 담아 반환
-            return new LoginResponse(serviceAccessToken, serviceRefreshToken, isAdditionalInfoRequired);
+            UserResponse userResponse = UserResponse.from(user);
+            log.info("Generated UserResponse: {}", userResponse);
+            log.info("UserResponse Public ID: {}", userResponse.getUserPublicId());
+
+            return new LoginResponse(serviceAccessToken, serviceRefreshToken, isAdditionalInfoRequired, userResponse);
 
         } catch (WebClientResponseException ex) {
-            // GitHub 통신 중 에러 발생 시
             log.error("Error during GitHub communication: Status {}, Body {}", ex.getRawStatusCode(), ex.getResponseBodyAsString(), ex);
-            // 여기서 커스텀 예외를 던져서 500 대신 더 구체적인 에러 코드를 반환하게 할 수 있습니다.
             throw new RuntimeException("GitHub login failed.", ex);
         } catch (Exception ex) {
-            // 그 외 모든 예외 (NullPointerException 등)
             log.error("An unexpected error occurred during GitHub login", ex);
             throw new RuntimeException("Internal server error during login.", ex);
         }

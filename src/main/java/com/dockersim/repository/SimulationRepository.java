@@ -1,6 +1,8 @@
 package com.dockersim.repository;
 
 import com.dockersim.domain.Simulation;
+import com.dockersim.domain.User; // User 임포트
+import java.util.List; // List 임포트
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -13,6 +15,9 @@ public interface SimulationRepository extends JpaRepository<Simulation, Long> {
     Optional<Simulation> findByPublicId(String publicId);
 
     boolean existsByPublicId(String publicId);
+
+    // 사용자가 소유한 모든 시뮬레이션을 조회하는 메서드 추가
+    List<Simulation> findAllByOwner(User owner);
 
     @Query("SELECT COUNT(c) FROM Simulation s "
         + "JOIN s.collaborators c "

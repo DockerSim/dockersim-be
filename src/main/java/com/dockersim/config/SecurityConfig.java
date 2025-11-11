@@ -24,6 +24,12 @@ public class SecurityConfig {
     private final SimulationAuthorizationFilter simulationAuthorizationFilter;
     private final CustomAccessDeniedHandler customAccessDeniedHandler;
 
+    // JwtAuthenticationFilter를 빈으로 등록
+    @Bean
+    public JwtAuthenticationFilter jwtAuthenticationFilter() {
+        return new JwtAuthenticationFilter(jwtTokenProvider);
+    }
+
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
         // Spring Security 필터 체인을 완전히 무시할 경로
@@ -40,9 +46,12 @@ public class SecurityConfig {
             .securityMatcher("/api/simulations/**")
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers(HttpMethod.OPTIONS, "/api/simulations/**").permitAll() // OPTIONS 요청 허용
+                .anyRequest().authenticated()
+            )
             .exceptionHandling(exceptions -> exceptions.accessDeniedHandler(customAccessDeniedHandler))
-            .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class)
+            .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
             .addFilterAfter(simulationAuthorizationFilter, JwtAuthenticationFilter.class);
 
         return http.build();
@@ -55,6 +64,7 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // OPTIONS 요청 허용 (전역)
                 // 인증 없이 허용할 경로
                 .requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/users/**").permitAll()
@@ -69,7 +79,7 @@ public class SecurityConfig {
                 .anyRequest().denyAll() 
             )
             .exceptionHandling(exceptions -> exceptions.accessDeniedHandler(customAccessDeniedHandler))
-            .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);
+            .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

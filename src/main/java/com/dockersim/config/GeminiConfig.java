@@ -16,8 +16,11 @@ public class GeminiConfig {
     @Value("${gemini.api.key}")
     private String apiKey;
 
-    @Value("${gemini.api.url}")
-    private String apiUrl;
+    @Value("${gemini.api.base-url}")
+    private String apiBaseUrl;
+
+    @Value("${gemini.api.model-name}")
+    private String apiModelName;
 
     @Value("${gemini.api.timeout:30}")
     private int timeoutSeconds;
@@ -25,9 +28,8 @@ public class GeminiConfig {
     @Bean
     public WebClient geminiWebClient() {
         return WebClient.builder()
-            .baseUrl(apiUrl)
+            .baseUrl(apiBaseUrl) // baseUrl을 apiBaseUrl까지만 설정
             .defaultHeader("Content-Type", "application/json")
-            .defaultHeader("x-goog-api-key", apiKey)
             .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(1024 * 1024))
             .build();
     }

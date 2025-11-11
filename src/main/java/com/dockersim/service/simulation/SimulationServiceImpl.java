@@ -42,7 +42,9 @@ public class SimulationServiceImpl implements SimulationService {
     @Override
     @Transactional(readOnly = true)
     public SimulationResponse getSimulation(String userId, String simulationPublicId) {
+        log.info("SimulationServiceImpl: Attempting to get simulation by publicId: {}", simulationPublicId); // 로그 추가
         Simulation simulation = simulationFinder.findByPublicId(simulationPublicId);
+        log.info("SimulationServiceImpl: Found simulation with publicId: {}", simulation.getPublicId()); // 로그 추가
 
         if (simulation.getShareState() != SimulationShareState.READ) {
             User user = userFinder.findUserByPublicId(userId);
@@ -81,6 +83,17 @@ public class SimulationServiceImpl implements SimulationService {
         validateOwnership(simulation, owner);
 
         simulationRepository.delete(simulation);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<SimulationResponse> getMySimulations(String userPublicId) {
+        User owner = userFinder.findUserByPublicId(userPublicId);
+        List<Simulation> simulations = simulationRepository.findAllByOwner(owner);
+        log.info("Found {} simulations for userPublicId: {}", simulations.size(), userPublicId);
+        return simulations.stream()
+                .map(SimulationResponse::from)
+                .toList();
     }
 
     @Override
@@ -147,6 +160,10 @@ public class SimulationServiceImpl implements SimulationService {
     }
 
     private SimulationShareState validateShareState(String shareStateStr) {
+        log.info("Validating share state: {}", shareStateStr);
+        if (shareStateStr == null) {
+            throw new BusinessException(SimulationErrorCode.SIMULATION_INVALID_SHARE_STATE, "null");
+        }
         try {
             return SimulationShareState.valueOf(shareStateStr);
         } catch (IllegalArgumentException e) {
