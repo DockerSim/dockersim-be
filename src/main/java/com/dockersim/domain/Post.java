@@ -66,7 +66,4 @@ public class Post {
         this.createdAt = LocalDateTime.now();
         this.views = 0;
     }
-
-    public Post(String testTitle, String testContent, String testuser, Object o) {
-    }
 }

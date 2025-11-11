@@ -8,7 +8,12 @@ import java.util.List;
 public interface DockerContainerService {
 
     DockerContainerResponse create(SimulationUserPrincipal principal,
-                                   String imageNameOrHexId, String name);
+                                   String imageNameOrHexId,
+                                   String name,
+                                   List<String> publish,
+                                   List<String> volume,
+                                   List<String> env,
+                                   String network);
 
     List<String> inspect(SimulationUserPrincipal principal,
                          String containerNameOrHexId);

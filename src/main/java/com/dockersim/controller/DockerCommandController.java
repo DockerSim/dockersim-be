@@ -32,8 +32,6 @@ public class DockerCommandController {
      * @param principal 시뮬레이션을 조작핧 사용자와 시뮬레이션 인증 정보
      * @param command   실행할 도커 명령어
      * @return 도커 명령어에 의한 상태 변화 응답
-     * cffa582d-bd93-42a4-a8d5-26fb138aaf01
-     * f44b497f-5a18-4c62-8dae-f3b211763d28
      */
     @Operation(summary = "Docker 명령어 실행",
             description = "시뮬레이션에서 Docker 명령어를 실행 후 상태 변화를 응답합니다. ")

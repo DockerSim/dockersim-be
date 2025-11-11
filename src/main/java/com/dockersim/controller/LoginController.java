@@ -19,7 +19,7 @@ public class LoginController {
 
     private final LoginService loginService;
 
-    @GetMapping("/api/auth/github/callback")
+    @GetMapping("/api/login/github") // <-- 이 줄을 변경
     public ResponseEntity<LoginResponse> githubLogin(@RequestParam String code) {
         log.info("Received GitHub callback with code: {}", code);
         LoginResponse loginResponse = loginService.githubLogin(code);

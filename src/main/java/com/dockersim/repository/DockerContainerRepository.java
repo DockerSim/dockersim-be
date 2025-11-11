@@ -12,6 +12,8 @@ import java.util.Optional;
 
 public interface DockerContainerRepository extends JpaRepository<DockerContainer, Long> {
 
+    boolean existsByNameAndSimulation(String name, Simulation simulation);
+
     @Query("""
             SELECT c FROM DockerContainer c
             WHERE c.simulation = :simulation

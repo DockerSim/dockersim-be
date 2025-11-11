@@ -53,17 +53,6 @@ public class DockerComposeServiceImpl implements DockerComposeService {
                 infraData.getNetworks() != null ? infraData.getNetworks().size() : 0,
                 infraData.getVolumes() != null ? infraData.getVolumes().size() : 0);
 
-            // 추출된 인프라 데이터가 비어있으면 Gemini API 호출 없이 응답
-            if (isInfrastructureDataEmpty(infraData)) {
-                log.info("추출된 인프라 데이터가 없어 Docker-compose를 생성할 수 없습니다. userPublicId={}, simulationPublicId={}", userPublicId, simulationPublicId);
-                return ComposeGenerationResponse.builder()
-                    .composeContent("")
-                    .generationMethod("AI_AUTO")
-                    .processingTimeMs(System.currentTimeMillis() - startTime)
-                    .errorMessage("생성할 Docker Compose 내용이 없습니다. 시뮬레이션에 컨테이너, 네트워크, 볼륨 등을 추가해주세요.")
-                    .build();
-            }
-
             // 프롬프트 생성
             String prompt = promptBuilder.build(infraData);
             log.debug("생성된 프롬프트 길이: {}", prompt.length());
@@ -103,17 +92,6 @@ public class DockerComposeServiceImpl implements DockerComposeService {
         try {
             // 수동 모드에서는 검증을 모두 우회 (테스트 목적)
             log.debug("수동 모드 - 사용자 및 시뮬레이션 검증 우회: userPublicId={}", userPublicId);
-
-            // 추출된 인프라 데이터가 비어있으면 Gemini API 호출 없이 응답
-            if (isInfrastructureDataEmpty(request.getInfrastructureData())) {
-                log.info("수동 모드: 제공된 인프라 데이터가 없어 Docker-compose를 생성할 수 없습니다. userPublicId={}", userPublicId);
-                return ComposeGenerationResponse.builder()
-                    .composeContent("")
-                    .generationMethod("AI_MANUAL")
-                    .processingTimeMs(System.currentTimeMillis() - startTime)
-                    .errorMessage("생성할 Docker Compose 내용이 없습니다. 인프라 데이터를 제공해주세요.")
-                    .build();
-            }
 
             // 프롬프트 생성
             String prompt = promptBuilder.build(request.getInfrastructureData());
@@ -156,12 +134,5 @@ public class DockerComposeServiceImpl implements DockerComposeService {
             throw new BusinessException(SimulationErrorCode.SIMULATION_ACCESS_DENIED,
                 user.getPublicId(), simulation.getPublicId());
         }
-    }
-
-    private boolean isInfrastructureDataEmpty(InfrastructureData infraData) {
-        return (infraData.getContainers() == null || infraData.getContainers().isEmpty()) &&
-               (infraData.getImages() == null || infraData.getImages().isEmpty()) &&
-               (infraData.getNetworks() == null || infraData.getNetworks().isEmpty()) &&
-               (infraData.getVolumes() == null || infraData.getVolumes().isEmpty());
     }
 }

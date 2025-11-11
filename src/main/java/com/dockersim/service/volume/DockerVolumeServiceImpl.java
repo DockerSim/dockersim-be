@@ -41,7 +41,8 @@ public class DockerVolumeServiceImpl implements DockerVolumeService {
 		동일한 이름의 불륨이 이미 있는 경우, 불륨 생성에 실패합니다.
 		익명 볼륨의 이름은 새로 생성되는 Hex ID이므로, name은 항상 null이 아닙니다.
 		 */
-		if (!dockerVolumeFinder.existsBySimulationAndName(simulation, name)) {
+		// 수정: 볼륨이 존재할 때 예외를 발생시키도록 조건문 변경
+		if (dockerVolumeFinder.existsBySimulationAndName(simulation, name)) {
 			throw new BusinessException(DockerVolumeErrorCode.VOLUME_NAME_DUPLICATED, name);
 		}
 

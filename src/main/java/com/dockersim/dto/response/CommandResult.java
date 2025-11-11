@@ -21,6 +21,12 @@ public class CommandResult {
      */
     private CommandResultStatus status;
 
+    /**
+     * 명령어 실행 성공 여부
+     */
+    @Builder.Default
+    private boolean success = true; // Add this field with a default value
+
     @Singular
     private List<DockerImageResponse> changedImages;
 

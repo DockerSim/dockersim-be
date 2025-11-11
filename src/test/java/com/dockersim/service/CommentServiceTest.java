@@ -2,6 +2,7 @@ package com.dockersim.service;
 
 import com.dockersim.domain.Comments;
 import com.dockersim.domain.Post;
+import com.dockersim.domain.User; // Import User
 import com.dockersim.dto.request.PostCommentRequest;
 import com.dockersim.dto.response.PostCommentResponse;
 import com.dockersim.repository.PostCommentRepository;
@@ -14,6 +15,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDateTime; // Import LocalDateTime
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -37,12 +39,13 @@ class CommentServiceTest {
 
     private Post post;
     private Comments comment;
-    private String author = "testUser";
+    private User author; // Change author to User type
 
     @BeforeEach
     void setUp() {
-        post = new Post("Test Title", "Test Content", author, null);
-        comment = new Comments("Test Comment", author, post);
+        author = User.builder().publicId("testuser_public_id").name("testUser").email("test@example.com").createdAt(LocalDateTime.now()).build(); // Initialize User object
+        post = new Post("Test Title", "Test Content", author, null, null); // Pass User object
+        comment = new Comments("Test Comment", author, post); // Pass User object
     }
 
     @Test
@@ -54,11 +57,11 @@ class CommentServiceTest {
         given(commentRepository.save(any(Comments.class))).willReturn(comment);
 
         // when
-        PostCommentResponse response = commentService.createComment(request, author);
+        PostCommentResponse response = commentService.createComment(request, author); // Pass User object
 
         // then
         assertThat(response.getContent()).isEqualTo("Test Comment");
-        assertThat(response.getAuthor()).isEqualTo(author);
+        assertThat(response.getAuthor().getName()).isEqualTo(author.getName()); // Adjust assertion
         then(postRepository).should().findById(1L);
         then(commentRepository).should().save(any(Comments.class));
     }
@@ -101,7 +104,7 @@ class CommentServiceTest {
         given(commentRepository.findById(1L)).willReturn(Optional.of(comment));
 
         // when
-        PostCommentResponse response = commentService.updateComment(1L, request, author);
+        PostCommentResponse response = commentService.updateComment(1L, request, author); // Pass User object
 
         // then
         assertThat(response.getContent()).isEqualTo("Updated Comment");
@@ -127,8 +130,7 @@ class CommentServiceTest {
     @DisplayName("댓글 수정 실패 - 권한 없음")
     void updateComment_unauthorized() {
         // given
-        PostCommentRequest request = new PostCommentRequest("Updated Comment", null);
-        String anotherUser = "anotherUser";
+        User anotherUser = User.builder().publicId("anotheruser_public_id").name("anotherUser").email("another@example.com").createdAt(LocalDateTime.now()).build(); // Create User object
         given(commentRepository.findById(1L)).willReturn(Optional.of(comment));
 
         // when & then
@@ -146,7 +148,7 @@ class CommentServiceTest {
         willDoNothing().given(commentRepository).delete(comment);
 
         // when
-        commentService.deleteComment(1L, author);
+        commentService.deleteComment(1L, author); // Pass User object
 
         // then
         then(commentRepository).should().findById(1L);
@@ -171,7 +173,7 @@ class CommentServiceTest {
     @DisplayName("댓글 삭제 실패 - 권한 없음")
     void deleteComment_unauthorized() {
         // given
-        String anotherUser = "anotherUser";
+        User anotherUser = User.builder().publicId("anotheruser_public_id").name("anotherUser").email("another@example.com").createdAt(LocalDateTime.now()).build(); // Create User object
         given(commentRepository.findById(1L)).willReturn(Optional.of(comment));
 
         // when & then
@@ -189,11 +191,11 @@ class CommentServiceTest {
         given(commentRepository.findByAuthorOrderByCreatedAtDesc(author)).willReturn(Collections.singletonList(comment));
 
         // when
-        List<PostCommentResponse> responses = commentService.getCommentsByAuthor(author);
+        List<PostCommentResponse> responses = commentService.getCommentsByAuthor(author); // Pass User object
 
         // then
         assertThat(responses).hasSize(1);
-        assertThat(responses.get(0).getAuthor()).isEqualTo(author);
+        assertThat(responses.get(0).getAuthor().getName()).isEqualTo(author.getName()); // Adjust assertion
         then(commentRepository).should().findByAuthorOrderByCreatedAtDesc(author);
     }
 }

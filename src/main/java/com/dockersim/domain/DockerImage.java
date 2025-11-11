@@ -1,6 +1,7 @@
 package com.dockersim.domain;
 
 import com.dockersim.common.IdGenerator;
+import com.dockersim.dto.response.DockerOfficeImageResponse; // Import DockerOfficeImageResponse
 import com.dockersim.dto.util.ImageMeta;
 import com.dockersim.util.StringListConverter;
 import jakarta.persistence.*;
@@ -106,6 +107,21 @@ public class DockerImage {
                 .location(location)
                 .layers(List.of(officeImage.getName()))
                 .createdAt(officeImage.getLastUpdated())
+                .build();
+    }
+
+    // New from method for DockerOfficeImageResponse
+    public static DockerImage from(DockerOfficeImageResponse officeImageResponse, Simulation simulation, ImageLocation location) {
+        return DockerImage.builder()
+                .hexId(officeImageResponse.getHexId())
+                .shortHexId(officeImageResponse.getShortHexId())
+                .namespace("library") // Assuming official images are always in 'library' namespace
+                .name(officeImageResponse.getName())
+                .tag(officeImageResponse.getTag())
+                .location(location)
+                .layers(List.of(officeImageResponse.getName())) // Placeholder for layers
+                .createdAt(officeImageResponse.getLastUpdated())
+                .simulation(simulation)
                 .build();
     }
 

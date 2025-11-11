@@ -35,8 +35,9 @@ public class SimulationController {
             @Parameter(hidden = true) @AuthenticationPrincipal SimulationUserPrincipal principal,
             @Parameter(description = "조회할 시뮬레이션 ID") @PathVariable String simulationPublicId
     ) {
+        String userPublicId = (principal != null) ? principal.getUserPublicId() : null;
         return ResponseEntity.ok(ApiResponse.success(
-                service.getSimulation(principal.getUserPublicId(), simulationPublicId)));
+                service.getSimulation(userPublicId, simulationPublicId)));
     }
 
     @Operation(summary = "시뮬레이션 생성", description = "새로운 시뮬레이션을 생성합니다.")

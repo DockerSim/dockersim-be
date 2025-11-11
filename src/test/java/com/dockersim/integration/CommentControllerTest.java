@@ -2,6 +2,7 @@ package com.dockersim.integration;
 
 import com.dockersim.domain.Comments;
 import com.dockersim.domain.Post;
+import com.dockersim.domain.User; // Import User
 import com.dockersim.dto.request.PostCommentRequest;
 import com.dockersim.repository.PostCommentRepository;
 import com.dockersim.repository.PostRepository;
@@ -38,11 +39,19 @@ class CommentControllerTest {
     private PostCommentRepository commentRepository;
 
     private Post savedPost;
+    private User testUser; // Add testUser field
+    private User user1; // Add user1 field
+    private User user2; // Add user2 field
 
     @BeforeEach
     void setUp() {
+        // Create User objects for testing
+        testUser = User.builder().publicId("testuser_public_id").name("testuser").email("test@example.com").build();
+        user1 = User.builder().publicId("user1_public_id").name("user1").email("user1@example.com").build();
+        user2 = User.builder().publicId("user2_public_id").name("user2").email("user2@example.com").build();
+
         // 테스트를 위한 게시글 미리 저장
-        Post post = new Post("Test Title", "Test Content", "testuser", null);
+        Post post = new Post("Test Title", "Test Content", testUser, null, null); // Pass testUser
         savedPost = postRepository.save(post);
     }
 
@@ -60,7 +69,7 @@ class CommentControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.content").value("New test comment"))
-                .andExpect(jsonPath("$.data.author").value("testuser"));
+                .andExpect(jsonPath("$.data.author.name").value("testuser")); // Adjust assertion
     }
 
     @Test
@@ -68,8 +77,8 @@ class CommentControllerTest {
     @WithMockUser
     void getCommentsByPostId() throws Exception {
         // given
-        commentRepository.save(new Comments("First comment", "user1", savedPost));
-        commentRepository.save(new Comments("Second comment", "user2", savedPost));
+        commentRepository.save(new Comments("First comment", user1, savedPost)); // Pass user1
+        commentRepository.save(new Comments("Second comment", user2, savedPost)); // Pass user2
 
         // when & then
         mockMvc.perform(get("/api/posts/{postId}/comments", savedPost.getId()))
@@ -84,7 +93,7 @@ class CommentControllerTest {
     @WithMockUser(username = "testuser")
     void updateComment() throws Exception {
         // given
-        Comments savedComment = commentRepository.save(new Comments("Original comment", "testuser", savedPost));
+        Comments savedComment = commentRepository.save(new Comments("Original comment", testUser, savedPost)); // Pass testUser
         PostCommentRequest request = new PostCommentRequest("Updated comment", null);
 
         // when & then
@@ -93,7 +102,8 @@ class CommentControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.content").value("Updated comment"));
+                .andExpect(jsonPath("$.data.content").value("Updated comment"))
+                .andExpect(jsonPath("$.data.author.name").value("testuser")); // Adjust assertion
     }
 
     @Test
@@ -101,7 +111,7 @@ class CommentControllerTest {
     @WithMockUser(username = "testuser")
     void deleteComment() throws Exception {
         // given
-        Comments savedComment = commentRepository.save(new Comments("To be deleted", "testuser", savedPost));
+        Comments savedComment = commentRepository.save(new Comments("To be deleted", testUser, savedPost)); // Pass testUser
 
         // when & then
         mockMvc.perform(delete("/api/posts/{postId}/comments/{commentId}", savedPost.getId(), savedComment.getId()))

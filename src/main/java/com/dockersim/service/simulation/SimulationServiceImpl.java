@@ -8,6 +8,7 @@ import com.dockersim.dto.request.SimulationRequest;
 import com.dockersim.dto.response.CollaboratorResponse;
 import com.dockersim.dto.response.SimulationResponse;
 import com.dockersim.exception.BusinessException;
+import com.dockersim.exception.code.AuthErrorCode;
 import com.dockersim.exception.code.SimulationErrorCode;
 import com.dockersim.repository.SimulationRepository;
 import com.dockersim.service.user.UserFinder;
@@ -42,11 +43,12 @@ public class SimulationServiceImpl implements SimulationService {
     @Override
     @Transactional(readOnly = true)
     public SimulationResponse getSimulation(String userId, String simulationPublicId) {
-        log.info("SimulationServiceImpl: Attempting to get simulation by publicId: {}", simulationPublicId); // 로그 추가
         Simulation simulation = simulationFinder.findByPublicId(simulationPublicId);
-        log.info("SimulationServiceImpl: Found simulation with publicId: {}", simulation.getPublicId()); // 로그 추가
 
         if (simulation.getShareState() != SimulationShareState.READ) {
+            if (userId == null) {
+                throw new BusinessException(AuthErrorCode.UNAUTHORIZED_ACCESS);
+            }
             User user = userFinder.findUserByPublicId(userId);
             validateSimulationAccess(simulation, user);
         }

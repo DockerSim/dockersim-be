@@ -52,9 +52,11 @@ public class User {
     private String roles; // "ROLE_USER,ROLE_ADMIN"
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
     private List<DockerFile> dockerfiles = new ArrayList<>();
 
     @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
     private List<Simulation> simulations = new ArrayList<>();
 
     public static User fromUserRequest(UserRequest request) {

@@ -23,10 +23,10 @@ public class DockerOfficeImage {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "hex_id", nullable = false)
+    @Column(name = "hex_id", nullable = false) // Removed unique = true
     private String hexId;
 
-    @Column(name = "short_hex_id", nullable = false)
+    @Column(name = "short_hex_id", nullable = false) // Removed unique = true
     private String shortHexId;
 
     @Column(nullable = false)

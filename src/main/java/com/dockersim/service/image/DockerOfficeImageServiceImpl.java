@@ -17,7 +17,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.InputStream;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional; // Import Optional
 import java.util.stream.Collectors;
 
 
@@ -58,6 +61,7 @@ public class DockerOfficeImageServiceImpl implements DockerOfficeImageService {
                 try {
                     for (String tag : jsonImage.getTags()) {
                         DockerOfficeImage image = DockerOfficeImage.from(jsonImage, tag);
+                        log.debug("Saving DockerOfficeImage: name={}, tag={}, hexId={}", image.getName(), image.getTag(), image.getHexId());
                         officeImageRepository.save(image);
 
                         imageRepository.save(DockerImage.from(image, ImageLocation.HUB));
@@ -79,20 +83,28 @@ public class DockerOfficeImageServiceImpl implements DockerOfficeImageService {
 
     @Override
     @Transactional(readOnly = true)
-    public DockerOfficeImageResponse findByNameAndTag(String name, String tag) {
-        return DockerOfficeImageResponse.from(officeImageRepository.findByNameAndTag(name, tag).orElseThrow(
-                () -> new BusinessException(DockerImageErrorCode.OFFICE_IMAGE_NOT_FOUND, name + ":" + tag)
-        ));
+    public Optional<DockerOfficeImageResponse> findByNameAndTag(String name, String tag) {
+        log.debug("Attempting to find DockerOfficeImage by name={} and tag={}", name, tag);
+        Optional<DockerOfficeImageResponse> result = officeImageRepository.findByNameAndTag(name, tag)
+                .map(DockerOfficeImageResponse::from);
+        if (result.isPresent()) {
+            log.debug("Found DockerOfficeImage: name={}, tag={}", name, tag);
+        } else {
+            log.debug("DockerOfficeImage not found for name={} and tag={}", name, tag);
+        }
+        return result;
     }
 
     @Transactional(readOnly = true)
     public List<DockerOfficeImageResponse> findAllByName(String name) {
-
+        log.debug("Attempting to find all DockerOfficeImage by name={}", name);
         List<DockerOfficeImage> images = officeImageRepository.findAllByName(name);
 
         if (images.isEmpty()) {
+            log.debug("No DockerOfficeImage found for name={}", name);
             throw new BusinessException(DockerImageErrorCode.OFFICE_IMAGE_NOT_FOUND, name);
         }
+        log.debug("Found {} DockerOfficeImages for name={}", images.size(), name);
         return images.stream()
                 .map(DockerOfficeImageResponse::from)
                 .collect(Collectors.toList());
@@ -102,7 +114,14 @@ public class DockerOfficeImageServiceImpl implements DockerOfficeImageService {
     @Override
     @Transactional(readOnly = true)
     public List<DockerOfficeImageResponse> getAllImages() {
-        return officeImageRepository.findAll().stream()
+        log.debug("Attempting to get all DockerOfficeImages");
+        List<DockerOfficeImage> allImages = officeImageRepository.findAll();
+        Map<String, DockerOfficeImage> uniqueImages = new LinkedHashMap<>();
+        for (DockerOfficeImage image : allImages) {
+            uniqueImages.putIfAbsent(image.getName(), image);
+        }
+        log.debug("Found {} unique DockerOfficeImages", uniqueImages.size());
+        return uniqueImages.values().stream()
                 .map(DockerOfficeImageResponse::from)
                 .collect(Collectors.toList());
     }

@@ -1,6 +1,7 @@
 package com.dockersim.integration;
 
 import com.dockersim.domain.Post;
+import com.dockersim.domain.User; // Import User
 import com.dockersim.domain.enums.PostType;
 import com.dockersim.dto.request.PostRequest;
 import com.dockersim.repository.PostLikeRepository;
@@ -17,6 +18,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime; // Import LocalDateTime
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -41,11 +43,15 @@ class PostControllerTest {
     private PostLikeRepository postLikeRepository;
 
     private Post savedPost;
+    private User testUser; // Add testUser field
 
     @BeforeEach
     void setUp() {
+        // Create User object for testing
+        testUser = User.builder().publicId("testuser_public_id").name("testuser").email("test@example.com").createdAt(LocalDateTime.now()).build(); // Initialize all required fields for User
+
         postRepository.deleteAll();
-        Post post = new Post("Test Title", "Test Content", "testuser", PostType.QUESTION, "#java");
+        Post post = new Post("Test Title", "Test Content", testUser, PostType.QUESTION, "#java"); // Pass testUser
         savedPost = postRepository.save(post);
     }
 
@@ -62,7 +68,8 @@ class PostControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.title").value("New Title"));
+                .andExpect(jsonPath("$.data.title").value("New Title"))
+                .andExpect(jsonPath("$.data.author.name").value("testuser")); // Adjust assertion
     }
 
     @Test
@@ -102,7 +109,8 @@ class PostControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.title").value("Updated Title"));
+                .andExpect(jsonPath("$.data.title").value("Updated Title"))
+                .andExpect(jsonPath("$.data.author.name").value("testuser")); // Adjust assertion
     }
 
     @Test

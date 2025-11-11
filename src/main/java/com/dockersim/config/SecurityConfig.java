@@ -34,7 +34,7 @@ public class SecurityConfig {
     public WebSecurityCustomizer webSecurityCustomizer() {
         // Spring Security 필터 체인을 완전히 무시할 경로
         return (web) -> web.ignoring().requestMatchers(
-                "/api/auth/github/callback",
+                "/api/login/github", // <-- 이 줄을 변경
                 "/swagger-ui/**", "/v3/api-docs/**", "/hc"
         );
     }

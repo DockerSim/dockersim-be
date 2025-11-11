@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.dockersim.common.ApiResponse;
 import com.dockersim.dto.response.DockerOfficeImageResponse;
 import com.dockersim.service.image.DockerOfficeImageService;
+import com.dockersim.exception.BusinessException; // Import BusinessException
+import com.dockersim.exception.code.DockerImageErrorCode; // Import DockerImageErrorCode
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -53,7 +55,8 @@ public class DockerOfficeImageController {
 		@Parameter(description = "조회할 도커 이미지 이름(name)", required = true) @RequestParam String name,
 		@Parameter(description = "조회할 도커 이미지 태그(tag)", required = true) @RequestParam String tag
 	) {
-		return ResponseEntity.ok(ApiResponse.success(service.findByNameAndTag(name, tag)));
+		return ResponseEntity.ok(ApiResponse.success(service.findByNameAndTag(name, tag)
+				.orElseThrow(() -> new BusinessException(DockerImageErrorCode.OFFICE_IMAGE_NOT_FOUND, name + ":" + tag))));
 	}
 
 	/**

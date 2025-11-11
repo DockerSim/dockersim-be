@@ -2,6 +2,7 @@ package com.dockersim.service;
 
 import com.dockersim.domain.Post;
 import com.dockersim.domain.PostLike;
+import com.dockersim.domain.User; // Import User
 import com.dockersim.domain.enums.PostType;
 import com.dockersim.dto.request.PostRequest;
 import com.dockersim.dto.response.PostResponse;
@@ -15,6 +16,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDateTime; // Import LocalDateTime
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -37,11 +39,12 @@ class PostServiceTest {
     private PostLikeRepository postLikeRepository;
 
     private Post post;
-    private String author = "testUser";
+    private User author; // Change author to User type
 
     @BeforeEach
     void setUp() {
-        post = new Post("Test Title", "Test Content", author, PostType.QUESTION, "#java #spring");
+        author = User.builder().publicId("testuser_public_id").name("testUser").email("test@example.com").createdAt(LocalDateTime.now()).build(); // Initialize User object
+        post = new Post("Test Title", "Test Content", author, PostType.QUESTION, "#java #spring"); // Pass User object
     }
 
     @Test
@@ -52,7 +55,7 @@ class PostServiceTest {
         given(postRepository.save(any(Post.class))).willReturn(post);
 
         // when
-        PostResponse response = postService.createPost(request, author);
+        PostResponse response = postService.createPost(request, author); // Pass User object
 
         // then
         assertThat(response.getTitle()).isEqualTo("Test Title");
@@ -85,7 +88,7 @@ class PostServiceTest {
         given(postRepository.findById(1L)).willReturn(Optional.of(post));
 
         // when
-        postService.updatePost(1L, request, author);
+        postService.updatePost(1L, request, author); // Pass User object
 
         // then
         assertThat(post.getTitle()).isEqualTo("Updated Title");
@@ -101,7 +104,7 @@ class PostServiceTest {
         willDoNothing().given(postRepository).delete(post);
 
         // when
-        postService.deletePost(1L, author);
+        postService.deletePost(1L, author); // Pass User object
 
         // then
         then(postRepository).should().findById(1L);
@@ -113,10 +116,10 @@ class PostServiceTest {
     void toggleLike_addLike() {
         // given
         given(postRepository.findById(1L)).willReturn(Optional.of(post));
-        given(postLikeRepository.findByAuthorAndPost(author, post)).willReturn(Optional.empty());
+        given(postLikeRepository.findByAuthorAndPost(author, post)).willReturn(Optional.empty()); // Pass User object
 
         // when
-        postService.toggleLike(1L, author);
+        postService.toggleLike(1L, author); // Pass User object
 
         // then
         then(postLikeRepository).should().save(any(PostLike.class));
@@ -126,12 +129,12 @@ class PostServiceTest {
     @DisplayName("좋아요 토글 - 좋아요 취소")
     void toggleLike_removeLike() {
         // given
-        PostLike postLike = new PostLike(author, post);
+        PostLike postLike = new PostLike(author, post); // Pass User object
         given(postRepository.findById(1L)).willReturn(Optional.of(post));
-        given(postLikeRepository.findByAuthorAndPost(author, post)).willReturn(Optional.of(postLike));
+        given(postLikeRepository.findByAuthorAndPost(author, post)).willReturn(Optional.of(postLike)); // Pass User object
 
         // when
-        postService.toggleLike(1L, author);
+        postService.toggleLike(1L, author); // Pass User object
 
         // then
         then(postLikeRepository).should().delete(postLike);
