@@ -2,6 +2,7 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '3.4.4'
     id 'io.spring.dependency-management' version '1.1.7'
+    id 'jacoco'
 }
 
 group = 'com'
@@ -53,6 +54,51 @@ dependencies {
     testImplementation 'com.h2database:h2'
 }
 
+
+jacoco {
+    toolVersion = '0.8.12' // 최신 안정 버전 권장
+}
+
 tasks.named('test') {
     useJUnitPlatform()
+    systemProperty 'spring.profiles.active', 'test'
+    finalizedBy 'jacocoTestReport'
+}
+
+tasks.jacocoTestReport {
+    dependsOn test
+    reports {
+        html.required.set(true)
+        xml.required.set(true)
+        csv.required.set(false)
+    }
+    doFirst {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: [
+                    '**/*Application*',
+                    '**/*Config*',
+                    '**/*Dto*', '**/*Request*', '**/*Response*',
+                    '**/Q*'
+            ])
+        }))
+    }
+}
+
+tasks.named('jacocoTestCoverageVerification', JacocoCoverageVerification) {
+    dependsOn test
+    violationRules {
+        rule {
+            limit {
+                counter = 'BRANCH'       // 또는 'LINE'
+                value = 'COVEREDRATIO'
+                // 초기 설정: 테스트 코드가 없으므로 0으로 설정합니다.
+                // 테스트가 준비되면 값(예: 0.60)을 점진적으로 상향하세요.
+                minimum = 0.0
+            }
+        }
+    }
+}
+
+tasks.check {
+    dependsOn 'jacocoTestCoverageVerification'
 }

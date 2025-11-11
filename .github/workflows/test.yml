@@ -1,0 +1,25 @@
+# .github/workflows/test.yml
+name: test
+on: [ push, pull_request ]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+      - name: Run tests
+        run: ./gradlew clean test jacocoTestReport
+
+      # 예: JaCoCo 리포트 요약 코멘트(여러 액션 중 하나)
+      - name: Jacoco Report
+        uses: madrapps/jacoco-report@v1.6.1
+        with:
+          paths: build/reports/jacoco/test/jacocoTestReport.xml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          min-coverage-overall: 0
+          title: 'Coverage'
