@@ -65,23 +65,26 @@ tasks.named('test') {
     finalizedBy 'jacocoTestReport'
 }
 
-tasks.jacocoTestReport {
+tasks.named('jacocoTestReport', JacocoReport) {
     dependsOn test
     reports {
         html.required.set(true)
         xml.required.set(true)
         csv.required.set(false)
     }
-    doFirst {
-        classDirectories.setFrom(files(classDirectories.files.collect {
-            fileTree(dir: it, exclude: [
-                    '**/*Application*',
-                    '**/*Config*',
-                    '**/*Dto*', '**/*Request*', '**/*Response*',
-                    '**/Q*'
-            ])
-        }))
-    }
+    def excludes = [
+            '**/*Application*',
+            '**/*Config*',
+            '**/*Dto*', '**/*Request*', '**/*Response*',
+            '**/Q*'
+    ]
+    classDirectories.setFrom(
+            files(
+                    sourceSets.main.output.asFileTree.matching {
+                        exclude(excludes)
+                    }
+            )
+    )
 }
 
 tasks.named('jacocoTestCoverageVerification', JacocoCoverageVerification) {
