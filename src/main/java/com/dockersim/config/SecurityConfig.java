@@ -44,11 +44,16 @@ public class SecurityConfig {
 			.authorizeHttpRequests(auth -> auth
 				.requestMatchers(
 					"/api/public/**",
-					"/swagger-ui/**", // Swagger UI 경로
-					"/v3/api-docs/**"  // API 문서 경로
+					"/swagger-ui.html",       // Swagger UI HTML 페이지
+					"/swagger-ui/**",         // Swagger UI 리소스
+					"/v3/api-docs/**",        // API 문서
+					"/swagger-resources/**",  // Swagger 리소스
+					"/webjars/**"             // Swagger 의존성
 				).permitAll()
 				.requestMatchers(HttpMethod.POST, "/api/users").permitAll()
 				.requestMatchers(HttpMethod.GET, "/api/users/**").permitAll()
+				.requestMatchers(HttpMethod.POST, "/api/simulations/compose/manual").permitAll()  // Docker Compose 수동 생성
+				.requestMatchers(HttpMethod.POST, "/api/dockerfiles/feedback").permitAll()  // Dockerfile 피드백
 				.requestMatchers("/hc").permitAll()
 				.requestMatchers("/api/officeimage/**").permitAll()
 				.anyRequest().authenticated()

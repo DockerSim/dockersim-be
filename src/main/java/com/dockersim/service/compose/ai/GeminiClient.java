@@ -28,8 +28,9 @@ public class GeminiClient {
 
     public String generateCompose(String prompt) {
         try {
-            log.debug("Gemini API 호출 시작: prompt length = {}", prompt.length());
-            
+            log.info("=== Gemini API 호출 시작 ===");
+            log.info("Prompt length: {}", prompt.length());
+
             GeminiRequest request = GeminiRequest.builder()
                 .contents(List.of(
                     Content.builder()
@@ -46,12 +47,15 @@ public class GeminiClient {
                     .build())
                 .build();
 
+            log.info("Request body 준비 완료, API 호출 시작");
+
             GeminiResponse response = geminiWebClient
                 .post()
                 .bodyValue(request)
                 .retrieve()
                 .bodyToMono(GeminiResponse.class)
                 .timeout(Duration.ofSeconds(30))
+                .doOnError(error -> log.error("API 호출 중 에러: {}", error.getMessage()))
                 .block();
 
             String composeYml = extractComposeContent(response);

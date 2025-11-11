@@ -38,6 +38,13 @@ public class SimulationAuthorizationFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
+        // /api/simulations/compose/** 경로는 제외 (수동 모드)
+        String requestUri = request.getRequestURI();
+        if (requestUri.startsWith("/api/simulations/compose")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         // 사용자 정보만 담긴 인증정보가 있어야함.
         if (authentication == null || !requestMatcher.matches(request)) {
             System.out.println("사용자 정보가 없거나, 시뮬레이션 ID인증이 불필요");

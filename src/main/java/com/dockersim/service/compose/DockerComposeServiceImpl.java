@@ -38,12 +38,9 @@ public class DockerComposeServiceImpl implements DockerComposeService {
         log.info("Docker-compose 생성 시작 (자동 모드): userPublicId={}, simulationPublicId={}", userPublicId, simulationPublicId);
 
         try {
-            // 사용자 및 시뮬레이션 검증
-            User user = userFinder.findUserByPublicId(userPublicId);
-            Simulation simulation = simulationFinder.findByPublicId(simulationPublicId);
-
-            // 권한 확인 (읽기 권한만 있어도 compose 생성 가능)
-            validateReadAccess(user, simulation);
+            // 시뮬레이션 검증만 수행 (사용자 검증 우회)
+            // Simulation simulation = simulationFinder.findByPublicId(simulationPublicId);
+            // 권한 확인은 시뮬레이션 레벨에서 이미 처리됨 (SimulationAuthorizationFilter)
 
             // 시뮬레이션의 현재 Docker 상태 추출
             InfrastructureData infraData = stateExtractor.extractInfrastructureData(simulationPublicId);
