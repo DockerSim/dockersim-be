@@ -13,6 +13,8 @@ java {
     }
 }
 
+// sourceSets 블록을 완전히 제거합니다.
+
 configurations {
     compileOnly {
         extendsFrom annotationProcessor
@@ -64,4 +66,9 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+}
+
+// bootRun 태스크를 수정하여 main 클래스패스만 사용하도록 합니다.
+bootRun {
+    classpath = sourceSets.main.runtimeClasspath
 }

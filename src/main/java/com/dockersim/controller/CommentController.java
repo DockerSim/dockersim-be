@@ -45,7 +45,7 @@ public class CommentController {
     @Operation(summary = "댓글 수정", description = "특정 댓글의 내용을 수정합니다.")
     @PutMapping("/{commentId}")
     public ResponseEntity<ApiResponse<PostCommentResponse>> updateComment(
-            @Parameter(description = "게시글 ID") @PathVariable Long postId, // postId는 경로에 있지만 직접 사용되지는 않음
+            @Parameter(description = "게시글 ID") @PathVariable Long postId,
             @Parameter(description = "댓글 ID") @PathVariable Long commentId,
             @RequestBody PostCommentRequest requestDto,
             @AuthenticationPrincipal UserDetails userDetails) {
@@ -56,7 +56,7 @@ public class CommentController {
     @Operation(summary = "댓글 삭제", description = "특정 댓글을 삭제합니다.")
     @DeleteMapping("/{commentId}")
     public ResponseEntity<ApiResponse<Void>> deleteComment(
-            @Parameter(description = "게시글 ID") @PathVariable Long postId, // postId는 경로에 있지만 직접 사용되지는 않음
+            @Parameter(description = "게시글 ID") @PathVariable Long postId,
             @Parameter(description = "댓글 ID") @PathVariable Long commentId,
             @AuthenticationPrincipal UserDetails userDetails) {
         commentService.deleteComment(commentId, userDetails.getUsername());

@@ -1,63 +1,76 @@
 package com.dockersim.config;
 
-import org.springframework.beans.factory.annotation.Qualifier;
+import com.dockersim.config.auth.CustomAccessDeniedHandler;
+import com.dockersim.jwt.provider.JwtTokenProvider;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.filter.OncePerRequestFilter;
-
-import com.dockersim.config.auth.CustomAccessDeniedHandler;
-
-import lombok.RequiredArgsConstructor;
 
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-	// Profile에 따라 DevUserInjectionFilter 또는 JwtAuthenticationFilter가 주입됨
-	@Qualifier("authenticationFilter")
-	private final OncePerRequestFilter authenticationFilter;
+    private final JwtTokenProvider jwtTokenProvider;
+    private final SimulationAuthorizationFilter simulationAuthorizationFilter;
+    private final CustomAccessDeniedHandler customAccessDeniedHandler;
 
-	// 시뮬레이션 소유권 인가 필터
-	private final SimulationAuthorizationFilter simulationAuthorizationFilter;
+    @Bean
+    public WebSecurityCustomizer webSecurityCustomizer() {
+        // Spring Security 필터 체인을 완전히 무시할 경로
+        return (web) -> web.ignoring().requestMatchers(
+                "/api/auth/github/callback",
+                "/swagger-ui/**", "/v3/api-docs/**", "/hc"
+        );
+    }
 
-	// 보안 예외를 처리할 커스텀 핸들러
-	private final CustomAccessDeniedHandler customAccessDeniedHandler;
+    @Bean
+    @Order(1)
+    public SecurityFilterChain simulationFilterChain(HttpSecurity http) throws Exception {
+        http
+            .securityMatcher("/api/simulations/**")
+            .csrf(AbstractHttpConfigurer::disable)
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
+            .exceptionHandling(exceptions -> exceptions.accessDeniedHandler(customAccessDeniedHandler))
+            .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class)
+            .addFilterAfter(simulationAuthorizationFilter, JwtAuthenticationFilter.class);
 
-	@Bean
-	SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-		return http
-			.csrf(AbstractHttpConfigurer::disable)
-			.formLogin(AbstractHttpConfigurer::disable)
-			.httpBasic(AbstractHttpConfigurer::disable)
-			.sessionManagement(session ->
-				session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-			)
+        return http.build();
+    }
 
-			.authorizeHttpRequests(auth -> auth
-				.requestMatchers(
-					"/api/public/**",
-					"/swagger-ui/**", // Swagger UI 경로
-					"/v3/api-docs/**"  // API 문서 경로
-				).permitAll()
-				.requestMatchers(HttpMethod.POST, "/api/users").permitAll()
-				.requestMatchers(HttpMethod.GET, "/api/users/**").permitAll()
-				.requestMatchers("/hc").permitAll()
-				.requestMatchers("/api/officeimage/**").permitAll()
-				.anyRequest().authenticated()
-			)
-			.exceptionHandling(exceptions ->
-				exceptions.accessDeniedHandler(customAccessDeniedHandler)
-			)
-			.addFilterBefore(authenticationFilter, UsernamePasswordAuthenticationFilter.class)
-			.addFilterAfter(simulationAuthorizationFilter, authenticationFilter.getClass())
-			.build();
-	}
+    @Bean
+    @Order(2)
+    public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
+        http
+            .csrf(AbstractHttpConfigurer::disable)
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth -> auth
+                // 인증 없이 허용할 경로
+                .requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/users/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/officeimage/**").permitAll()
+
+                // POST, PUT, DELETE 등 인증이 필요한 경로
+                .requestMatchers(HttpMethod.POST, "/api/posts/**").authenticated()
+                .requestMatchers(HttpMethod.PUT, "/api/posts/**").authenticated()
+                .requestMatchers(HttpMethod.DELETE, "/api/posts/**").authenticated()
+                
+                // 위에서 정의되지 않은 나머지 모든 요청은 일단 거부
+                .anyRequest().denyAll() 
+            )
+            .exceptionHandling(exceptions -> exceptions.accessDeniedHandler(customAccessDeniedHandler))
+            .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
+    }
 }

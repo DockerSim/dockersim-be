@@ -68,9 +68,10 @@ public class User {
     }
 
     public static User fromGithub(GithubUserResponse userInfo) {
+        String username = userInfo.getName() != null ? userInfo.getName() : userInfo.getLogin(); // 이름이 없으면 로그인 ID를 사용
         return User.builder()
             .publicId(IdGenerator.generatePublicId())
-            .name(userInfo.getName())
+            .name(username) // 수정된 username 사용
             .email(userInfo.getEmail())
             .githubId(String.valueOf(userInfo.getId()))
             .createdAt(LocalDateTime.now())
