@@ -34,7 +34,7 @@ public class SecurityConfig {
     public WebSecurityCustomizer webSecurityCustomizer() {
         // Spring Security 필터 체인을 완전히 무시할 경로
         return (web) -> web.ignoring().requestMatchers(
-                "/api/login/github", // <-- 이 줄을 변경
+                "api/auth/**", "/api/login/**", "/login/**", // <-- 이 줄을 변경
                 "/swagger-ui/**", "/v3/api-docs/**", "/hc"
         );
     }
@@ -76,10 +76,11 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.DELETE, "/api/posts/**").authenticated()
                 
                 // Dockerfile 관련 모든 요청은 인증 필요
-                .requestMatchers("/api/dockerfiles/**").authenticated() // 이 줄을 추가합니다.
+                .requestMatchers("/api/dockerfiles/**").authenticated()
                 
-                // 위에서 정의되지 않은 나머지 모든 요청은 일단 거부
-                .anyRequest().denyAll() 
+
+                .anyRequest().denyAll()
+
             )
             .exceptionHandling(exceptions -> exceptions.accessDeniedHandler(customAccessDeniedHandler))
             .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
