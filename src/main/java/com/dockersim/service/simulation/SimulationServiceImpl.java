@@ -8,6 +8,7 @@ import com.dockersim.dto.request.SimulationRequest;
 import com.dockersim.dto.response.CollaboratorResponse;
 import com.dockersim.dto.response.SimulationResponse;
 import com.dockersim.exception.BusinessException;
+import com.dockersim.exception.code.AuthErrorCode;
 import com.dockersim.exception.code.SimulationErrorCode;
 import com.dockersim.repository.SimulationRepository;
 import com.dockersim.service.user.UserFinder;
@@ -45,6 +46,9 @@ public class SimulationServiceImpl implements SimulationService {
         Simulation simulation = simulationFinder.findByPublicId(simulationPublicId);
 
         if (simulation.getShareState() != SimulationShareState.READ) {
+            if (userId == null) {
+                throw new BusinessException(AuthErrorCode.UNAUTHORIZED_ACCESS);
+            }
             User user = userFinder.findUserByPublicId(userId);
             validateSimulationAccess(simulation, user);
         }
@@ -81,6 +85,17 @@ public class SimulationServiceImpl implements SimulationService {
         validateOwnership(simulation, owner);
 
         simulationRepository.delete(simulation);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<SimulationResponse> getMySimulations(String userPublicId) {
+        User owner = userFinder.findUserByPublicId(userPublicId);
+        List<Simulation> simulations = simulationRepository.findAllByOwner(owner);
+        log.info("Found {} simulations for userPublicId: {}", simulations.size(), userPublicId);
+        return simulations.stream()
+                .map(SimulationResponse::from)
+                .toList();
     }
 
     @Override
@@ -147,6 +162,10 @@ public class SimulationServiceImpl implements SimulationService {
     }
 
     private SimulationShareState validateShareState(String shareStateStr) {
+        log.info("Validating share state: {}", shareStateStr);
+        if (shareStateStr == null) {
+            throw new BusinessException(SimulationErrorCode.SIMULATION_INVALID_SHARE_STATE, "null");
+        }
         try {
             return SimulationShareState.valueOf(shareStateStr);
         } catch (IllegalArgumentException e) {

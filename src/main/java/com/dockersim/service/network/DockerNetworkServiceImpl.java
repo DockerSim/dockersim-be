@@ -5,6 +5,7 @@ import com.dockersim.domain.ContainerNetwork;
 import com.dockersim.domain.DockerContainer;
 import com.dockersim.domain.DockerNetwork;
 import com.dockersim.domain.Simulation;
+import com.dockersim.dto.response.DockerContainerResponse; // 추가
 import com.dockersim.dto.response.DockerContainerSimpleInspect;
 import com.dockersim.dto.response.DockerNetworkInspect;
 import com.dockersim.dto.response.DockerNetworkResponse;
@@ -16,6 +17,7 @@ import com.dockersim.service.simulation.SimulationFinder;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.util.Pair; // 추가
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,7 +35,7 @@ public class DockerNetworkServiceImpl implements DockerNetworkService {
     private final SimulationFinder simulationFinder;
 
     @Override
-    public DockerNetworkResponse connect(
+    public Pair<DockerNetworkResponse, DockerContainerResponse> connect( // 반환 타입 변경
             SimulationUserPrincipal principal,
             String networkNameOrHexId, String containerNameOrHexId
     ) {
@@ -42,11 +44,21 @@ public class DockerNetworkServiceImpl implements DockerNetworkService {
         DockerContainer container = dockerContainerFinder.findByIdentifier(simulation, containerNameOrHexId);
 
         network.connect(container);
-        DockerNetwork save = dockerNetworkRepository.save(network);
+        DockerNetwork savedNetwork = dockerNetworkRepository.save(network); // 네트워크 저장
 
-        return DockerNetworkResponse.from(save, List.of(
+        // 컨테이너 엔티티를 다시 로드하여 최신 상태를 반영 (네트워크 연결 정보 포함)
+        DockerContainer updatedContainer = dockerContainerFinder.findByIdentifier(simulation, containerNameOrHexId);
+
+        DockerNetworkResponse networkResponse = DockerNetworkResponse.from(savedNetwork, List.of(
                 String.format("네트워크 %s에 컨테이너 %s가 연결되었습니다.", networkNameOrHexId, containerNameOrHexId)
-        ), true, container.getId());
+        ), true, updatedContainer.getId());
+
+        DockerContainerResponse containerResponse = DockerContainerResponse.from(
+                List.of(String.format("컨테이너 %s가 네트워크 %s에 연결되었습니다.", containerNameOrHexId, networkNameOrHexId)),
+                updatedContainer
+        );
+
+        return Pair.of(networkResponse, containerResponse);
     }
 
     @Override

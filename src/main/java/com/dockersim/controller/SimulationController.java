@@ -6,11 +6,14 @@ import com.dockersim.dto.request.CollaboratorRequest;
 import com.dockersim.dto.request.SimulationRequest;
 import com.dockersim.dto.response.CollaboratorResponse;
 import com.dockersim.dto.response.SimulationResponse;
+import com.dockersim.exception.BusinessException;
+import com.dockersim.exception.code.AuthErrorCode;
 import com.dockersim.service.simulation.SimulationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -21,6 +24,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/simulations")
 @RequiredArgsConstructor
+@Slf4j
 public class SimulationController {
 
     private final SimulationService service;
@@ -31,16 +35,24 @@ public class SimulationController {
             @Parameter(hidden = true) @AuthenticationPrincipal SimulationUserPrincipal principal,
             @Parameter(description = "조회할 시뮬레이션 ID") @PathVariable String simulationPublicId
     ) {
+        String userPublicId = (principal != null) ? principal.getUserPublicId() : null;
         return ResponseEntity.ok(ApiResponse.success(
-                service.getSimulation(principal.getUserPublicId(), simulationPublicId)));
+                service.getSimulation(userPublicId, simulationPublicId)));
     }
 
     @Operation(summary = "시뮬레이션 생성", description = "새로운 시뮬레이션을 생성합니다.")
     @PostMapping
     public ResponseEntity<ApiResponse<SimulationResponse>> createSimulation(
-            @Parameter(hidden = true) @AuthenticationPrincipal String userPublicId,
+            @Parameter(hidden = true) @AuthenticationPrincipal SimulationUserPrincipal principal,
             @Parameter(description = "생성할 시뮬레이션 정보") @RequestBody SimulationRequest request
     ) {
+        if (principal == null || principal.getUserPublicId() == null) {
+            log.error("Authentication principal is null or userPublicId is null. Cannot create simulation.");
+            throw new BusinessException(AuthErrorCode.UNAUTHORIZED_ACCESS);
+        }
+        String userPublicId = principal.getUserPublicId();
+        log.info("Attempting to create simulation for userPublicId: {}", userPublicId);
+        
         return ResponseEntity.ok(ApiResponse.success(
                 service.createSimulation(userPublicId, request)));
     }
@@ -52,8 +64,15 @@ public class SimulationController {
             @Parameter(hidden = true) @AuthenticationPrincipal SimulationUserPrincipal principal,
             @Parameter(description = "수정할 시뮬레이션 정보") @RequestBody SimulationRequest request
     ) {
+        if (principal == null || principal.getUserPublicId() == null) {
+            log.error("Authentication principal is null or userPublicId is null. Cannot update simulation.");
+            throw new BusinessException(AuthErrorCode.UNAUTHORIZED_ACCESS);
+        }
+        String userPublicId = principal.getUserPublicId();
+        log.info("Attempting to update simulation {} for userPublicId: {}", simulationPublicId, userPublicId);
+        
         return ResponseEntity.ok(ApiResponse.success(
-                service.updateSimulation(principal.getUserPublicId(), simulationPublicId, request)));
+                service.updateSimulation(userPublicId, simulationPublicId, request)));
     }
 
     @Operation(summary = "시뮬레이션 삭제", description = "시뮬레이션을 삭제합니다. 소유자만 삭제할 수 있습니다.")
@@ -62,8 +81,31 @@ public class SimulationController {
             @Parameter(hidden = true) @AuthenticationPrincipal SimulationUserPrincipal principal,
             @Parameter(description = "삭제할 시뮬레이션 ID") @PathVariable String simulationPublicId
     ) {
+        if (principal == null || principal.getUserPublicId() == null) {
+            log.error("Authentication principal is null or userPublicId is null. Cannot delete simulation.");
+            throw new BusinessException(AuthErrorCode.UNAUTHORIZED_ACCESS);
+        }
         service.deleteSimulation(principal.getUserPublicId(), simulationPublicId);
         return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
+    @Operation(summary = "현재 사용자의 모든 시뮬레이션 조회", description = "현재 로그인한 사용자의 모든 시뮬레이션 목록을 조회합니다.")
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<List<SimulationResponse>>> getMySimulations(
+            @Parameter(hidden = true) @AuthenticationPrincipal SimulationUserPrincipal principal
+    ) {
+        if (principal == null) { // principal이 null인 경우를 명확히 로그
+            log.error("Authentication principal is null. Cannot get user's simulations.");
+            throw new BusinessException(AuthErrorCode.UNAUTHORIZED_ACCESS);
+        }
+        if (principal.getUserPublicId() == null) { // userPublicId가 null인 경우를 명확히 로그
+            log.error("userPublicId is null in principal. Cannot get user's simulations.");
+            throw new BusinessException(AuthErrorCode.UNAUTHORIZED_ACCESS);
+        }
+        String userPublicId = principal.getUserPublicId();
+        log.info("Attempting to get simulations for userPublicId: {}", userPublicId);
+        return ResponseEntity.ok(ApiResponse.success(
+                service.getMySimulations(userPublicId)));
     }
 
     @Operation(summary = "협업자 초대", description = "시뮬레이션에 협업자를 초대합니다. 최대 6명까지 초대할 수 있습니다.")
@@ -73,6 +115,10 @@ public class SimulationController {
             @Parameter(description = "협업자를 초대할 시뮬레이션 ID") @PathVariable String simulationPublicId,
             @Parameter(description = "초대할 협업자 정보") @RequestBody CollaboratorRequest request
     ) {
+        if (principal == null || principal.getUserPublicId() == null) {
+            log.error("Authentication principal is null or userPublicId is null. Cannot invite collaborator.");
+            throw new BusinessException(AuthErrorCode.UNAUTHORIZED_ACCESS);
+        }
         return ResponseEntity.ok(ApiResponse.success(
                 service.inviteCollaborator(simulationPublicId, principal.getUserPublicId(), request)));
     }
@@ -83,6 +129,10 @@ public class SimulationController {
             @Parameter(description = "협업자를 조회할 시뮬레이션 ID") @PathVariable String simulationPublicId,
             @Parameter(hidden = true) @AuthenticationPrincipal SimulationUserPrincipal principal
     ) {
+        if (principal == null || principal.getUserPublicId() == null) {
+            log.error("Authentication principal is null or userPublicId is null. Cannot get collaborators.");
+            throw new BusinessException(AuthErrorCode.UNAUTHORIZED_ACCESS);
+        }
         return ResponseEntity.ok(ApiResponse.success(
                 service.getCollaborators(principal.getUserPublicId(), simulationPublicId)));
     }
@@ -92,9 +142,13 @@ public class SimulationController {
     public ResponseEntity<ApiResponse<Void>> removeCollaborator(
             @Parameter(description = "협업자를 제거할 시뮬레이션 ID") @PathVariable String simulationPublicId,
             @Parameter(description = "제거할 협업자 ID") @PathVariable String collaboratorId,
-            @Parameter(hidden = true) @AuthenticationPrincipal String userId
+            @Parameter(hidden = true) @AuthenticationPrincipal SimulationUserPrincipal principal
     ) {
-        service.removeCollaborator(userId, simulationPublicId, collaboratorId);
+        if (principal == null || principal.getUserPublicId() == null) {
+            log.error("Authentication principal is null or userPublicId is null. Cannot remove collaborator.");
+            throw new BusinessException(AuthErrorCode.UNAUTHORIZED_ACCESS);
+        }
+        service.removeCollaborator(principal.getUserPublicId(), simulationPublicId, collaboratorId);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 }

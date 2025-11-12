@@ -1,6 +1,7 @@
 package com.dockersim.controller;
 
 import com.dockersim.common.ApiResponse;
+import com.dockersim.dto.request.UserEmailUpdateRequest;
 import com.dockersim.dto.request.UserRequest;
 import com.dockersim.dto.response.UserResponse;
 import com.dockersim.service.user.UserService;
@@ -11,12 +12,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
 
 
 @Slf4j
@@ -27,6 +26,20 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserController {
 
     private final UserService userService;
+
+    @PatchMapping("/me/email")
+    public ResponseEntity<Void> updateUserEmail(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestBody UserEmailUpdateRequest request) {
+
+        // 현재 로그인된 사용자의 publicId를 가져옵니다.
+        String publicId = userDetails.getUsername();
+
+        // 서비스 레이어에 이메일 업데이트를 위임합니다.
+        userService.updateEmail(publicId, request.getEmail());
+
+        return ResponseEntity.ok().build();
+    }
 
     /**
      * 새로운 사용자 생성을 진행합니다.
@@ -46,29 +59,29 @@ public class UserController {
     /**
      * 사용자 정보를 조회합니다.
      *
-     * @param userId 조회할 사용자 UUID
+     * @param publicId 조회할 사용자 public ID
      * @return 조회된 사용자 정보
      */
     @Operation(summary = "사용자 정보 조회", description = "사용자 정보를 조회합니다.")
     @GetMapping
     public ResponseEntity<ApiResponse<UserResponse>> getUser(
-        @Parameter(hidden = true, description = "조회할 사용자 UUID") @AuthenticationPrincipal String userId
+        @Parameter(hidden = true, description = "조회할 사용자 public ID") @AuthenticationPrincipal String publicId
     ) {
-        return ResponseEntity.ok(ApiResponse.success(userService.getUser(userId)));
+        return ResponseEntity.ok(ApiResponse.success(userService.getUser(publicId)));
     }
 
 
     /**
      * 사용자를 삭제합니다.
      *
-     * @param userId 삭제할 사용자 UUID
+     * @param publicId 삭제할 사용자 public ID
      */
     @Operation(summary = "사용자 삭제", description = "사용자를 삭제합니다.")
     @DeleteMapping
     public ResponseEntity<ApiResponse<Void>> deleteUser(
-        @Parameter(hidden = true, description = "삭제할 사용자 UUID") @AuthenticationPrincipal String userId
+        @Parameter(hidden = true, description = "삭제할 사용자 public ID") @AuthenticationPrincipal String publicId
     ) {
-        userService.deleteUser(userId);
+        userService.deleteUser(publicId);
         return ResponseEntity.ok(ApiResponse.success());
     }
 }

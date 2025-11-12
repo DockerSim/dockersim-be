@@ -37,6 +37,7 @@ public class DockerImageServiceImpl implements DockerImageService {
     private final DockerImageFinder dockerImageFinder;
     private final UserFinder userFinder;
     private final DockerFileFinder dockerFileFinder;
+    private final DockerOfficeImageService dockerOfficeImageService; // Inject DockerOfficeImageService
 
     @Override
     public DockerImageResponse build(SimulationUserPrincipal principal, String dockerFilePath, String tag) {
@@ -184,6 +185,24 @@ public class DockerImageServiceImpl implements DockerImageService {
 
         Simulation simulation = simulationFinder.findById(principal.getSimulationId());
         List<DockerImage> images = dockerImageFinder.findPullImageByInfo(simulation, meta, allTags);
+
+        // If no image found locally or in user's hub, try to pull from official images
+        if (images.isEmpty()) {
+            if (allTags) {
+                // If allTags is true, pull all tags for the given image name from official images
+                dockerOfficeImageService.findAllByName(meta.getName()).stream()
+                        .map(officeImageResponse -> DockerImage.from(officeImageResponse, simulation, ImageLocation.LOCAL))
+                        .forEach(images::add);
+            } else {
+                // Pull specific tag from official images
+                dockerOfficeImageService.findByNameAndTag(meta.getName(), meta.getTag())
+                        .ifPresent(officeImageResponse -> images.add(DockerImage.from(officeImageResponse, simulation, ImageLocation.LOCAL)));
+            }
+        }
+
+        if (images.isEmpty()) {
+            throw new BusinessException(DockerImageErrorCode.IMAGE_NOT_FOUND, name);
+        }
 
         images.forEach(image -> image.addSimulation(simulation));
         repo.saveAll(images);

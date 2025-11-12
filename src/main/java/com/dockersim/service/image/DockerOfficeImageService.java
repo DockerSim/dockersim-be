@@ -2,6 +2,7 @@ package com.dockersim.service.image;
 
 import com.dockersim.dto.response.DockerOfficeImageResponse;
 import java.util.List;
+import java.util.Optional; // Import Optional
 
 public interface DockerOfficeImageService {
 
@@ -17,7 +18,7 @@ public interface DockerOfficeImageService {
      * @param name Image 이름
      * @param tag  Image 태그
      */
-    DockerOfficeImageResponse findByNameAndTag(String name, String tag);
+    Optional<DockerOfficeImageResponse> findByNameAndTag(String name, String tag); // Changed return type to Optional
 
     /**
      * name이 일치하는 모든 도커 공식 Image를 조회합니다.

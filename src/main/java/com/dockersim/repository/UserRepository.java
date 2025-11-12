@@ -15,6 +15,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findByPublicId(String publicId);
 
+    Optional<User> findByGithubId(String githubId);
+
     /**
      * 이메일 중복 확인
      */

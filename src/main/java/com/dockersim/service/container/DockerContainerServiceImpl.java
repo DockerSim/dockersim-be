@@ -5,9 +5,11 @@ import com.dockersim.domain.*;
 import com.dockersim.dto.response.ContainerInspectData;
 import com.dockersim.dto.response.DockerContainerResponse;
 import com.dockersim.exception.BusinessException;
+import com.dockersim.exception.code.DockerContainerErrorCode;
 import com.dockersim.exception.code.DockerImageErrorCode;
 import com.dockersim.repository.DockerContainerRepository;
 import com.dockersim.service.image.DockerImageFinder;
+import com.dockersim.service.network.DockerNetworkFinder;
 import com.dockersim.service.simulation.SimulationFinder;
 import com.dockersim.service.user.UserFinder;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -15,7 +17,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional; // Import Transactional
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -27,30 +31,77 @@ public class DockerContainerServiceImpl implements DockerContainerService {
     private final SimulationFinder simulationFinder;
     private final DockerImageFinder dockerImageFinder;
     private final DockerContainerFinder dockerContainerFinder;
+    private final DockerNetworkFinder dockerNetworkFinder;
     private final UserFinder userFinder;
 
     private final DockerContainerRepository repo;
 
     @Override
-    public DockerContainerResponse create(SimulationUserPrincipal principal, String baseImageNameOrHexId, String name) {
-        log.debug("컨테이너 생성 전 검증");
-        Simulation simulation = simulationFinder.findById(principal.getSimulationId());
-        User user = userFinder.findUserById(principal.getUserId());
+    @Transactional // Added Transactional annotation
+    public DockerContainerResponse create(SimulationUserPrincipal principal,
+                                          String baseImageNameOrHexId,
+                                          String name,
+                                          List<String> publish,
+                                          List<String> volume,
+                                          List<String> env,
+                                          List<String> networks) { // Changed from String to List<String>
+        log.info("Attempting to create container with name '{}' from image '{}'", name, baseImageNameOrHexId);
 
-        log.debug("로컬에서 base image 탐색");
+        log.debug("Step 1: Find simulation by ID '{}'", principal.getSimulationId());
+        Simulation simulation = simulationFinder.findById(principal.getSimulationId());
+
+        if (name != null && !name.trim().isEmpty()) {
+            log.debug("Step 2: Check for duplicate container name '{}' in simulation '{}'", name, simulation.getPublicId());
+            if (repo.existsByNameAndSimulation(name, simulation)) {
+                log.warn("Container name '{}' already exists in simulation '{}'", name, simulation.getPublicId());
+                throw new BusinessException(DockerContainerErrorCode.CONTAINER_NAME_DUPLICATE, name);
+            }
+        }
+
+        log.debug("Step 3: Find base image '{}' in local repository for simulation '{}'", baseImageNameOrHexId, simulation.getPublicId());
         DockerImage image = dockerImageFinder.findByIdentifierAndLocation(simulation,
                 baseImageNameOrHexId, ImageLocation.LOCAL);
+        log.info("Found base image: {}", image.getFullNameWithTag());
 
-        log.debug("컨테이너 생성");
+        log.debug("Step 4: Create DockerContainer entity");
         DockerContainer container = DockerContainer.from(name, image, simulation);
+        log.info("Created container entity with hexId '{}'", container.getHexId());
+
+        // Handle network connections
+        List<String> networksToConnect = (networks == null || networks.isEmpty()) ?
+                Collections.singletonList("bridge") : networks;
+
+        for (String networkName : networksToConnect) {
+            log.debug("Step 5: Find network '{}' for container", networkName);
+            DockerNetwork dockerNetwork = dockerNetworkFinder.findByNameOrHexId(simulation, networkName);
+            container.getContainerNetworks().add(ContainerNetwork.from(container, dockerNetwork));
+            log.info("Container connected to network '{}'", dockerNetwork.getName());
+        }
+
+        // TODO: Implement logic for publish, volume, env options
+        if (publish != null && !publish.isEmpty()) {
+            log.warn("Publish options are not yet fully implemented: {}", publish);
+        }
+        if (volume != null && !volume.isEmpty()) {
+            log.warn("Volume options are not yet fully implemented: {}", volume);
+        }
+        if (env != null && !env.isEmpty()) {
+            log.warn("Environment variable options are not yet fully implemented: {}", env);
+        }
+
+
+        log.debug("Step 6: Save container to repository");
+        DockerContainer savedContainer = repo.save(container);
+        log.info("Successfully saved container with ID {}", savedContainer.getId());
 
         return DockerContainerResponse.from(
-                List.of("[Create Container]: " + container.getHexId()),
-                repo.save(container)
+                List.of("[Create Container]: " + savedContainer.getHexId()),
+                savedContainer
         );
     }
 
     @Override
+    @Transactional(readOnly = true) // Added Transactional annotation
     public List<String> inspect(SimulationUserPrincipal principal, String containerNameOrHexId) {
         log.debug("컨테이너 상세 조회 전 검증");
         Simulation simulation = simulationFinder.findByPublicId(principal.getSimulationPublicId());
@@ -72,6 +123,7 @@ public class DockerContainerServiceImpl implements DockerContainerService {
     }
 
     @Override
+    @Transactional(readOnly = true) // Added Transactional annotation
     public List<String> ps(SimulationUserPrincipal principal, boolean all, boolean quiet) {
         Simulation simulation = simulationFinder.findById(principal.getSimulationId());
         List<DockerContainer> containers = dockerContainerFinder.findBySimulation(simulation, all);
@@ -97,6 +149,7 @@ public class DockerContainerServiceImpl implements DockerContainerService {
     }
 
     @Override
+    @Transactional // Added Transactional annotation
     public DockerContainerResponse pause(SimulationUserPrincipal principal, String containerNameOrHexId) {
         log.debug("컨테이너 일시 중지 전 검증");
         Simulation simulation = simulationFinder.findById(principal.getSimulationId());
@@ -112,18 +165,34 @@ public class DockerContainerServiceImpl implements DockerContainerService {
     }
 
     @Override
+    @Transactional // Added Transactional annotation
     public List<DockerContainerResponse> restart(SimulationUserPrincipal principal, String containerNameOrHexId) {
         return List.of(stop(principal, containerNameOrHexId), start(principal, containerNameOrHexId));
     }
 
     @Override
+    @Transactional // Added Transactional annotation
     public DockerContainerResponse rm(SimulationUserPrincipal principal, String containerNameOrHexId) {
-
+        log.debug("컨테이너 삭제 전 검증");
         Simulation simulation = simulationFinder.findById(principal.getSimulationId());
 
-        DockerContainer container = dockerContainerFinder.findBySimulationAndIdentifierAndStatus(simulation, containerNameOrHexId, ContainerStatus.EXITED);
+        // Find the container regardless of its status
+        DockerContainer container = dockerContainerFinder.findByIdentifier(simulation, containerNameOrHexId);
+
+        // If the container is running or paused, stop it first
+        if (container.getStatus() == ContainerStatus.RUNNING) {
+            log.info("Stopping running container '{}' before removal.", container.getName());
+            container.stop();
+            repo.save(container); // Save the status change
+        } else if (container.getStatus() == ContainerStatus.PAUSED) {
+            log.info("Unpausing and stopping paused container '{}' before removal.", container.getName());
+            container.unpause();
+            container.stop();
+            repo.save(container); // Save the status change
+        }
 
         repo.delete(container);
+        log.info("Container '{}' removed successfully.", container.getName());
         return DockerContainerResponse.from(
                 List.of("[Remove Container]: " + container.getShortHexId()),
                 container
@@ -131,6 +200,7 @@ public class DockerContainerServiceImpl implements DockerContainerService {
     }
 
     @Override
+    @Transactional // Added Transactional annotation
     public DockerContainerResponse start(SimulationUserPrincipal principal, String containerNameOrHexId) {
         log.debug("컨테이너 시작 전 검증");
         Simulation simulation = simulationFinder.findById(principal.getSimulationId());
@@ -145,6 +215,7 @@ public class DockerContainerServiceImpl implements DockerContainerService {
     }
 
     @Override
+    @Transactional // Added Transactional annotation
     public DockerContainerResponse stop(SimulationUserPrincipal principal, String containerNameOrHexId) {
         log.debug("컨테이너 중지 전 검증");
         Simulation simulation = simulationFinder.findById(principal.getSimulationId());
@@ -159,6 +230,7 @@ public class DockerContainerServiceImpl implements DockerContainerService {
     }
 
     @Override
+    @Transactional // Added Transactional annotation
     public DockerContainerResponse unpause(SimulationUserPrincipal principal, String containerNameOrHexId) {
 
         log.debug("컨테이너 일시 중지 해제 전 검증");

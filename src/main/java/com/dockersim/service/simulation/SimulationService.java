@@ -47,6 +47,13 @@ public interface SimulationService {
     void deleteSimulation(String ownerId, String simulationId);
 
     /**
+     * 현재 로그인한 사용자의 모든 시뮬레이션 목록을 조회합니다.
+     * @param userPublicId 사용자 공개 ID
+     * @return 사용자의 시뮬레이션 목록
+     */
+    List<SimulationResponse> getMySimulations(String userPublicId); // 새로운 메서드 추가
+
+    /**
      * 협업자 초대 SimulationShareState가 WRITE일 때만 초대 가능
      *
      * @param simulationId 시뮬레이션 ID

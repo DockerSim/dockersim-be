@@ -4,6 +4,7 @@ import com.dockersim.domain.DockerImage;
 import com.dockersim.domain.ImageLocation;
 import com.dockersim.domain.Simulation;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -11,6 +12,10 @@ import java.util.List;
 import java.util.Optional;
 
 public interface DockerImageRepository extends JpaRepository<DockerImage, Long> {
+
+    @Modifying
+    @Query("DELETE FROM DockerImage di WHERE di.location = :location")
+    void deleteByLocation(@Param("location") ImageLocation location);
 
     Optional<DockerImage> findBySimulationAndNamespaceAndNameAndTagAndLocation(
             Simulation simulation,

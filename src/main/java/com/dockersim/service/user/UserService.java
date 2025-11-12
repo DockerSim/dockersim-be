@@ -16,15 +16,23 @@ public interface UserService {
     /**
      * 사용자 조회
      *
-     * @param userId 조회할 사용자 ID
+     * @param publicId 조회할 사용자 public ID (String)
      * @return 조회된 사용자 정보
      */
-    UserResponse getUser(String userId);
+    UserResponse getUser(String publicId);
 
     /**
      * 사용자 삭제
      *
-     * @param userId 삭제할 사용자 ID
+     * @param publicId 삭제할 사용자 public ID (String)
      */
-    void deleteUser(String userId);
+    void deleteUser(String publicId);
+
+    /**
+     * 사용자 이메일 업데이트
+     *
+     * @param publicId 업데이트할 사용자의 public ID (String)
+     * @param email 새로운 이메일 주소
+     */
+    void updateEmail(String publicId, String email);
 }

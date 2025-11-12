@@ -20,4 +20,8 @@ public class ImageMeta {
 	public void updateTag(String newTag) {
 		this.tag = newTag;
 	}
+
+	public boolean hasTag() {
+		return this.tag != null && !this.tag.isEmpty();
+	}
 }

@@ -69,6 +69,8 @@ public class DockerContainer {
                 .baseImage(baseImage)
                 .simulation(simulation)
                 .createdAt(LocalDateTime.now())
+                .containerNetworks(new HashSet<>())
+                .containerVolumes(new HashSet<>())
                 .build();
     }
 

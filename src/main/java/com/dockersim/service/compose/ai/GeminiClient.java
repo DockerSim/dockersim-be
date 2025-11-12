@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -21,10 +22,22 @@ import java.util.List;
  */
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class GeminiClient {
 
     private final WebClient geminiWebClient;
+    private final String apiKey;
+    private final String apiBaseUrl; // apiBaseUrl 필드 추가
+    private final String apiModelName; // apiModelName 필드 추가
+
+    public GeminiClient(WebClient geminiWebClient,
+                        @Value("${gemini.api.key}") String apiKey,
+                        @Value("${gemini.api.base-url}") String apiBaseUrl, // apiBaseUrl 주입
+                        @Value("${gemini.api.model-name}") String apiModelName) { // apiModelName 주입
+        this.geminiWebClient = geminiWebClient;
+        this.apiKey = apiKey;
+        this.apiBaseUrl = apiBaseUrl;
+        this.apiModelName = apiModelName;
+    }
 
     public String generateCompose(String prompt) {
         try {
@@ -49,8 +62,12 @@ public class GeminiClient {
 
             log.info("Request body 준비 완료, API 호출 시작");
 
+            // 로그 메시지 수정: apiBaseUrl과 apiModelName 사용
+            log.info("GeminiClient: Calling generateContent API with URL: {}/models/{}:generateContent?key={} and API Key: {}", apiBaseUrl, apiModelName, apiKey, apiKey);
+
             GeminiResponse response = geminiWebClient
                 .post()
+                .uri("/models/{modelName}:generateContent?key={apiKey}", apiModelName, apiKey) // uri 수정
                 .bodyValue(request)
                 .retrieve()
                 .bodyToMono(GeminiResponse.class)
@@ -58,6 +75,7 @@ public class GeminiClient {
                 .doOnError(error -> log.error("API 호출 중 에러: {}", error.getMessage()))
                 .block();
 
+            log.error("Gemini API로부터 받은 원본 응답: {}", response);
             String composeYml = extractComposeContent(response);
             log.debug("Gemini API 호출 성공: response length = {}", composeYml.length());
             
@@ -75,7 +93,8 @@ public class GeminiClient {
     public String analyzeDockerfile(String prompt) {
         try {
             log.debug("Dockerfile 분석 API 호출 시작: prompt length = {}", prompt.length());
-            
+            log.debug("Gemini API로 전송되는 프롬프트: {}", prompt);
+
             GeminiRequest request = GeminiRequest.builder()
                 .contents(List.of(
                     Content.builder()
@@ -92,8 +111,12 @@ public class GeminiClient {
                     .build())
                 .build();
 
+            // 로그 메시지 수정: apiBaseUrl과 apiModelName 사용
+            log.info("GeminiClient: Calling analyzeDockerfile API with URL: {}/models/{}:generateContent?key={} and API Key: {}", apiBaseUrl, apiModelName, apiKey, apiKey);
+
             GeminiResponse response = geminiWebClient
                 .post()
+                .uri("/models/{modelName}:generateContent?key={apiKey}", apiModelName, apiKey) // uri 수정
                 .bodyValue(request)
                 .retrieve()
                 .bodyToMono(GeminiResponse.class)

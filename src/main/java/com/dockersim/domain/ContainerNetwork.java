@@ -36,4 +36,8 @@ public class ContainerNetwork {
 		this.container = container;
 		this.network = network;
 	}
+
+	public static ContainerNetwork from(DockerContainer container, DockerNetwork network) {
+		return new ContainerNetwork(container, network);
+	}
 }

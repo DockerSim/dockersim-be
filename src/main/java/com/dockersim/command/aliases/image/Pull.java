@@ -35,6 +35,7 @@ public class Pull implements Callable<CommandResult> {
 				.flatMap(response -> response.getConsole().stream()).toList())
 			.status(CommandResultStatus.CREATE)
 			.changedImages(pull)
+			.success(true) // Add this line
 			.build();
 	}
 }

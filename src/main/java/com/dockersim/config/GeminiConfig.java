@@ -18,21 +18,19 @@ public class GeminiConfig {
     @Value("${gemini.api.key}")
     private String apiKey;
 
-    @Value("${gemini.api.url}")
-    private String apiUrl;
+    @Value("${gemini.api.base-url}")
+    private String apiBaseUrl;
+
+    @Value("${gemini.api.model-name}")
+    private String apiModelName;
 
     @Value("${gemini.api.timeout:30}")
     private int timeoutSeconds;
 
     @Bean
     public WebClient geminiWebClient() {
-        String urlWithKey = apiUrl + "?key=" + apiKey;
-        log.info("=== Gemini WebClient 초기화 ===");
-        log.info("Base URL (with key): {}", apiUrl + "?key=" + maskApiKey(apiKey));
-        log.info("Timeout: {} seconds", timeoutSeconds);
-
         return WebClient.builder()
-            .baseUrl(urlWithKey)
+            .baseUrl(apiBaseUrl)
             .defaultHeader("Content-Type", "application/json")
             .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(1024 * 1024))
             .build();

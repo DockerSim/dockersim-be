@@ -9,7 +9,9 @@ import com.dockersim.exception.BusinessException;
 import com.dockersim.exception.code.DockerImageErrorCode;
 import com.dockersim.repository.DockerImageRepository;
 import com.dockersim.repository.DockerOfficeImageRepository;
+import com.dockersim.util.ImageUtil; // Import ImageUtil
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j; // Import Slf4j
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +19,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+@Slf4j // Add Slf4j annotation
 @Component
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -195,7 +198,23 @@ public class DockerImageFinderImpl implements DockerImageFinder {
             String nameOrShortHexId,
             ImageLocation imageLocation
     ) {
-        return repo.findByIdentifier(simulation, nameOrShortHexId, imageLocation)
-                .orElseThrow(() -> new BusinessException(DockerImageErrorCode.IMAGE_NOT_FOUND, imageLocation, nameOrShortHexId));
+        log.debug("findByIdentifierAndLocation: Attempting to find image by identifier='{}', simulation='{}', location='{}'", nameOrShortHexId, simulation.getPublicId(), imageLocation);
+        
+        ImageMeta meta = ImageUtil.parserFullName(nameOrShortHexId);
+        Optional<DockerImage> foundImage;
+
+        if (meta.hasTag()) { // name:tag 형식인 경우
+            foundImage = repo.findBySimulationAndNameAndTagAndLocation(simulation, meta.getName(), meta.getTag(), imageLocation);
+        } else { // name 또는 shortHexId 형식인 경우
+            foundImage = repo.findByIdentifier(simulation, nameOrShortHexId, imageLocation);
+        }
+
+        if (foundImage.isPresent()) {
+            log.debug("findByIdentifierAndLocation: Image found: name='{}', tag='{}', hexId='{}'", foundImage.get().getName(), foundImage.get().getTag(), foundImage.get().getHexId());
+            return foundImage.get();
+        } else {
+            log.warn("findByIdentifierAndLocation: Image not found: identifier='{}', simulation='{}', location='{}'", nameOrShortHexId, simulation.getPublicId(), imageLocation);
+            throw new BusinessException(DockerImageErrorCode.IMAGE_NOT_FOUND, imageLocation, nameOrShortHexId);
+        }
     }
 }
