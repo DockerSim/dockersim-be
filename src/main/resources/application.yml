@@ -35,6 +35,14 @@ springdoc:
   show-actuator: false
 
 
+# Gemini API 설정
+gemini:
+  api:
+    key: ${GEMINI_API_KEY:AIzaSyA3gGaNVocN6GqvswfnyEr1La6KUkZBMQk}
+    base-url: https://generativelanguage.googleapis.com/v1beta
+    model-name: gemini-2.5-flash
+    timeout: 30
+
 
 logging:
   level:

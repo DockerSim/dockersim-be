@@ -10,32 +10,49 @@ public class DockerfilePromptBuilder {
 
     public String buildAnalysisPrompt(String dockerfileContent) {
         return """
-                다음 내용을 분석하여 최적화된 Dockerfile을 제공해주세요.
+                다음 내용을 분석해 최적화된 Dockerfile을 출력하세요.
 
                 입력 유형:
-                - Dockerfile인 경우: 분석 후 최적화된 버전 제공
-                - 수도 코드/요구사항인 경우: Dockerfile로 변환
+                - Dockerfile: 문제점 분석 후 최적화된 Dockerfile 제시
+                - 수도코드/요구사항: 프레임워크 유형 감지(Express/Nest/Next/Flask/Spring 등) 후 적절한 Dockerfile 생성
 
-                최적화 기준:
-                1. 이미지 크기 최적화 - alpine, slim 버전 사용
-                2. 레이어 캐싱 최적화 - 의존성 파일 먼저 복사
-                3. 보안 강화 - 비root 사용자 사용
-                4. 멀티 스테이지 빌드 - 필요시 적용
-                5. 헬스체크 - 프로젝트에 맞게 추가
+                최적화 규칙(엄수):
+                1) 베이스 이미지: 가능한 alpine/slim 사용. 필요 시에만 build-base 설치
+                2) 레이어 캐싱: 의존성 파일(package.json, requirements.txt, pom.xml 등) 먼저 COPY
+                3) 멀티스테이지: 빌드/런타임 분리, 최종 이미지에는 필수 파일만
+                4) 보안: 비root 사용자, COPY --chown 사용
+                5) 실행 최적화: 프레임워크별 적절한 실행 커맨드 (Next.js: npm start, Nest: node dist/main.js 등)
+                6) 헬스체크: 프로젝트에 맞게 추가
 
-                응답 규칙 (매우 중요):
-                - Dockerfile 코드가 주, 주석은 보조
-                - 주석은 한 줄로 핵심만 간결하게 (이모티콘 금지)
-                - 장황한 설명 금지 (예: "# 이미지 크기 최적화", "# 레이어 캐싱")
-                - 불필요한 주석 제거 (당연한 내용 생략)
-                - 실행 가능한 Dockerfile 코드 제공
+                출력 형식(매우 중요):
+                섹션 A - 최종 Dockerfile:
+                ```dockerfile
+                (코드만, 필수 주석만 한 줄로)
+                ```
+
+                섹션 B - .dockerignore:
+                ```
+                node_modules
+                .git
+                *.log
+                (프로젝트별 추가 항목)
+                ```
+
+                섹션 C - 개선 요약:
+                - 변경사항 1
+                - 변경사항 2
+                - 변경사항 3
 
                 입력 내용:
                 ```
                 %s
                 ```
 
-                최적화된 Dockerfile (주석은 핵심만 한 줄로):
+                주의사항:
+                - 전체 폴더 COPY 금지 (.git, tests 제외)
+                - 멀티스테이지 시 최종 단계에 필요한 것만 COPY
+                - 권한 설정: COPY --chown=node:node 후 USER node
+                - 불필요한 주석/이모지 금지, 실행 가능한 코드 우선
                 """.formatted(dockerfileContent);
     }
 }
