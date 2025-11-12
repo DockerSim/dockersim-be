@@ -58,11 +58,17 @@ public class DockerCommandController {
     /**
      * Docker Compose 파일 피드백 API
      *
+     * 주의: 엔드포인트 이름은 레거시로 'dockerfile'이지만 실제로는 Docker Compose 파일을 분석합니다.
+     * Dockerfile과 docker-compose.yml은 다른 파일입니다:
+     * - Dockerfile: 도커 이미지 빌드 방법 정의
+     * - docker-compose.yml: 멀티 컨테이너 애플리케이션 실행 설정 정의
+     *
      * @param request Docker Compose 파일 내용을 포함하는 요청
      * @return AI 피드백 응답
      */
     @Operation(summary = "Docker Compose 파일 피드백",
-            description = "제공된 Docker Compose 파일 내용에 대한 AI 피드백을 생성합니다.")
+            description = "제공된 docker-compose.yml 파일 내용에 대한 AI 피드백을 생성합니다. " +
+                         "현재 컨테이너, 네트워크, 볼륨 설정을 분석하고 개선 제안을 제공합니다.")
     @PostMapping("/feedback/dockerfile")
     public ResponseEntity<ApiResponse<DockerfileFeedbackResponse>> getDockerfileFeedback(
             @RequestBody DockerfileFeedbackRequest request
