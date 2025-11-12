@@ -71,6 +71,7 @@ public class GeminiClient {
                 .timeout(Duration.ofSeconds(30))
                 .block();
 
+            log.error("Gemini API로부터 받은 원본 응답: {}", response);
             String composeYml = extractComposeContent(response);
             log.debug("Gemini API 호출 성공: response length = {}", composeYml.length());
             
@@ -88,7 +89,8 @@ public class GeminiClient {
     public String analyzeDockerfile(String prompt) {
         try {
             log.debug("Dockerfile 분석 API 호출 시작: prompt length = {}", prompt.length());
-            
+            log.debug("Gemini API로 전송되는 프롬프트: {}", prompt);
+
             GeminiRequest request = GeminiRequest.builder()
                 .contents(List.of(
                     Content.builder()

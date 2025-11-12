@@ -83,4 +83,20 @@ public class PostController {
         int likesCount = postService.getLikesCount(postId);
         return ResponseEntity.ok(ApiResponse.success(likesCount));
     }
+
+    @Operation(summary = "내가 작성한 게시글 조회", description = "현재 로그인한 사용자가 작성한 모든 게시글을 조회합니다.")
+    @GetMapping("/my-posts")
+    public ResponseEntity<ApiResponse<List<PostResponse>>> getMyPosts(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        List<PostResponse> posts = postService.getPostsByAuthor(userDetails.getUsername());
+        return ResponseEntity.ok(ApiResponse.success(posts));
+    }
+
+    @Operation(summary = "내가 좋아요한 게시글 조회", description = "현재 로그인한 사용자가 좋아요한 모든 게시글을 조회합니다.")
+    @GetMapping("/my-likes")
+    public ResponseEntity<ApiResponse<List<PostResponse>>> getMyLikedPosts(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        List<PostResponse> posts = postService.getLikedPostsByAuthor(userDetails.getUsername());
+        return ResponseEntity.ok(ApiResponse.success(posts));
+    }
 }

@@ -10,7 +10,6 @@ import com.dockersim.dto.response.DockerfileFeedbackResponse;
 import com.dockersim.service.dockerfile.DockerFileService;
 import com.dockersim.service.dockerfile.DockerfileAnalysisService;
 import jakarta.validation.Valid;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -68,7 +67,8 @@ public class DockerFileController {
 
     @PostMapping("/feedback")
     public ResponseEntity<ApiResponse<DockerfileFeedbackResponse>> getDockerfileFeedback(
-        @Valid @RequestBody DockerfileFeedbackRequest request
+            @CurrentUser SimulationUserPrincipal principal,
+            @Valid @RequestBody DockerfileFeedbackRequest request
     ) {
         DockerfileFeedbackResponse response = analysisService.analyzeDockerfile(request);
         return ResponseEntity.ok(ApiResponse.success(response));

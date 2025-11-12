@@ -33,14 +33,15 @@ public class Create implements Callable<CommandResult> {
     private List<String> env;
 
     @CommandLine.Option(names = "--network", description = "컨테이너를 연결할 네트워크")
-    private String network;
+    private List<String> networks; // Changed from String to List<String>
 
     @CommandLine.Parameters(index = "0", description = "Container을 만드는데 사용되는 Base Image")
     private String baseImageNameOrHexId;
 
     @Override
     public CommandResult call() throws Exception {
-        DockerContainerResponse container = service.create(parent.getPrincipal(), baseImageNameOrHexId, name, port, volume, env, network);
+        // Changed 'network' to 'networks'
+        DockerContainerResponse container = service.create(parent.getPrincipal(), baseImageNameOrHexId, name, port, volume, env, networks);
         return CommandResult.builder()
                 .console(container.getConsole())
                 .changedContainer(container)

@@ -75,6 +75,9 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.PUT, "/api/posts/**").authenticated()
                 .requestMatchers(HttpMethod.DELETE, "/api/posts/**").authenticated()
                 
+                // Dockerfile 관련 모든 요청은 인증 필요
+                .requestMatchers("/api/dockerfiles/**").authenticated() // 이 줄을 추가합니다.
+                
                 // 위에서 정의되지 않은 나머지 모든 요청은 일단 거부
                 .anyRequest().denyAll() 
             )

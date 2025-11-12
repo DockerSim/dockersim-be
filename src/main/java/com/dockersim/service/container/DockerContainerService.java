@@ -13,7 +13,7 @@ public interface DockerContainerService {
                                    List<String> publish,
                                    List<String> volume,
                                    List<String> env,
-                                   String network);
+                                   List<String> networks); // Changed from String to List<String>
 
     List<String> inspect(SimulationUserPrincipal principal,
                          String containerNameOrHexId);
